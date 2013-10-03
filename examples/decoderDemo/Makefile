@@ -3,10 +3,10 @@ ACTORS=RVC__decoder__GEN_mgnt_Merger420.so RVC__decoder__motion_U__add.so RVC__d
 all: $(ACTORS) calvin.py
 
 %.so: %.c
-	make -f ../m5/m5/runtime/barebones/Makefile $@
+	make -f ../../Makefile $@
 
 calvin.py:
-	ln -sf ../python_support/calvin.py .
+	ln -sf ../../python_support/calvin.py .
 
 clean:
 	rm -f $(ACTORS)
