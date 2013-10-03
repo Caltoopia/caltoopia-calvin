@@ -45,13 +45,9 @@ Running an application requires the following:
 
 \subsection{How to build Calvin and actors}
 
-Get the barebones runtime out of the M5 git, switch to the
-   'dynload' branch, and build calvin:
+First, build Calvin in the most straight-forward way:
 
 \begin{verbatim}
-    git clone ssh://kloker.ld.sw.ericsson.se/mnt/repos/m5.git
-    cd m5/runtime/barebones
-    git checkout -b dynload origin/dynload
     make
 \end{verbatim}
 
@@ -110,8 +106,8 @@ sed -ie 's/ActorClass.*INIT_ActorClass/ActorClass klass=INIT_ActorClass/g' *.c
 \section{Calvin scripts: executable network descriptions}
 \label{CalvinScript}
 
-To be able to deploy applications in an incremental (and, ultimately,
-distributed) fashion, a simple network description language has been
+To be able to deploy applications in an incremental and
+distributed fashion, a simple network description language has been
 designed. It is intended to be used in (at least) the following three
 ways:
 
@@ -121,8 +117,7 @@ ways:
   network.
 \item As a plaintext protocol between devices (like IETF protocols
   such as POP). In this case, commands are issued by a remote peer,
-  for example, to establish network connections. (This is obviously of
-  limited use until we support distributed applications.)
+  for example, to establish network connections.
 \item Line-by-line execution, to allow for interactive operation, for
   experimentation and system maintenance.
 \end{itemize}
@@ -133,7 +128,7 @@ resulting actor network accordingly.
 \subsection{Command-line arguments}
 
 Executing an entire network description file was demonstrated in
-QuickIntro. Line-by-line execution is invoked by the -i option, as
+\ref{QuickIntro}. Line-by-line execution is invoked by the -i option, as
 shown in the following example:
 
 \begin{verbatim}
@@ -147,7 +142,7 @@ OK art_Sink_bin art_Sink_real art_Sink_txt ... Example_m1
 OK bye
 \end{verbatim}
 
-Calvin can also be started as a server using the -s option, for example as
+Calvin can also be started as a server on a given TCP port using the -s option, for example as
 
 \begin{verbatim}
 # ./calvin -s 9000
@@ -349,7 +344,7 @@ calvin -s 9001 -i
 \end{verbatim}
 
 respectively. Make sure the Calvin instance on port 9000 runs in the
-same directory as the .bundle actor file; if necessary, compile it as
+same directory as the .so (or .bundle) actor file; if necessary, compile it as
 outlined in QuickIntro. The application above can then be executed as
 (assuming it has the name 'example.py'):
 
@@ -377,7 +372,7 @@ example.
 Calvin is multithreaded, not (currently) to use multiple cores, but to
 permit concurrent access from an interactive session and one or more
 remote sessions. These notes describe the general ideas in the
-threading design.
+threading design. They are intended to help the reader understand the code.
 
 \subsubsection*{The actor worker thread}
 
