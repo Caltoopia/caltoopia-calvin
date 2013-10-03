@@ -1,0 +1,421 @@
+\documentclass[10pt, a4paper]{article}
+\usepackage{fullpage}
+
+\title{Calvin: A Virtual Machine for Cal}
+
+\author{Patrik Persson, Ericsson AB (\texttt{patrik.j.persson@ericsson.com)}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\vfill
+
+\tableofcontents
+
+\vfill
+
+\newpage
+
+\section{Introduction}
+
+\label{QuickIntro}
+
+Calvin is a Cal runtime system that allows for dynamic loading of
+actors. The idea is to have Calvin running continously, and
+load/unload actors and networks as needed.
+
+\vspace{5mm}\noindent%
+These instructions have been verified on my
+Ubuntu VM, and should probably work on any recent Linux
+machine. Support for Mac OS X is experimental. This document is by no
+means complete; work on it has just begun.
+
+\subsection{Components involved}
+
+Running an application requires the following:
+
+\begin{itemize}
+\item Calvin
+\item one or more actors, in the form of hot-loadable .so files
+\item a network description, typically in CalvinScript format
+\end{itemize}
+
+\subsection{How to build Calvin and actors}
+
+Get the barebones runtime out of the M5 git, switch to the
+   'dynload' branch, and build calvin:
+
+\begin{verbatim}
+    git clone ssh://kloker.ld.sw.ericsson.se/mnt/repos/m5.git
+    cd m5/runtime/barebones
+    git checkout -b dynload origin/dynload
+    make
+\end{verbatim}
+
+Build example actors, as separate .so files (Linux) or .bundle
+   files (Mac OS X). The runtime makefile has a rule for building such
+   files. On a Linux machine, do this:
+
+\begin{verbatim}
+    cd examples/loadableActors
+    make -f ../../Makefile \
+      Example__m1.so Example__m2.so \
+      Example__m3.so Example__m4.so
+\end{verbatim}
+
+   Or, on a Mac:
+
+\begin{verbatim}
+    cd examples/loadableActors
+    make -f ../../Makefile \
+      Example__m1.bundle Example__m2.bundle \
+      Example__m3.bundle Example__m4.bundle
+\end{verbatim}
+
+\subsection{How to run it}
+
+For the 'loadableActor' example above, the network is described in
+Example.cs. Assuming that 'examples/loadableActors' is still the
+current working directory:
+
+\begin{verbatim}
+  ../../calvin Example.cs
+\end{verbatim}
+
+This line loads Calvin, loads four actors, and finally loads a
+network. The network is then executed. You should now have four files
+named outdata1..outdata4.txt in your directory.
+
+The extension '.cs' stands for 'Calvin script'. This way of describing
+the network is described in Section~\ref{CalvinScript}.
+
+\subsection{Considerations for code generation}
+
+Each generated actor has a global variable 'klass' referring to the actor class. This value previously had a unique name for each actor. Diff output:
+
+\begin{verbatim}
+-ActorClass ActorClass_Example_m1 = INIT_ActorClass(
++ActorClass klass = INIT_ActorClass(
+\end{verbatim}
+
+Until the compiler generates such code, here's a command line that you may find useful in this conversion:
+
+\begin{verbatim}
+sed -ie 's/ActorClass.*INIT_ActorClass/ActorClass klass=INIT_ActorClass/g' *.c
+\end{verbatim}
+
+\section{Calvin scripts: executable network descriptions}
+\label{CalvinScript}
+
+To be able to deploy applications in an incremental (and, ultimately,
+distributed) fashion, a simple network description language has been
+designed. It is intended to be used in (at least) the following three
+ways:
+
+\begin{itemize}
+\item In a network description file. In this case, such a .cs file
+  contains a sequence of commands that build and execute a Cal
+  network.
+\item As a plaintext protocol between devices (like IETF protocols
+  such as POP). In this case, commands are issued by a remote peer,
+  for example, to establish network connections. (This is obviously of
+  limited use until we support distributed applications.)
+\item Line-by-line execution, to allow for interactive operation, for
+  experimentation and system maintenance.
+\end{itemize}
+
+Calvin thus interprets CalvinScript commands and executes the
+resulting actor network accordingly.
+
+\subsection{Command-line arguments}
+
+Executing an entire network description file was demonstrated in
+QuickIntro. Line-by-line execution is invoked by the -i option, as
+shown in the following example:
+
+\begin{verbatim}
+# ./calvin -i
+OK calvin 1.0
+% load ./Example__m1.so
+OK Example_m1
+% classes
+OK art_Sink_bin art_Sink_real art_Sink_txt ... Example_m1
+% quit
+OK bye
+\end{verbatim}
+
+Calvin can also be started as a server using the -s option, for example as
+
+\begin{verbatim}
+# ./calvin -s 9000
+\end{verbatim}
+
+The server can then be remotely accessed using, e.g., telnet:
+
+\begin{verbatim}
+# telnet <ip address> 9000
+OK calvin 1.0
+% quit
+OK bye
+\end{verbatim}
+
+Command line parameters are executed in order, so the following command line
+\begin{verbatim}
+# ./calvin -s 9000 -i
+\end{verbatim}
+
+spawns a server thread, then immediately launches an interactive
+session. This is probably what you want; it allows you to monitor
+Calvin from the same console. In contrast,
+
+\begin{verbatim}
+# ./calvin -i -s 9000
+\end{verbatim}
+
+launches an interactive session, waits for it to terminate (by a QUIT
+command), {\em then} spawns a server thread. This is probably {\em
+  not} what you want.
+
+\subsection{Command reference}
+
+Commands in Calvin are used for the following:
+
+\begin{itemize}
+\item Loading classes
+\item Creating actor instances of those classes
+\item Connecting actor instances
+\item Executing actor networks
+\end{itemize}
+
+The response to a command, as shown either interactively or via a
+network socket, is a one-line status line beginning with either 'OK'
+or 'ERROR'. After this indicator follows more information; usually an
+informal status message, but in some cases (such as CREATE or LISTEN)
+also important information.
+
+Commands are not case sensitive; identifiers are, however.
+
+Comments start with \# (the hash character) and extend to the end of
+the line. Empty lines are allowed and constitute no-ops.
+
+The actor network generally executes asynchronously to the command
+parser.
+
+\subsubsection*{ACTORS}
+
+Syntax:
+\begin{verbatim}
+ACTORS
+\end{verbatim}
+
+Lists actor instances.
+
+Calvin will respond with a single line, starting with 'OK', followed by a number of instance names separated by whitespace.
+
+\subsubsection*{CLASSES}
+
+Syntax:
+\begin{verbatim}
+CLASSES
+\end{verbatim}
+
+Lists actor classes.
+
+Calvin will respond with a single line, starting with 'OK', followed by a number of class names separated by whitespace.
+
+\subsubsection*{CONNECT}
+
+Syntax:
+\begin{verbatim}
+CONNECT <source actor>.<source port> <destination actor>.<destination port>
+CONNECT <source actor>.<source port> <remote IP address>:<remote port>
+\end{verbatim}
+
+Connects an output port of one actor to an input of another.
+
+The destination is either a local actor, or the port of a remote host which has previously executed a LISTEN command. The remote port is then the port provided as output by that LISTEN command.
+
+\subsubsection*{ENABLE}
+
+Syntax:
+\begin{verbatim}
+ENABLE <actor1> [<actor2> ... <actorN>]
+\end{verbatim}
+
+Schedules one or more previously created actors for execution.
+
+Until this is done, the actors will not be executed.
+
+\subsubsection*{JOIN}
+
+Syntax:
+\begin{verbatim}
+JOIN
+\end{verbatim}
+
+Blocks the command parser until no more actors can fire.
+
+This command provides a mechanism for detecting the termination of an application. If the network does not go idle, then this command will not terminate.
+
+(This command currently requires the entire network to go idle, which is rather crude. When executing multiple applications concurrently on the same node, it may even be useless. Joining a specific actor is currently not supported, but may be in the future.)
+
+\subsubsection*{LISTEN}
+
+Syntax:
+\begin{verbatim}
+LISTEN <actor>.<port>
+\end{verbatim}
+
+Initiate a remote connection.
+
+Specifies that the indicated port is to receive tokens from a remote source, rather than a local one. Upon success, the status line will be 'OK' followed by whitespace and the numeric IP port where tokens are expected. This IP port is to be used by the remote peer's CONNECT command.
+
+\subsubsection*{LOAD}
+
+Syntax:
+\begin{verbatim}
+LOAD <file name>
+\end{verbatim}
+
+Loads a compiled actor from the indicated binary file.
+
+It is not always possible to infer the actual name of the class from the file name. For this reason, the status line will provide this information: it consists of the word 'OK', followed by whitespace and the name of the class.
+
+\subsubsection*{NEW}
+
+Syntax:
+\begin{verbatim}
+NEW <class name> <instance name> [<param1>=<value1> ... <paramN>=<valueN>]
+\end{verbatim}
+
+Create a new instance of an actor class.
+
+Parameter values, if applicable, are provided on the same line. After this command has been given, the actor instance is not yet scheduled for execution: the command ENABLE must be given for this to be done.
+
+\subsubsection*{QUIT}
+
+Syntax:
+\begin{verbatim}
+QUIT
+\end{verbatim}
+
+Terminates a session.
+
+\section{Dynamic deployment of distributed applications using Python}
+
+CalvinScript can be viewed as a simple protocol, where the client
+sends a single-line request and the server (Calvin) responds with a
+single-line response. A client for this protocol has been implemented
+in Python. This client allows Calvin nodes, actor classes, actor
+instances, and ports to be represented as Python objects.
+
+A simple distributed application is given in the following example:
+
+\begin{verbatim}
+import calvin
+
+n1         = calvin.Node("localhost", 9000, True)
+n2         = calvin.Node("localhost", 9001, True)
+
+sensor     = n1.new("art_Source_txt", "sensor", fileName="in.txt")
+actuator   = n1.new("art_Sink_txt", "actuator", fileName="pyout.txt")
+
+comp_class = n2.load("./Example__m1.bundle")
+comp       = n2.new(comp_class, "comp")
+
+sensor.Out >> comp.In
+comp.Out   >> actuator.In
+
+sensor.enable()
+actuator.enable()
+comp.enable()
+\end{verbatim}
+
+The example assumes two Calvin instances to be running on the local
+machine, on ports 9000 and 9001 respectively. Start these in separate
+terminal sessions using
+
+\begin{verbatim}
+calvin -s 9000 -i
+\end{verbatim}
+
+and
+
+\begin{verbatim}
+calvin -s 9001 -i
+\end{verbatim}
+
+respectively. Make sure the Calvin instance on port 9000 runs in the
+same directory as the .bundle actor file; if necessary, compile it as
+outlined in QuickIntro. The application above can then be executed as
+(assuming it has the name 'example.py'):
+
+\begin{verbatim}
+python example.py
+\end{verbatim}
+
+The Python operations on Node objects largely correspond to
+CalvinScript commands. However, the new() operation returns a Python
+object representing the remote actor, and this actor object in turn
+holds members representing the actor's ports. This allows connections
+to be described succinctly using the $>>$ operator. Note that the
+connections in the example are of the remote variety; the Python
+client will then perform a LISTEN-CONNECT pair of commands to
+establish the connection. If the 'comp' actor were instead deployed on
+the same node as the sensor and the actuator, the connections would be
+local, and the $>>$ operator would perform a local FIFO connection.
+
+Also note that the Node::load() operation returns a string in the
+format to be used for Node::new(), as shown for 'comp\_class' in the
+example.
+
+\section{Some notes on the implementation}
+
+Calvin is multithreaded, not (currently) to use multiple cores, but to
+permit concurrent access from an interactive session and one or more
+remote sessions. These notes describe the general ideas in the
+threading design.
+
+\subsubsection*{The actor worker thread}
+
+All actors share a single worker thread implemented in actors-network.c. Contrary to some other Cal runtime systems, this thread does not terminate: rather, it goes idle when there is no work to do. Calvin is viewed as a resident service on a node, rather than a one-shot application.
+
+\begin{itemize}
+\item When all actors have been executed once, without a single
+  firing, the worker thread will suspend itself.
+\item When an actor is enabled (using the ENABLE) command, a new
+  connection is added (using the CONNECT command), or a socket is
+  ready for sending/receiving, the worker thread will be activated.
+\end{itemize}
+
+\subsubsection*{Socket receivers/senders}
+
+Remote connections, that is, connections between actors residing on
+separate nodes, are implemented using dedicated proxy actors. These
+proxy actors forward tokens to/from sockets to/from local token
+FIFOs. The proxies are implemented in actors-socket.c.
+
+Each such proxy has a dedicated, separate thread to send/receive
+tokens. These separate threads block on read()/write() calls, pass
+tokens to/from the proxy, and notify the worker thread when there is
+work to do.
+
+\subsubsection*{Synchronization}
+
+The actor network, handled in actors-network.c, is accessed from
+multiple threads, including both the main thread (running commands
+from the command line) and any threads associated with remotely
+connected clients. These threads are collectively referred to as 'the
+parser' in actors-network.c.
+
+A simple, straight-forward approach to synchronization has been
+taken. Internal structures are generally built upon a doubly-linked
+list, described in dllist.h. The implementation of this list is
+intended to be thread-safe, and each list instance is associated with
+a lock. The locking is rather fine-grained, in that two parts of a
+list can be concurrently accessed.
+
+\end{document}

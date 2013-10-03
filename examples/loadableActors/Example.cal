@@ -1,0 +1,32 @@
+namespace Example:
+
+  import ART.art_Sink_bin;
+  import ART.art_Source_bin;
+  
+  actor Multiplier (int FACTOR) int In ==> int Out :
+    action In:[x] ==> Out:[x * FACTOR]
+    end
+  end
+  
+  network toppen () ==> :
+  entities
+    m1 = Multiplier(FACTOR = 2);
+    m2 = Multiplier(FACTOR = 3);
+    m3 = Multiplier(FACTOR = 5);
+    m4 = Multiplier(FACTOR = 7);
+    src = art_Source_bin(fileName = "indata.txt");
+    snk1 = art_Sink_bin(fileName = "outdata1.txt");
+    snk2 = art_Sink_bin(fileName = "outdata2.txt");
+    snk3 = art_Sink_bin(fileName = "outdata3.txt");
+    snk4 = art_Sink_bin(fileName = "outdata4.txt");
+  structure
+    src.Out --> m1.In;
+    src.Out --> m2.In;
+    src.Out --> m3.In;
+    src.Out --> m4.In;
+    m1.Out --> snk1.In;
+    m2.Out --> snk2.In;
+    m3.Out --> snk3.In;
+    m4.Out --> snk4.In;
+  end
+end
