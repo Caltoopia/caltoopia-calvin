@@ -118,7 +118,7 @@ class Node:
 
   def get_address(self):
     # TODO: be more clever about which IP address to choose
-    return self.execute("ADDRESS").split(" ")[1]
+    return self.execute("ADDRESS").split(" ")[0]
 
   def execute(self, command):
     if self.verbose: print "--> %s" % command
