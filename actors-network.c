@@ -66,22 +66,29 @@ static dllist_head_t disabled_instances;/* disabled, non-executing instances */
 
 /* ------------------------------------------------------------------------- */
 
+/** Set this to enable power-saving idle mode */
+/* #define CALVIN_BLOCK_ON_IDLE */
+
+/* ------------------------------------------------------------------------- */
+
 /*
  * Synchronization state for worker thread
  */
 static struct {
+  /* taken by worker thread while running an actor */
+  pthread_mutex_t execution_mutex;
+
+#ifdef CALVIN_BLOCK_ON_IDLE
   pthread_mutex_t signaling_mutex;
 
   pthread_cond_t idle_cond;         /* signaled by thread when it goes idle */
   pthread_cond_t wakeup_cond;       /* signaled by parser to wake up thread */
 
-  /* taken by worker thread while running an actor */
-  pthread_mutex_t execution_mutex;
-
   enum {
     ACTOR_THREAD_BUSY,              /* executing actors */
     ACTOR_THREAD_IDLE               /* waiting for wakeup_cond */
   } state;
+#endif
 } thread_state;
 
 /* ------------------------------------------------------------------------- */
@@ -335,6 +342,7 @@ static void * workerThreadMain(void *unused_arg)
       }
     }
 
+#ifdef CALVIN_BLOCK_ON_IDLE
     /* no actor fired on last iteration -- go idle, wait for trigger */
     /* warn("actor network idle, waiting\n"); */
     {
@@ -348,6 +356,7 @@ static void * workerThreadMain(void *unused_arg)
       pthread_mutex_unlock(&thread_state.signaling_mutex);
     }
     /* warn("actor network reactivated\n"); */
+#endif
   }
 
   return NULL; /* won't happen, just here for the 'void *' return type */
@@ -362,13 +371,16 @@ void initActorNetwork(void)
   dllist_create(&instances);
   dllist_create(&disabled_instances);
 
-  pthread_mutex_init(&thread_state.signaling_mutex, NULL);
   pthread_mutex_init(&thread_state.execution_mutex, NULL);
+
+#ifdef CALVIN_BLOCK_ON_IDLE
+  pthread_mutex_init(&thread_state.signaling_mutex, NULL);
 
   pthread_cond_init(&thread_state.idle_cond, NULL);
   pthread_cond_init(&thread_state.wakeup_cond, NULL);
 
   thread_state.state = ACTOR_THREAD_BUSY;
+#endif
 
   pthread_create(&pid, NULL, &workerThreadMain, NULL);
 }
@@ -568,22 +580,26 @@ int createSocketReceiver(const char *actor_name,
 
 void waitForIdle(void)
 {
+#ifdef CALVIN_BLOCK_ON_IDLE
   pthread_mutex_lock(&thread_state.signaling_mutex);
   while (thread_state.state != ACTOR_THREAD_IDLE) {
     pthread_cond_wait(&thread_state.idle_cond,
                       &thread_state.signaling_mutex);
   }
   pthread_mutex_unlock(&thread_state.signaling_mutex);
+#endif
 }
 
 /* ------------------------------------------------------------------------- */
 
 void wakeUpNetwork(void)
 {
+#ifdef CALVIN_BLOCK_ON_IDLE
   pthread_mutex_lock(&thread_state.signaling_mutex);
   thread_state.state = ACTOR_THREAD_BUSY;
   pthread_cond_signal(&thread_state.wakeup_cond);
   pthread_mutex_unlock(&thread_state.signaling_mutex);
+#endif
 }
 
 /* ------------------------------------------------------------------------- */

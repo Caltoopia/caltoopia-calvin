@@ -2,10 +2,10 @@
 # a network
 
 # Load classes
-LOAD ./Example__m1.bundle
-LOAD ./Example__m2.bundle
-LOAD ./Example__m3.bundle
-LOAD ./Example__m4.bundle
+LOAD ./Example__m1.so
+LOAD ./Example__m2.so
+LOAD ./Example__m3.so
+LOAD ./Example__m4.so
 
 # Create instances with parameters
 NEW art_Source_txt src fileName=indata.txt
