@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -176,6 +177,14 @@ static void *receiver_thread(void *arg)
       warn("accept() failed: %s", strerror(errno));
       return NULL;
     }
+
+    /* Don't buffer, send tokens asap */
+    static const int one = 1;
+    (void) setsockopt(instance->client_socket,
+		      IPPROTO_TCP,
+		      TCP_NODELAY,
+		      (char *) &one,
+		      sizeof(one));
 
     while (1) {  /* one iteration per token */
 
@@ -365,6 +374,14 @@ static void *sender_thread(void *arg)
     instance->socket = -1;
     return NULL;
   }
+
+  /* Don't buffer, send tokens asap */
+  static const int one = 1;
+  (void) setsockopt(instance->socket,
+		    IPPROTO_TCP,
+		    TCP_NODELAY,
+		    (char *) &one,
+		    sizeof(one));
 
   while (1) {  /* one iteration per token */
 
