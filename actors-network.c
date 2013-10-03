@@ -66,7 +66,7 @@ static dllist_head_t disabled_instances;/* disabled, non-executing instances */
 
 /* ------------------------------------------------------------------------- */
 
-/** Set this to enable power-saving idle mode */
+/** Set this to enable power-saving idle mode (flaky) */
 /* #define CALVIN_BLOCK_ON_IDLE */
 
 /* ------------------------------------------------------------------------- */
