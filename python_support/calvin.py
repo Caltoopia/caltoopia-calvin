@@ -101,11 +101,11 @@ class Node:
   def __init__(self, host, port, verbose = False):
     sock = socket.socket()
     sock.connect((host, port))
-    self.address, _ = sock.getpeername()
     self.conn = sock.makefile()
     self.verbose = verbose
     self.actors = []
     self.get_result()  # TODO: check version ID returned by server here
+    self.address = self.get_address()
 
   def get_result(self):
     status = self.conn.readline().strip().split(" ", 1)
@@ -115,6 +115,10 @@ class Node:
       raise RuntimeError("invalid response: %s" % status)
     self.conn.read(2) # consume and ignore prompt
     return status[1]
+
+  def get_address(self):
+    # TODO: be more clever about which IP address to choose
+    return self.execute("ADDRESS").split(" ")[1]
 
   def execute(self, command):
     if self.verbose: print "--> %s" % command
