@@ -92,6 +92,8 @@ void fail(const char *fmt, ...)
   vfprintf(stderr, fmt, args);
   va_end(args);
 
+  fprintf(stderr, "\n");
+
   exit(1);
 }
 
@@ -105,6 +107,8 @@ void warn(const char *fmt, ...)
   fprintf(stderr, "warning: ");
   vfprintf(stderr, fmt, args);
   va_end(args);
+
+  fprintf(stderr, "\n");
 }
 
 // ============================================================================

@@ -1,9 +1,9 @@
 import calvin
 
 n = calvin.Node("localhost", 9000, True)
-# k = calvin.Node("kloker.ld.sw.ericsson.se", 9000, True)
+k = calvin.Node("136.225.61.113", 9000, True)
 # k = calvin.Node("localhost", 9001, True)
-k = n
+# k = n
 
 n.load("./RVC__decoder__GEN_mgnt_Merger420.so")
 n.load("./RVC__decoder__motion_U__add.so")

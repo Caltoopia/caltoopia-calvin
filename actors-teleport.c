@@ -342,9 +342,9 @@ static void receiver_destructor(AbstractActorInstance *pBase)
 static void *sender_thread(void *arg)
 {
   ActorInstance_art_SocketSender *instance
-  = (ActorInstance_art_SocketSender *) arg;
+    = (ActorInstance_art_SocketSender *) arg;
   int tokenSize
-  = instance->base.actorClass->inputPortDescriptions[0].tokenSize;
+    = instance->base.actorClass->inputPortDescriptions[0].tokenSize;
   struct sockaddr_in server_addr;
 
   server_addr.sin_family = AF_INET;

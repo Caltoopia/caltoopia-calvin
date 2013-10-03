@@ -101,7 +101,7 @@ class Node:
   def __init__(self, host, port, verbose = False):
     sock = socket.socket()
     sock.connect((host, port))
-    self.address, _ = sock.getsockname()
+    self.address, _ = sock.getpeername()
     self.conn = sock.makefile()
     self.verbose = verbose
     self.actors = []
