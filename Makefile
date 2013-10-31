@@ -4,11 +4,18 @@ OBJECTS=actors-registry.o actors-network.o \
         art_Sink_bin.o art_Sink_txt.o art_Sink_real.o \
 	art_Source_bin.o art_Source_txt.o art_Source_real.o
 
-# set up linker flags; SDL currently Linux-only
+# set up linker flags Linux
 ifeq ($(shell uname -s),Linux)
   LDFLAGS += -rdynamic $(shell sdl-config --libs)
   OBJECTS += display-sdl.o display.o art_Display_yuv.o
   CFLAGS += $(shell sdl-config --cflags) -DCALVIN_SDL_SUPPORT
+endif
+# set up linker flags Mac OS X
+ifeq ($(shell uname -s),Darwin)
+  LDFLAGS += -rdynamic
+  OBJECTS += display-file.o display.o art_Display_yuv.o
+# This is using the file display not SDL for the YUV display actor
+  CFLAGS += -DCALVIN_SDL_SUPPORT
 endif
 
 all: $(REAL_NAME)
@@ -33,6 +40,6 @@ CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 	$(CC) -I$(CALVIN_HOME) -Wall -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
-	$(CC) -I$(CALVIN_HOME) -Wall -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<
+	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<
 
 .INTERMEDIATE: $(OBJECTS)
