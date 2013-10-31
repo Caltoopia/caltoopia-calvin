@@ -22,10 +22,10 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_V__IS;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_V__ISwa(ActorInstance_RVC_decoder__texture_V__IS* thisActor){
+static inline int32_t RVC_decoder__texture_V__ISwa(ActorInstance_RVC_decoder__texture_V__IS* thisActor){
   return bitor(bitand(thisActor->count, 63), ((thisActor->half) ? (64):(0)));
 }
-inline int32_t RVC_decoder__texture_V__ISra(ActorInstance_RVC_decoder__texture_V__IS* thisActor, int32_t address){
+static inline int32_t RVC_decoder__texture_V__ISra(ActorInstance_RVC_decoder__texture_V__IS* thisActor, int32_t address){
   return bitor(bitand(address, 63), ((thisActor->half) ? (0):(64)));
 }
 ART_ACTION_CONTEXT(2, 1)

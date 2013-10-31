@@ -20,7 +20,7 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_V__IQ;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_V__IQsaturate(ActorInstance_RVC_decoder__texture_V__IQ* thisActor, int32_t x){
+static inline int32_t RVC_decoder__texture_V__IQsaturate(ActorInstance_RVC_decoder__texture_V__IQ* thisActor, int32_t x){
   bool_t minus;
   bool_t plus;
   int32_t ret;
@@ -29,7 +29,7 @@ inline int32_t RVC_decoder__texture_V__IQsaturate(ActorInstance_RVC_decoder__tex
   ret = ((minus) ? ((-(2048))):(((plus) ? (2047):(x))));
   return ret;
 }
-inline int32_t RVC_decoder__texture_V__IQabs(ActorInstance_RVC_decoder__texture_V__IQ* thisActor, int32_t x){
+static inline int32_t RVC_decoder__texture_V__IQabs(ActorInstance_RVC_decoder__texture_V__IQ* thisActor, int32_t x){
   return (((x < 0)) ? ((-(x))):(x));
 }
 ART_ACTION_CONTEXT(3, 1)

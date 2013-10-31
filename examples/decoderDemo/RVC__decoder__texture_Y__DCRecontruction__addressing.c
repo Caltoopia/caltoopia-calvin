@@ -31,10 +31,10 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_Y__DCRecontruction__addressing;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_Y__DCRecontruction__addressingdecrement(ActorInstance_RVC_decoder__texture_Y__DCRecontruction__addressing* thisActor, int32_t p){
+static inline int32_t RVC_decoder__texture_Y__DCRecontruction__addressingdecrement(ActorInstance_RVC_decoder__texture_Y__DCRecontruction__addressing* thisActor, int32_t p){
   return (((p == 1)) ? ((BUF_SIZE - 1)):((p - 1)));
 }
-inline int32_t RVC_decoder__texture_Y__DCRecontruction__addressingaccess(ActorInstance_RVC_decoder__texture_Y__DCRecontruction__addressing* thisActor, int32_t p, int32_t c){
+static inline int32_t RVC_decoder__texture_Y__DCRecontruction__addressingaccess(ActorInstance_RVC_decoder__texture_Y__DCRecontruction__addressing* thisActor, int32_t p, int32_t c){
   return bitor(lshift(p, 2), c);
 }
 ART_ACTION_CONTEXT(1, 3)

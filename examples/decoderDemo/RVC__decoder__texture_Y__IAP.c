@@ -30,7 +30,7 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_Y__IAP;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_Y__IAPdivroundnearest(ActorInstance_RVC_decoder__texture_Y__IAP* thisActor, int32_t i, int32_t iDenom){
+static inline int32_t RVC_decoder__texture_Y__IAPdivroundnearest(ActorInstance_RVC_decoder__texture_Y__IAP* thisActor, int32_t i, int32_t iDenom){
   return (((i >= 0)) ? (((i + (iDenom >> 1)) / iDenom)):(((i - (iDenom >> 1)) / iDenom)));
 }
 ART_ACTION_CONTEXT(5, 1)

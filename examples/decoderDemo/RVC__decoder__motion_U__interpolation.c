@@ -31,7 +31,7 @@ typedef struct {
 } ActorInstance_RVC_decoder__motion_U__interpolation;
 
 //Actor functions
-inline int32_t RVC_decoder__motion_U__interpolationcompensate(ActorInstance_RVC_decoder__motion_U__interpolation* thisActor, int32_t p00, int32_t p10, int32_t p01, int32_t p11){
+static inline int32_t RVC_decoder__motion_U__interpolationcompensate(ActorInstance_RVC_decoder__motion_U__interpolation* thisActor, int32_t p00, int32_t p10, int32_t p01, int32_t p11){
   return (((thisActor->flags == 0)) ? (p00):((((thisActor->flags == 1)) ? (rshift((((p00 + p01) + 1) - thisActor->round), 1)):((((thisActor->flags == 2)) ? (rshift((((p00 + p10) + 1) - thisActor->round), 1)):(rshift((((((p00 + p10) + p01) + p11) + 2) - thisActor->round), 2)))))));
 }
 ART_ACTION_CONTEXT(2, 1)

@@ -40,6 +40,20 @@
 
 #include "actors-rts.h"
 
+#ifdef _WIN64
+//define something for Windows (64-bit)
+#elif _WIN32
+//define something for Windows (32-bit)
+#elif __APPLE__
+#define CALVIN_LIBEXT "bundle"
+#elif __linux
+#define CALVIN_LIBEXT "so"
+#elif __unix // all unices not caught above
+#define CALVIN_LIBEXT "so"
+#elif __posix
+#define CALVIN_LIBEXT "so"
+#endif
+
 /**
  * Initialize registry: called once on startup.
  */

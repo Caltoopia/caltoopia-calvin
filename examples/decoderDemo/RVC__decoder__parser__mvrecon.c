@@ -53,23 +53,23 @@ typedef struct {
 } ActorInstance_RVC_decoder__parser__mvrecon;
 
 //Actor functions
-inline int32_t RVC_decoder__parser__mvreconmiddle(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t a, int32_t b, int32_t c){
+static inline int32_t RVC_decoder__parser__mvreconmiddle(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t a, int32_t b, int32_t c){
   return (((a < b)) ? ((((a > c)) ? (a):((((b < c)) ? (b):(c))))):((((b > c)) ? (b):((((a < c)) ? (a):(c))))));
 }
-inline int32_t RVC_decoder__parser__mvreconmvcalc(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t pred, int32_t mv_mag, int32_t mag_shift){
+static inline int32_t RVC_decoder__parser__mvreconmvcalc(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t pred, int32_t mv_mag, int32_t mag_shift){
   return ((((thisActor->mv_rsize == 0) || (mv_mag == 0))) ? ((pred + mv_mag)):((((mv_mag < 0)) ? ((pred - mag_shift)):((pred + mag_shift)))));
 }
-inline int32_t RVC_decoder__parser__mvreconmvclip(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
+static inline int32_t RVC_decoder__parser__mvreconmvclip(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
   return (((v < thisActor->mv_low)) ? ((v + thisActor->mv_range)):((((v > thisActor->mv_high)) ? ((v - thisActor->mv_range)):(v))));
 }
-inline int32_t RVC_decoder__parser__mvreconuvclip_1(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
+static inline int32_t RVC_decoder__parser__mvreconuvclip_1(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
   int32_t vv;
   int32_t ret;
   vv = rshift(v, 1);
   ret = bitor(vv, (((bitand(v, 3) == 0)) ? (0):(1)));
   return ret;
 }
-inline int32_t RVC_decoder__parser__mvreconuvclip_4(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
+static inline int32_t RVC_decoder__parser__mvreconuvclip_4(ActorInstance_RVC_decoder__parser__mvrecon* thisActor, int32_t v){
   bool_t sign;
   int32_t absv;
   int32_t resv;

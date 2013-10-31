@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>BC74DDE0-327F-4813-8470-77FFE6AFF472</string>
+	<key>IDESourceControlProjectName</key>
+	<string>calvin-xcode</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>11A0B274-EF8A-4EF6-9073-8F2C4D222FBA</key>
+		<string>ssh://github.com/Caltoopia/caltoopia-calvin.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>calvin-xcode/calvin-xcode.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>11A0B274-EF8A-4EF6-9073-8F2C4D222FBA</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/Caltoopia/caltoopia-calvin.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>11A0B274-EF8A-4EF6-9073-8F2C4D222FBA</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>11A0B274-EF8A-4EF6-9073-8F2C4D222FBA</string>
+			<key>IDESourceControlWCCName</key>
+			<string>caltoopia-calvin</string>
+		</dict>
+	</array>
+</dict>
+</plist>

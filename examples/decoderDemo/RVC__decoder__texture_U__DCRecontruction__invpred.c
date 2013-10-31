@@ -49,13 +49,13 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_U__DCRecontruction__invpredabs(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor, int32_t x){
+static inline int32_t RVC_decoder__texture_U__DCRecontruction__invpredabs(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor, int32_t x){
   return (((x < 0)) ? ((-(x))):(x));
 }
-inline int32_t RVC_decoder__texture_U__DCRecontruction__invpreddc_scaler(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor){
+static inline int32_t RVC_decoder__texture_U__DCRecontruction__invpreddc_scaler(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor){
   return ((((thisActor->s_qp > 0) && (thisActor->s_qp < 5))) ? (8):(((((thisActor->s_qp > 4) && (thisActor->s_qp < 25))) ? (rshift((thisActor->s_qp + 13), 1)):((thisActor->s_qp - 6)))));
 }
-inline int32_t RVC_decoder__texture_U__DCRecontruction__invpredsaturate(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor, int32_t x){
+static inline int32_t RVC_decoder__texture_U__DCRecontruction__invpredsaturate(ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred* thisActor, int32_t x){
   bool_t minus;
   bool_t plus;
   int32_t ret;

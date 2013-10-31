@@ -64,8 +64,13 @@ void registryInit(void)
 
 const ActorClass * registryLoadClass(const char *filename)
 {
-  void *lib_handle = dlopen(filename, RTLD_LAZY);
+  char filenameext[256];
+  void *lib_handle;
   const ActorClass *klass;
+
+  sprintf(filenameext,"%s.%s",filename,CALVIN_LIBEXT);
+  
+  lib_handle = dlopen(filenameext, RTLD_LAZY);
 
   if (! lib_handle) {
     fail("failed loading %s: %s\n", filename, dlerror());

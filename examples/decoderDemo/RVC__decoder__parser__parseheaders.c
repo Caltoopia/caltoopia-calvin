@@ -126,34 +126,34 @@ typedef struct {
 } ActorInstance_RVC_decoder__parser__parseheaders;
 
 //Actor functions
-inline int32_t RVC_decoder__parser__parseheadersmask_bits(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, int32_t v, int32_t n){
+static inline int32_t RVC_decoder__parser__parseheadersmask_bits(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, int32_t v, int32_t n){
   return bitand(v, (lshift(1, n) - 1));
 }
-inline bool_t RVC_decoder__parser__parseheadersdone_reading_bits(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
+static inline bool_t RVC_decoder__parser__parseheadersdone_reading_bits(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
   return (thisActor->bits_to_read_count < 0);
 }
-inline int32_t RVC_decoder__parser__parseheadersread_result(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
+static inline int32_t RVC_decoder__parser__parseheadersread_result(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
   return thisActor->read_result_in_progress;
 }
-inline int32_t RVC_decoder__parser__parseheadersintra_max_level(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t run){
+static inline int32_t RVC_decoder__parser__parseheadersintra_max_level(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t run){
   return (((!(last))) ? ((((run == 0)) ? (27):((((run == 1)) ? (10):((((run == 2)) ? (5):((((run == 3)) ? (4):((((run < 8)) ? (3):((((run < 10)) ? (2):((((run < 15)) ? (1):(0))))))))))))))):((((run == 0)) ? (8):((((run == 1)) ? (3):((((run < 7)) ? (2):((((run < 21)) ? (1):(0))))))))));
 }
-inline int32_t RVC_decoder__parser__parseheadersinter_max_level(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t run){
+static inline int32_t RVC_decoder__parser__parseheadersinter_max_level(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t run){
   return (((!(last))) ? ((((run == 0)) ? (12):((((run == 1)) ? (6):((((run == 2)) ? (4):((((run < 7)) ? (3):((((run < 11)) ? (2):((((run < 27)) ? (1):(0))))))))))))):((((run == 0)) ? (3):((((run == 1)) ? (2):((((run < 41)) ? (1):(0))))))));
 }
-inline int32_t RVC_decoder__parser__parseheadersintra_max_run(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t level){
+static inline int32_t RVC_decoder__parser__parseheadersintra_max_run(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t level){
   return (((!(last))) ? ((((level == 1)) ? (14):((((level == 2)) ? (9):((((level == 3)) ? (7):((((level == 4)) ? (3):((((level == 5)) ? (2):((((level < 11)) ? (1):(0))))))))))))):((((level == 1)) ? (20):((((level == 2)) ? (6):((((level == 3)) ? (1):(0))))))));
 }
-inline int32_t RVC_decoder__parser__parseheadersinter_max_run(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t level){
+static inline int32_t RVC_decoder__parser__parseheadersinter_max_run(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, bool_t last, int32_t level){
   return (((!(last))) ? ((((level == 1)) ? (26):((((level == 2)) ? (10):((((level == 3)) ? (6):((((level == 4)) ? (2):(((((level == 5) || (level == 6))) ? (1):(0))))))))))):((((level == 1)) ? (40):((((level == 2)) ? (1):(0))))));
 }
-inline bool_t RVC_decoder__parser__parseheadersvld_success(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
+static inline bool_t RVC_decoder__parser__parseheadersvld_success(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
   return (bitand(thisActor->vld_codeword, 3) == 0);
 }
-inline bool_t RVC_decoder__parser__parseheadersvld_failure(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
+static inline bool_t RVC_decoder__parser__parseheadersvld_failure(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
   return (bitand(thisActor->vld_codeword, 1) == 1);
 }
-inline int32_t RVC_decoder__parser__parseheadersvld_result(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
+static inline int32_t RVC_decoder__parser__parseheadersvld_result(ActorInstance_RVC_decoder__parser__parseheaders* thisActor){
   return rshift(thisActor->vld_codeword, 2);
 }
 void RVC_decoder__parser__parseheadersset_bits_to_read(ActorInstance_RVC_decoder__parser__parseheaders* thisActor, int32_t count) {

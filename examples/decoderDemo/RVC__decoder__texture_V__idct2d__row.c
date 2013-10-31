@@ -15,14 +15,14 @@ typedef struct {
 } ActorInstance_RVC_decoder__texture_V__idct2d__row;
 
 //Actor functions
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_1_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_1_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   int32_t Temp1;
   int32_t ret;
   Temp1 = (rshift(X, 3) - rshift(X, 7));
   ret = (X - Temp1);
   return ret;
 }
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_1_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_1_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   int32_t Temp1;
   int32_t Temp2;
   int32_t ret;
@@ -31,17 +31,17 @@ inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_1_1(ActorInstance_RVC_dec
   ret = (Temp1 + rshift(Temp2, 1));
   return ret;
 }
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_2_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_2_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   int32_t Temp1;
   int32_t ret;
   Temp1 = (rshift(X, 9) - X);
   ret = (rshift(Temp1, 2) - Temp1);
   return ret;
 }
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_2_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_2_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   return rshift(X, 1);
 }
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_3_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_3_0(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   int32_t Temp1;
   int32_t Temp2;
   int32_t ret;
@@ -50,7 +50,7 @@ inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_3_0(ActorInstance_RVC_dec
   ret = (Temp2 + rshift(X, 4));
   return ret;
 }
-inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_3_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
+static inline int32_t RVC_decoder__texture_V__idct2d__rowpmul_3_1(ActorInstance_RVC_decoder__texture_V__idct2d__row* thisActor, int32_t X){
   int32_t Temp1;
   int32_t Temp2;
   int32_t ret;
