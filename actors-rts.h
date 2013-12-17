@@ -306,6 +306,14 @@ static void name(thistype *thisActor)
 #include "actors-fifo.h"
 #undef FIFO_TYPE
 
+#define FIFO_TYPE int16_t
+#include "actors-fifo.h"
+#undef FIFO_TYPE 
+
+#define FIFO_TYPE int8_t
+#include "actors-fifo.h"
+#undef FIFO_TYPE 
+
 #define FIFO_TYPE bool_t
 #include "actors-fifo.h"
 #undef FIFO_TYPE
@@ -313,6 +321,11 @@ static void name(thistype *thisActor)
 #define FIFO_TYPE double
 #include "actors-fifo.h"
 #undef FIFO_TYPE
+
+#define REF
+#include "actors-fifo.h"
+#undef FIFO_TYPE
+#undef REF
 
   // Define uint32_t FIFO operations in terms of int32_t operations
 #define pinAvailIn_uint32_t(port)   pinAvailIn_int32_t(port)

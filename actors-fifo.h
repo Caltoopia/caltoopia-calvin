@@ -35,9 +35,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef REF
+#undef FIFO_NAME
+#define FIFO_NAME(f) f##_##ref
+#define FIFO_TYPE void*
+#else
 #define FIFO_NAME_3(f,t) f##_##t
 #define FIFO_NAME_2(f,t) FIFO_NAME_3(f, t)
 #define FIFO_NAME(f) FIFO_NAME_2(f, FIFO_TYPE)
+#endif
 
 /*
  * Number of tokens available on InputPort p
@@ -57,7 +63,7 @@ static inline unsigned FIFO_NAME(pinAvailOut)(const LocalOutputPort *p)
 
 static inline void FIFO_NAME(pinWrite)(LocalOutputPort *p, FIFO_TYPE token) 
 {
-  FIFO_TYPE *writePtr=p->writePtr;
+  FIFO_TYPE *writePtr=(FIFO_TYPE *) p->writePtr;
   assert(p->spaceLeft > 0);
 
   *(writePtr++)=token;
@@ -95,15 +101,15 @@ static inline void FIFO_NAME(pinWriteRepeat)(LocalOutputPort *p,
 
 static inline FIFO_TYPE FIFO_NAME(pinRead)(LocalInputPort *p) 
 {
-  const FIFO_TYPE *readPtr=p->readPtr;
+  const FIFO_TYPE *readPtr=(const FIFO_TYPE *) p->readPtr;
   FIFO_TYPE result;
 
   assert(p->available > 0);
 
-  result = *readPtr++;
+  result = (FIFO_TYPE) *readPtr++;
 
-  if (readPtr >= (FIFO_TYPE*) p->bufferEnd)
-    readPtr = p->bufferStart;
+  if (readPtr >= (const FIFO_TYPE*) p->bufferEnd)
+    readPtr = (const FIFO_TYPE*)p->bufferStart;
   p->readPtr=readPtr;
   p->available--;
   return result;
