@@ -109,7 +109,10 @@ char *get_next_word(struct parser_state *state)
 
   /* Found a word. Now find out where it ends. */
   word_start = state->next_word;
-  while ((*(state->next_word)) && !isspace(*(state->next_word))) {
+  int in_quote = 0;
+  while ((*(state->next_word)) && (in_quote || !isspace(*(state->next_word))) ) {
+    //Toggle so between odd and even " in_quote is true
+    in_quote = in_quote ^ ((*(state->next_word)) == '"');
     state->next_word ++;
   }
   if (*(state->next_word)) {
@@ -421,7 +424,17 @@ static void new_handler(struct parser_state *state)
       return;
     }
     *splitpoint = '\0';
-    setActorParam(actor, arg, splitpoint + 1);
+    //If quoted string remove quotes
+    if(*(splitpoint+1) == '"') {
+      splitpoint+=2;
+      char *lastquote = index(splitpoint, '"');
+      if(lastquote)
+        *lastquote = '\0';
+    } else {
+      splitpoint++;
+    }
+    
+    setActorParam(actor, arg, splitpoint);
   }
 
   ok(state, "created actor %s", actor_name);

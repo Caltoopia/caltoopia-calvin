@@ -135,7 +135,7 @@ class Node:
     instance_name = _class_name
     if _instance_name:
       instance_name = _instance_name
-    serialized_args = " ".join(["%s=%s" % (k,v) for (k,v) in args.items()])
+    serialized_args = " ".join(["%s=\"%s\"" % (k,v) for (k,v) in args.items()])
     self.execute("NEW %s %s %s" % (_class_name, instance_name, serialized_args))
     actor = Node.Actor(self, instance_name)
     self.actors.append(actor)
