@@ -277,8 +277,8 @@ static void name(thistype *thisActor)
 
 #define ART_ACTION_EXIT(name, index)
 
-#define dprint1(x,y)
-#define dprint2(x,y,z)
+//#define dprint1(x,y)
+//#define dprint2(x,y,z)
 
 // FIXME: workarounds to handle System.bitops in RVC
   static inline int32_t bitand(int32_t x, int32_t y) { return x & y; }

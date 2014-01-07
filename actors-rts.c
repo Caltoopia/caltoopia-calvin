@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "actors-debug.h"
 #include "actors-registry.h"
 #include "actors-network.h"
 #include "actors-parser.h"
@@ -140,6 +141,19 @@ int main(int argc, char **argv)
 {
   int i;
   int keep_other_threads = 0; /* Allow other pthreads to stay on exit? */
+  int port = 0;
+
+  /* find our port number if we have any */
+  for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-s") == 0) {
+      if ((i+1) < argc) {
+        port = atoi(argv[i+1]);
+        break;
+      }
+    }
+  }
+
+  createDebugFile(port);
 
   registryInit();
   initActorNetwork();
@@ -182,6 +196,6 @@ int main(int argc, char **argv)
     /* Just exit the main thread, rather than the entire process */
     pthread_exit(NULL);
   }
-  
+  closeDebugFile();
   return 0;
 }

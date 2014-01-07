@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F01379FE187C0C5E002A5CC5 /* actors-debug.c in Sources */ = {isa = PBXBuildFile; fileRef = F01379FC187C0C5E002A5CC5 /* actors-debug.c */; };
 		F0BF3D4F18214FA70097A7B6 /* actors-fifo.h in Sources */ = {isa = PBXBuildFile; fileRef = F0BF3D3718214FA50097A7B6 /* actors-fifo.h */; };
 		F0BF3D5018214FA70097A7B6 /* actors-network.c in Sources */ = {isa = PBXBuildFile; fileRef = F0BF3D3818214FA50097A7B6 /* actors-network.c */; };
 		F0BF3D5118214FA70097A7B6 /* actors-network.h in Sources */ = {isa = PBXBuildFile; fileRef = F0BF3D3918214FA50097A7B6 /* actors-network.h */; };
@@ -48,6 +49,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F01379FC187C0C5E002A5CC5 /* actors-debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "actors-debug.c"; path = "../actors-debug.c"; sourceTree = "<group>"; };
+		F01379FD187C0C5E002A5CC5 /* actors-debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "actors-debug.h"; path = "../actors-debug.h"; sourceTree = "<group>"; };
 		F0BF3D2A18214D9A0097A7B6 /* calvin-xcode */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "calvin-xcode"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0BF3D3718214FA50097A7B6 /* actors-fifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-fifo.h"; path = "../actors-fifo.h"; sourceTree = "<group>"; };
 		F0BF3D3818214FA50097A7B6 /* actors-network.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "actors-network.c"; path = "../actors-network.c"; sourceTree = "<group>"; };
@@ -93,6 +96,8 @@
 		F0BF3D2118214D9A0097A7B6 = {
 			isa = PBXGroup;
 			children = (
+				F01379FC187C0C5E002A5CC5 /* actors-debug.c */,
+				F01379FD187C0C5E002A5CC5 /* actors-debug.h */,
 				F0BF3D691821516D0097A7B6 /* libdl.dylib */,
 				F0BF3D67182151500097A7B6 /* libpthread.dylib */,
 				F0BF3D3718214FA50097A7B6 /* actors-fifo.h */,
@@ -190,6 +195,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F01379FE187C0C5E002A5CC5 /* actors-debug.c in Sources */,
 				F0BF3D4F18214FA70097A7B6 /* actors-fifo.h in Sources */,
 				F0BF3D5018214FA70097A7B6 /* actors-network.c in Sources */,
 				F0BF3D5118214FA70097A7B6 /* actors-network.h in Sources */,
@@ -325,6 +331,7 @@
 				F0BF3D3518214D9A0097A7B6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

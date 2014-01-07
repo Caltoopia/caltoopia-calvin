@@ -1,6 +1,6 @@
 REAL_NAME=calvin
 OBJECTS=actors-registry.o actors-network.o \
-	actors-rts.o actors-parser.o actors-teleport.o \
+	actors-rts.o actors-parser.o actors-teleport.o actors-debug.o \
         art_Sink_bin.o art_Sink_txt.o art_Sink_real.o \
 	art_Source_bin.o art_Source_txt.o art_Source_real.o
 
