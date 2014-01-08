@@ -61,7 +61,7 @@ extern "C" {
    * These versioning constants are compiled into actors, and then checked
    * by the runtime.
    */
-#define ACTORS_RTS_MAJOR     1
+#define ACTORS_RTS_MAJOR     2
 #define ACTORS_RTS_MINOR     0
 
   void fail(const char *fmt, ...) __attribute__ ((noreturn));
@@ -90,9 +90,17 @@ extern "C" {
   } ActionDescription;
 
   typedef struct {
+    char * (*serialize)(void *, char*);
+    char * (*deserialize)(void **, char*);
+    long (*size)(void *);
+    int  (*free)(void *, int);
+  } tokenFn;
+  
+  typedef struct {
     int dummy;                  // FIXME: remove this from generated code
     const char  *name;          // port name
     int          tokenSize;     // sizeof token (in bytes)
+    tokenFn* functions;
   } PortDescription;
 
   struct ActorClass {
@@ -180,6 +188,8 @@ nActions, actionDescr) { \
     unsigned tokensConsumed;          // number of tokens consumed
     unsigned drainedAt;               // point at which all tokensConsumed
     unsigned capacity;                // minimum capacity of buffer (in tokens)
+
+    tokenFn functions;                // functions to handle structured tokens
   };
 
   /*
@@ -192,6 +202,8 @@ nActions, actionDescr) { \
     unsigned capacity;                   // capacity of buffer (in tokens)
     unsigned tokensProduced;             // number of tokens produced
     unsigned fullAt;                     // tokensProduced when FIFO is full
+    
+    tokenFn functions;                   // functions to handle structured tokens
 
     dllist_head_t consumers;
   };

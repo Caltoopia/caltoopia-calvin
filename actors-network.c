@@ -147,7 +147,7 @@ static AbstractActorInstance * lookupActor(const char *actorName)
 /* optionally returns token size, if pointer 'pTokenSize' != NULL */
 static OutputPort * lookupOutput(const AbstractActorInstance *instance,
                                  const char *portName,
-                                 int *pTokenSize)
+                                 int *pTokenSize, tokenFn* pFunctions)
 {
   const ActorClass *actorClass = instance->actorClass;
   unsigned int i;
@@ -158,6 +158,12 @@ static OutputPort * lookupOutput(const AbstractActorInstance *instance,
     if (strcmp(descr->name, portName) == 0) {
       if (pTokenSize) {
         *pTokenSize = descr->tokenSize;
+      }
+      if (pFunctions) {
+        if(descr->functions!=NULL)
+          memcpy(pFunctions, descr->functions, sizeof(tokenFn));
+        else
+          *pFunctions=(tokenFn){NULL,NULL,NULL,NULL};
       }
       return &instance->outputPort[i];
     }
@@ -172,7 +178,7 @@ static OutputPort * lookupOutput(const AbstractActorInstance *instance,
 /* optionally returns token size, if pointer 'pTokenSize' != NULL */
 static InputPort * lookupInput(const AbstractActorInstance *instance,
                                const char *portName,
-                               int *pTokenSize)
+                               int *pTokenSize, tokenFn* pFunctions)
 {
   const ActorClass *actorClass = instance->actorClass;
   unsigned int i;
@@ -183,6 +189,12 @@ static InputPort * lookupInput(const AbstractActorInstance *instance,
     if (strcmp(descr->name, portName) == 0) {
       if (pTokenSize) {
         *pTokenSize = descr->tokenSize;
+      }
+      if (pFunctions) {
+        if(descr->functions!=NULL)
+          memcpy(pFunctions, descr->functions, sizeof(tokenFn));
+        else
+          *pFunctions=(tokenFn){NULL,NULL,NULL,NULL};
       }
       return &instance->inputPort[i];
     }
@@ -214,6 +226,7 @@ static void connectInput(AbstractActorInstance *instance,
       input->localInputPort.readPtr = producer->localOutputPort.bufferStart;
       input->localInputPort.bufferEnd = producer->localOutputPort.bufferEnd;
       input->capacity = producer->capacity;
+      memcpy(&input->functions, &producer->functions, sizeof(tokenFn));
 
       dllist_init_element(&input->asConsumer);
       dllist_append(&producer->consumers, &input->asConsumer);
@@ -424,6 +437,10 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
     output->localOutputPort.writePtr = buffer;
     output->localOutputPort.bufferEnd = buffer + size;
     output->capacity = capacity;
+    if(descr->functions!=NULL)
+      memcpy(&output->functions, descr->functions, sizeof(tokenFn));
+    else
+      output->functions=(tokenFn){NULL,NULL,NULL,NULL};
 
     dllist_create(&output->consumers);
   }
@@ -517,7 +534,7 @@ void createLocalConnection(const char *src_actor,
 {
   connectInput(lookupActor(dst_actor),
                dst_port,
-               lookupOutput(lookupActor(src_actor), src_port, NULL));
+               lookupOutput(lookupActor(src_actor), src_port, NULL, NULL));
 
   wakeUpNetwork();
 }
@@ -531,8 +548,9 @@ void createRemoteConnection(const char *src_actor,
 {
   int tokenSize;
   AbstractActorInstance *src = lookupActor(src_actor);
-  (void) lookupOutput(src, src_port, &tokenSize);
-  const ActorClass *klass = getSenderClass(tokenSize);
+  tokenFn functions;
+  (void) lookupOutput(src, src_port, &tokenSize, &functions);
+  const ActorClass *klass = getSenderClass(tokenSize, &functions);
 
 #define MAX_SENDER_NAME   (30)
   char sender_name[MAX_SENDER_NAME];
@@ -545,7 +563,7 @@ void createRemoteConnection(const char *src_actor,
   = createActorInstance(klass, strdup(sender_name));
 
   setSenderRemoteAddress(sender, remote_host, atoi(remote_port));
-  connectInput(sender, "in", lookupOutput(src, src_port, NULL));
+  connectInput(sender, "in", lookupOutput(src, src_port, NULL, NULL));
   enableActorInstance(sender_name);
 
   wakeUpNetwork();
@@ -558,9 +576,10 @@ int createSocketReceiver(const char *actor_name,
 {
   int tokenSize;
   AbstractActorInstance *consumer = lookupActor(actor_name);
-  (void) lookupInput(consumer, port, &tokenSize);
+  tokenFn functions;
+  (void) lookupInput(consumer, port, &tokenSize, &functions);
 
-  const ActorClass *klass = getReceiverClass(tokenSize);
+  const ActorClass *klass = getReceiverClass(tokenSize, &functions);
 #define MAX_RECEIVER_NAME   (30)
   char receiver_name[MAX_RECEIVER_NAME];
 
@@ -570,7 +589,7 @@ int createSocketReceiver(const char *actor_name,
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *receiver
   = createActorInstance(klass, strdup(receiver_name));
-  connectInput(consumer, port, lookupOutput(receiver, "out", NULL));
+  connectInput(consumer, port, lookupOutput(receiver, "out", NULL, NULL));
   enableActorInstance(receiver_name);
 
   return getReceiverPort(receiver);

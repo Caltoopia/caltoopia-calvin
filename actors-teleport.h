@@ -40,8 +40,8 @@
 
 #include "actors-rts.h"
 
-const ActorClass *getReceiverClass(int tokenSize);
-const ActorClass *getSenderClass(int tokenSize);
+const ActorClass *getReceiverClass(int tokenSize, tokenFn* functions);
+const ActorClass *getSenderClass(int tokenSize, tokenFn* functions);
 
 /**
  * Get the port a receiver is listening to. The indicated instance

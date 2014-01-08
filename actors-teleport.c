@@ -54,8 +54,8 @@
 #include "actors-teleport.h"
 #include "dllist.h"
 
-/* maximal size of generated class names -- massive overkill */
-#define GENERATED_CLASS_NAME_MAX   (20)
+/* maximal size of generated class names */
+#define GENERATED_CLASS_NAME_MAX   (32)
 
 extern const ActorClass ActorClass_art_SocketSender;
 extern const ActorClass ActorClass_art_SocketReceiver;
@@ -76,6 +76,8 @@ struct TokenMonitor {
   pthread_cond_t  empty;
   int full;                   /* 0 or 1 */
   char *tokenBuffer;
+  size_t serializeBufferSize;
+  char *serializeBuffer;
 };
 
 /**
@@ -141,8 +143,11 @@ static void initTokenMonitor(struct TokenMonitor *mon, int tokenSize)
   pthread_cond_init(&mon->available, NULL);
   pthread_cond_init(&mon->empty, NULL);
   mon->full = 0;
-
+  
   mon->tokenBuffer = calloc(1, tokenSize);
+
+  mon->serializeBufferSize = 0;
+  mon->serializeBuffer = NULL;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -154,6 +159,10 @@ static void destroyTokenMonitor(struct TokenMonitor *mon)
   pthread_cond_destroy(&mon->empty);
 
   free(mon->tokenBuffer);
+  if(mon->serializeBuffer!=NULL && mon->serializeBufferSize>0) {
+    free(mon->serializeBuffer);
+    mon->serializeBufferSize = 0;
+  }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -164,6 +173,9 @@ static void *receiver_thread(void *arg)
   = (ActorInstance_art_SocketReceiver *) arg;
   int tokenSize
   = instance->base.actorClass->outputPortDescriptions[0].tokenSize;
+  tokenFn* functions
+  = instance->base.actorClass->outputPortDescriptions[0].functions;
+  int needSerialization = functions != NULL;
   int status;
 
   while (1) {  /* one iteration per client */
@@ -198,27 +210,85 @@ static void *receiver_thread(void *arg)
         pthread_mutex_unlock(&instance->tokenMon.lock);
       }
 
-      do {
-        status = read(instance->client_socket,
-                      instance->tokenMon.tokenBuffer + instance->bytesRead,
-                      tokenSize - instance->bytesRead);
-
-        if (status >= 0) {
-          instance->bytesRead += status;
-          assert(instance->bytesRead <= tokenSize);
+      if(needSerialization) {
+        /************************************************
+         * Read complex tokens that do need serialization
+         ************************************************/
+        int32_t sz=0;
+        int bytesRead = 0;
+        //Read serialization token size
+        do {
+          status = read(instance->client_socket, &sz+bytesRead, sizeof(int32_t)-bytesRead);
+          if(status >= 0) {
+            bytesRead += status;
+          } else {
+            bytesRead = 0;
+            warn("read() failed: %s", strerror(errno));
+          }
+        } while (bytesRead!=sizeof(int32_t));
+        
+        //Read serialized token data
+        if(bytesRead>0 && sz>0) {
+          bytesRead = 0;
+          if(instance->tokenMon.serializeBufferSize < sz) {
+            //Need more memory to handle the serialization
+            instance->tokenMon.serializeBuffer = realloc(instance->tokenMon.serializeBuffer,sz);
+            instance->tokenMon.serializeBufferSize = sz;
+          }
+          do {
+            status = read(instance->client_socket, instance->tokenMon.serializeBuffer + bytesRead, sz - bytesRead);
+            if(status >= 0) {
+              bytesRead += status;
+            } else {
+              bytesRead = 0;
+              warn("read() failed: %s", strerror(errno));
+            }
+          } while (bytesRead!=sz);
+          if(bytesRead!=sz) {
+            /* 
+             * If we got here it is a failure, since
+             * we have a serialization size but can't get all
+             * the data. Anyway break out of here and wait
+             * for a new sender to connect.
+             */
+            break;
+          } else {
+            //Deserialize the incoming token (will allocate it on the heap) and write the reference to the tokenBuffer
+            //Also assert that the deserialization used all the data
+            assert((functions->deserialize((void**)instance->tokenMon.tokenBuffer,instance->tokenMon.serializeBuffer) -
+                   instance->tokenMon.serializeBuffer) == sz);
+          }
         } else {
-          /* on general read failures, assume client disconnected and wait for
-           * another one */
-          instance->bytesRead = 0;
-          warn("read() failed: %s", strerror(errno));
+          /* if we failed reading, break out of this loop to and wait for
+           another client */
           break;
         }
-      } while (instance->bytesRead != tokenSize);
+      } else {
+        /**************************************************
+         * Read simple tokens that don't need serialization
+         **************************************************/
+        do {
+          status = read(instance->client_socket,
+                        instance->tokenMon.tokenBuffer + instance->bytesRead,
+                        tokenSize - instance->bytesRead);
 
-      /* if we failed reading, break out of this loop to and wait for
-       another client */
-      if (instance->bytesRead != tokenSize) {
-        break;
+          if (status >= 0) {
+            instance->bytesRead += status;
+            assert(instance->bytesRead <= tokenSize);
+          } else {
+            /* on general read failures, assume client disconnected and wait for
+             * another one */
+            instance->bytesRead = 0;
+            warn("read() failed: %s", strerror(errno));
+            break;
+          }
+        } while (instance->bytesRead != tokenSize);
+
+        /* if we failed reading, break out of this loop to and wait for
+         another client */
+        if (instance->bytesRead != tokenSize) {
+          break;
+        }
       }
 
       instance->bytesRead = 0;
@@ -244,7 +314,7 @@ static void receiver_constructor(AbstractActorInstance *pBase)
   ActorInstance_art_SocketReceiver *instance
   = (ActorInstance_art_SocketReceiver *) pBase;
   struct sockaddr_in server_addr;
-
+  
   instance->server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (instance->server_socket < 0) {
     warn("could not open server socket: %s", strerror(errno));
@@ -354,6 +424,9 @@ static void *sender_thread(void *arg)
     = (ActorInstance_art_SocketSender *) arg;
   int tokenSize
     = instance->base.actorClass->inputPortDescriptions[0].tokenSize;
+  tokenFn* functions
+  = instance->base.actorClass->inputPortDescriptions[0].functions;
+  int needSerialization = functions != NULL;
   struct sockaddr_in server_addr;
 
   server_addr.sin_family = AF_INET;
@@ -396,21 +469,62 @@ static void *sender_thread(void *arg)
     }
 
     int bytesWritten = 0;
-    do {
-      int status = write(instance->socket,
-                         instance->tokenMon.tokenBuffer + bytesWritten,
-                         tokenSize - bytesWritten);
-
-      if (status >= 0) {
-        bytesWritten += status;
-        assert(bytesWritten <= tokenSize);
-      } else {
-        /* on general write failures, bail out*/
-        warn("write() failed: %s", strerror(errno));
-        return NULL;
+    if(needSerialization) {
+      /************************************************
+       * Write complex tokens that do need serialization
+       ************************************************/
+      int32_t sz=functions->size(*((void**)instance->tokenMon.tokenBuffer));
+      if(instance->tokenMon.serializeBufferSize < (sz+sizeof(int32_t))) {
+        //Need more memory to handle the serialization
+        instance->tokenMon.serializeBuffer = realloc(instance->tokenMon.serializeBuffer,sz+sizeof(int32_t));
+        instance->tokenMon.serializeBufferSize = sz+sizeof(int32_t);
       }
-    } while (bytesWritten != tokenSize);
+      //Write the size first
+      *((int32_t*)instance->tokenMon.serializeBuffer) = sz;
+      //include the size bytes in sz
+      sz += sizeof(int32_t);
+      //Serialize the outgoing token and write the data into the serialization buffer
+      //Also assert that the serialization wrote all the data
+      assert((functions->serialize(*((void**)instance->tokenMon.tokenBuffer),instance->tokenMon.serializeBuffer+sizeof(int32_t)) -
+              instance->tokenMon.serializeBuffer) == sz);
+      //FIXME we free the token here, but that only works if the port has no fan-out,
+      //that limitation also exist in the Caltoopia generated code.
+      functions->free(*((void**)instance->tokenMon.tokenBuffer), 1/*TRUE*/);
+      
+      do {
+        int status = write(instance->socket,
+                           instance->tokenMon.serializeBuffer + bytesWritten,
+                           sz - bytesWritten);
+        
+        if (status >= 0) {
+          bytesWritten += status;
+          assert(bytesWritten <= sz);
+        } else {
+          /* on general write failures, bail out*/
+          warn("write() failed: %s", strerror(errno));
+          return NULL;
+        }
+      } while (bytesWritten != sz);
+    } else {
+      /**************************************************
+       * Write simple tokens that don't need serialization
+       **************************************************/
+      do {
+        int status = write(instance->socket,
+                           instance->tokenMon.tokenBuffer + bytesWritten,
+                           tokenSize - bytesWritten);
 
+        if (status >= 0) {
+          bytesWritten += status;
+          assert(bytesWritten <= tokenSize);
+        } else {
+          /* on general write failures, bail out*/
+          warn("write() failed: %s", strerror(errno));
+          return NULL;
+        }
+      } while (bytesWritten != tokenSize);
+    }
+    
     bytesWritten = 0;
 
     /* Update the monitor and notify actor */
@@ -507,9 +621,12 @@ static void sender_destructor(AbstractActorInstance *pBase)
 
 /* ========================================================================= */
 
-const ActorClass *getReceiverClass(int tokenSize)
+const ActorClass *getReceiverClass(int tokenSize, tokenFn *functions)
 {
   ensureInitialized();
+
+  //Detect need for serialization with if such function is provided
+  int needSerialization = functions->serialize != NULL;
 
   /*
    * Linear search should be fine: this list is likely to be small, and
@@ -518,8 +635,15 @@ const ActorClass *getReceiverClass(int tokenSize)
   dllist_element_t *elem = dllist_first(&receiver_classes);
   while (elem) {
     struct extended_class *xclass = (struct extended_class *) elem;
-    if (xclass->portDescription.tokenSize == tokenSize) {
-      return &xclass->actorClass;
+    if(needSerialization) {
+      //If we already have a class pointing to the same serialization function take it
+      if (xclass->portDescription.functions->serialize == functions->serialize) {
+        return &xclass->actorClass;
+      }
+    } else {
+      if (xclass->portDescription.tokenSize == tokenSize) {
+        return &xclass->actorClass;
+      }
     }
     elem = dllist_next(&receiver_classes, elem);
   }
@@ -528,10 +652,17 @@ const ActorClass *getReceiverClass(int tokenSize)
   struct extended_class *xclass = calloc(1, sizeof(struct extended_class));
 
   /* make up a name */
-  snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB", tokenSize);
+  if(needSerialization)
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB%8p", tokenSize, functions->serialize);
+  else
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB", tokenSize);
 
   xclass->portDescription.name = "out";
   xclass->portDescription.tokenSize = tokenSize;
+  if(needSerialization) {
+    xclass->portDescription.functions = calloc(1,sizeof(tokenFn));
+    memcpy(xclass->portDescription.functions, functions, sizeof(tokenFn));
+  }
 
   xclass->actorClass.majorVersion = ACTORS_RTS_MAJOR;
   xclass->actorClass.minorVersion = ACTORS_RTS_MINOR;
@@ -552,9 +683,12 @@ const ActorClass *getReceiverClass(int tokenSize)
 
 /* ------------------------------------------------------------------------- */
 
-const ActorClass *getSenderClass(int tokenSize)
+const ActorClass *getSenderClass(int tokenSize, tokenFn *functions)
 {
   ensureInitialized();
+  
+  //Detect need for serialization with if such function is provided
+  int needSerialization = functions->serialize != NULL;
 
   /*
    * Linear search should be fine: this list is likely to be small, and
@@ -563,8 +697,15 @@ const ActorClass *getSenderClass(int tokenSize)
   dllist_element_t *elem = dllist_first(&sender_classes);
   while (elem) {
     struct extended_class *xclass = (struct extended_class *) elem;
-    if (xclass->portDescription.tokenSize == tokenSize) {
-      return &xclass->actorClass;
+    if(needSerialization) {
+      //If we already have a class pointing to the same serialization function take it
+      if (xclass->portDescription.functions->serialize == functions->serialize) {
+        return &xclass->actorClass;
+      }
+    } else {
+      if (xclass->portDescription.tokenSize == tokenSize) {
+        return &xclass->actorClass;
+      }
     }
     elem = dllist_next(&sender_classes, elem);
   }
@@ -573,11 +714,17 @@ const ActorClass *getSenderClass(int tokenSize)
   struct extended_class *xclass = calloc(1, sizeof(struct extended_class));
 
   /* make up a name */
-  snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB", tokenSize);
+  if(needSerialization)
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB%8p", tokenSize, functions->serialize);
+  else
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB", tokenSize);
 
   xclass->portDescription.name = "in";
   xclass->portDescription.tokenSize = tokenSize;
-
+  if(needSerialization) {
+    xclass->portDescription.functions = calloc(1,sizeof(tokenFn));
+    memcpy(xclass->portDescription.functions, functions, sizeof(tokenFn));
+  }
   xclass->actorClass.majorVersion = ACTORS_RTS_MAJOR;
   xclass->actorClass.minorVersion = ACTORS_RTS_MINOR;
   xclass->actorClass.name = xclass->className;
