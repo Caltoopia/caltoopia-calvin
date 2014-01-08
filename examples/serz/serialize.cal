@@ -1,0 +1,124 @@
+namespace serz:
+import System.io.dprint1;
+    type T1 : A(int a, int b) | B(int a, int c) end
+    type T2 : A(T1 a, List(type:int,size=10) b) | B(int a, T1 c) end
+
+/*
+    actor first() T1 In ==> T1 Out :
+        doit: action In:[i] ==> Out:[o]
+        var
+            T1 o
+        do
+            case i of
+                A(x,y) do 
+                    o:=T1::A(x+y,y);
+                    dprint1("First A %i\\n",x+y);
+                end
+                B(x,y) do 
+                    o:=T1::B(x+y,y);
+                    dprint1("First B %i\\n",x+y);
+                end
+            end
+        end
+    end
+    
+    actor second() T1 In ==> T1 Out :
+        initialize ==> Out:[o]
+        var
+            //T1 t1,
+            T1 o
+        do
+            o:=T1::A(0,1);
+            //o:=T2::B(0,t1);
+        end
+        
+        doit2: action In:[i] ==> Out:[o]
+        var
+            T1 o
+        do
+            case i of
+                A(x,y) do 
+                    o:=T1::A(x+y,y);
+                    dprint1("Second A %i\\n",x+y);
+                end
+                B(x,y) do 
+                    o:=T1::B(x+y,y);
+                    dprint1("Second B %i\\n",x+y);
+                end
+            end
+        end
+    end
+*/
+
+    actor first() T2 In ==> T2 Out :
+        doit: action In:[i] ==> Out:[o]
+        var
+            T1 t1,
+            T1 t1i,
+            T2 o
+        do
+            case i of
+                A(x,_) do
+                    t1i:=x;
+                end
+            end
+            case t1i of
+                A(x2,y2) do
+                    t1:=T1::A(x2+y2,y2);
+                    o:=T2::A(t1,[0,1,2,3,4,5,6,7,8,9]);
+                    dprint1("First A %i\\n",x2+y2);
+                end
+                B(x2,y2) do 
+                    t1:=T1::B(x2+y2,y2);
+                    o:=T2::A(t1,[0,1,2,3,4,5,6,7,8,9]);
+                    dprint1("First B %i\\n",x2+y2);
+                end
+            end
+        end
+    end
+    
+    actor second() T2 In ==> T2 Out :
+        initialize ==> Out:[o]
+        var
+            T1 t1,
+            T2 o
+        do
+            t1:=T1::A(0,1);
+            o:=T2::A(t1,[0,1,2,3,4,5,6,7,8,9]);
+        end
+        
+        doit2: action In:[i] ==> Out:[o]
+        var
+            T1 t1,
+            T1 t1i,
+            T2 o
+        do
+            case i of
+                A(x,_) do
+                    t1i:=x;
+                end
+            end
+            case t1i of
+                A(x2,y2) do
+                    t1:=T1::A(x2+y2,y2);
+                    o:=T2::A(t1,[0,1,2,3,4,5,6,7,8,9]);
+                    dprint1("Second A %i\\n",x2+y2);
+                end
+                B(x2,y2) do 
+                    t1:=T1::B(x2+y2,y2);
+                    o:=T2::A(t1,[0,1,2,3,4,5,6,7,8,9]);
+                    dprint1("Second B %i\\n",x2+y2);
+                end
+            end
+        end
+    end
+
+    network top() ==>:
+    entities
+        f = first();
+        s = second();
+    structure
+        f.Out --> s.In;    
+        s.Out --> f.In;    
+    end
+end

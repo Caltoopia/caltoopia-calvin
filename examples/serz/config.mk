@@ -1,0 +1,9 @@
+SOURCES = serz__top.c commonSpec.c serz__f.c serz__s.c
+ACTORS = serz__f.c serz__s.c
+EXEC_NAME = top
+RUNTIME_ROOT = /Users/ecshdgn/open/rt_build
+CALVIN_RUNTIME_ROOT = /Users/ecshdgn/open/caltoopia-calvin
+SDL = n
+DPRINT = y
+CC = gcc
+TARGET = mac
