@@ -33,12 +33,12 @@ ART_ACTION_SCHEDULER(RVC_decoder__parser__blkexp_action_scheduler);
 static void ActorInstance_RVC_decoder__parser__blkexp_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "RUN", sizeof(int32_t)},
-  {0, "VALUE", sizeof(int32_t)},
-  {0, "LAST", sizeof(bool_t)},
+  {0, "RUN", sizeof(int32_t), NULL},
+  {0, "VALUE", sizeof(int32_t), NULL},
+  {0, "LAST", sizeof(bool_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "OUT", sizeof(int32_t)},
+  {0, "OUT", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__done[] = {0, 0, 0};

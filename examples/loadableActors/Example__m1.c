@@ -21,10 +21,10 @@ ART_ACTION_SCHEDULER(Example_m1_action_scheduler);
 static void ActorInstance_Example_m1_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "In", sizeof(int32_t)},
+  {0, "In", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "Out", sizeof(int32_t)},
+  {0, "Out", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0[] = {1};

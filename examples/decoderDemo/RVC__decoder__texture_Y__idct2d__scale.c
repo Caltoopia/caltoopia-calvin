@@ -33,10 +33,10 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_Y__idct2d__scale_action_scheduler);
 static void ActorInstance_RVC_decoder__texture_Y__idct2d__scale_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "SIn", sizeof(int32_t)},
+  {0, "SIn", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "SOut", sizeof(int32_t)},
+  {0, "SOut", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0[] = {(64 * 1)};

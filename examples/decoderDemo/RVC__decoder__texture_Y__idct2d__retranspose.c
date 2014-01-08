@@ -20,10 +20,10 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_Y__idct2d__retranspose_action_schedule
 static void ActorInstance_RVC_decoder__texture_Y__idct2d__retranspose_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "In", sizeof(int32_t)},
+  {0, "In", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "Out", sizeof(int32_t)},
+  {0, "Out", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0[] = {(64 * 1)};

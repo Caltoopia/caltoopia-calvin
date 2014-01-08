@@ -43,14 +43,14 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_U__IAP_action_scheduler);
 static void ActorInstance_RVC_decoder__texture_U__IAP_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "PQF_AC", sizeof(int32_t)},
-  {0, "PTR", sizeof(int32_t)},
-  {0, "AC_PRED_DIR", sizeof(int32_t)},
-  {0, "QP", sizeof(int32_t)},
-  {0, "PREV_QP", sizeof(int32_t)},
+  {0, "PQF_AC", sizeof(int32_t), NULL},
+  {0, "PTR", sizeof(int32_t), NULL},
+  {0, "AC_PRED_DIR", sizeof(int32_t), NULL},
+  {0, "QP", sizeof(int32_t), NULL},
+  {0, "PREV_QP", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "QF_AC", sizeof(int32_t)},
+  {0, "QF_AC", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__newvop[] = {0, 0, 1, 0, 0};

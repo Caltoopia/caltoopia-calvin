@@ -23,10 +23,10 @@ ART_ACTION_SCHEDULER(RVC_decoder__serialize_action_scheduler);
 static void ActorInstance_RVC_decoder__serialize_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "in8", sizeof(int32_t)},
+  {0, "in8", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "out", sizeof(bool_t)},
+  {0, "out", sizeof(bool_t), NULL},
 };
 
 static const int portRate_in_action0__reload[] = {1};

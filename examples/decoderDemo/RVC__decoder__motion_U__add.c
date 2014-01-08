@@ -34,12 +34,12 @@ ART_ACTION_SCHEDULER(RVC_decoder__motion_U__add_action_scheduler);
 static void ActorInstance_RVC_decoder__motion_U__add_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "MOT", sizeof(int32_t)},
-  {0, "TEX", sizeof(int32_t)},
-  {0, "BTYPE", sizeof(int32_t)},
+  {0, "MOT", sizeof(int32_t), NULL},
+  {0, "TEX", sizeof(int32_t), NULL},
+  {0, "BTYPE", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "VID", sizeof(int32_t)},
+  {0, "VID", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__cmd__newVop[] = {0, 0, 1};

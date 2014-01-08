@@ -246,17 +246,17 @@ ART_ACTION_SCHEDULER(RVC_decoder__parser__parseheaders_action_scheduler);
 static void ActorInstance_RVC_decoder__parser__parseheaders_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "bits", sizeof(bool_t)},
+  {0, "bits", sizeof(bool_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "BTYPE", sizeof(int32_t)},
-  {0, "MV", sizeof(int32_t)},
-  {0, "RUN", sizeof(int32_t)},
-  {0, "VALUE", sizeof(int32_t)},
-  {0, "LAST", sizeof(bool_t)},
-  {0, "WIDTH", sizeof(int32_t)},
-  {0, "HEIGHT", sizeof(int32_t)},
-  {0, "QP", sizeof(int32_t)},
+  {0, "BTYPE", sizeof(int32_t), NULL},
+  {0, "MV", sizeof(int32_t), NULL},
+  {0, "RUN", sizeof(int32_t), NULL},
+  {0, "VALUE", sizeof(int32_t), NULL},
+  {0, "LAST", sizeof(bool_t), NULL},
+  {0, "WIDTH", sizeof(int32_t), NULL},
+  {0, "HEIGHT", sizeof(int32_t), NULL},
+  {0, "QP", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0[] = {1};

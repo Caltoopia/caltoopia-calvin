@@ -44,11 +44,11 @@ ART_ACTION_SCHEDULER(RVC_decoder__motion_Y__interpolation_action_scheduler);
 static void ActorInstance_RVC_decoder__motion_Y__interpolation_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "RD", sizeof(int32_t)},
-  {0, "halfpel", sizeof(int32_t)},
+  {0, "RD", sizeof(int32_t), NULL},
+  {0, "halfpel", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "MOT", sizeof(int32_t)},
+  {0, "MOT", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__start[] = {0, 1};

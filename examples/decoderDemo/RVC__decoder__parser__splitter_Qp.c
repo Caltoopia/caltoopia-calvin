@@ -23,12 +23,12 @@ ART_ACTION_SCHEDULER(RVC_decoder__parser__splitter_Qp_action_scheduler);
 static void ActorInstance_RVC_decoder__parser__splitter_Qp_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "QP", sizeof(int32_t)},
+  {0, "QP", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "QUANT_Y", sizeof(int32_t)},
-  {0, "QUANT_U", sizeof(int32_t)},
-  {0, "QUANT_V", sizeof(int32_t)},
+  {0, "QUANT_Y", sizeof(int32_t), NULL},
+  {0, "QUANT_U", sizeof(int32_t), NULL},
+  {0, "QUANT_V", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__quant__split[] = {(6 * 1)};

@@ -25,11 +25,11 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_U__idct2d__clip_action_scheduler);
 static void ActorInstance_RVC_decoder__texture_U__idct2d__clip_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "I", sizeof(int32_t)},
-  {0, "SIGNED", sizeof(bool_t)},
+  {0, "I", sizeof(int32_t), NULL},
+  {0, "SIGNED", sizeof(bool_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "O", sizeof(int32_t)},
+  {0, "O", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__read_signed[] = {0, 1};

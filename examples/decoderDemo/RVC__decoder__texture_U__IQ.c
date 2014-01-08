@@ -40,12 +40,12 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_U__IQ_action_scheduler);
 static void ActorInstance_RVC_decoder__texture_U__IQ_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "DC", sizeof(int32_t)},
-  {0, "AC", sizeof(int32_t)},
-  {0, "QP", sizeof(int32_t)},
+  {0, "DC", sizeof(int32_t), NULL},
+  {0, "AC", sizeof(int32_t), NULL},
+  {0, "QP", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "OUT", sizeof(int32_t)},
+  {0, "OUT", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__get_qp[] = {1, 0, 1};

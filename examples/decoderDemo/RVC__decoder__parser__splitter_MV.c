@@ -35,13 +35,13 @@ ART_ACTION_SCHEDULER(RVC_decoder__parser__splitter_MV_action_scheduler);
 static void ActorInstance_RVC_decoder__parser__splitter_MV_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "MV", sizeof(int32_t)},
-  {0, "BTYPE", sizeof(int32_t)},
+  {0, "MV", sizeof(int32_t), NULL},
+  {0, "BTYPE", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "Y", sizeof(int32_t)},
-  {0, "U", sizeof(int32_t)},
-  {0, "V", sizeof(int32_t)},
+  {0, "Y", sizeof(int32_t), NULL},
+  {0, "U", sizeof(int32_t), NULL},
+  {0, "V", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__newvop[] = {0, 1};

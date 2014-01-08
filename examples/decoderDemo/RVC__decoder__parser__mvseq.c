@@ -50,10 +50,10 @@ ART_ACTION_SCHEDULER(RVC_decoder__parser__mvseq_action_scheduler);
 static void ActorInstance_RVC_decoder__parser__mvseq_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "BTYPE", sizeof(int32_t)},
+  {0, "BTYPE", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "A", sizeof(int32_t)},
+  {0, "A", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__start[] = {1};

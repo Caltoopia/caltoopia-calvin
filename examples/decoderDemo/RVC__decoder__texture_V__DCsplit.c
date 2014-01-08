@@ -22,11 +22,11 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_V__DCsplit_action_scheduler);
 static void ActorInstance_RVC_decoder__texture_V__DCsplit_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "IN", sizeof(int32_t)},
+  {0, "IN", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "DC", sizeof(int32_t)},
-  {0, "AC", sizeof(int32_t)},
+  {0, "DC", sizeof(int32_t), NULL},
+  {0, "AC", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0[] = {(64 * 1)};

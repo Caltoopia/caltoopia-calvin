@@ -80,20 +80,20 @@ ART_ACTION_SCHEDULER(RVC_decoder__texture_V__DCRecontruction__invpred_action_sch
 static void ActorInstance_RVC_decoder__texture_V__DCRecontruction__invpred_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
-  {0, "BTYPE", sizeof(int32_t)},
-  {0, "A", sizeof(int32_t)},
-  {0, "B", sizeof(int32_t)},
-  {0, "C", sizeof(int32_t)},
-  {0, "QFS_DC", sizeof(int32_t)},
-  {0, "QP", sizeof(int32_t)},
+  {0, "BTYPE", sizeof(int32_t), NULL},
+  {0, "A", sizeof(int32_t), NULL},
+  {0, "B", sizeof(int32_t), NULL},
+  {0, "C", sizeof(int32_t), NULL},
+  {0, "QFS_DC", sizeof(int32_t), NULL},
+  {0, "QP", sizeof(int32_t), NULL},
 };
 static const PortDescription outputPortDescriptions[]={
-  {0, "QF_DC", sizeof(int32_t)},
-  {0, "PTR", sizeof(int32_t)},
-  {0, "AC_PRED_DIR", sizeof(int32_t)},
-  {0, "SIGNED", sizeof(bool_t)},
-  {0, "QUANT", sizeof(int32_t)},
-  {0, "PREV_QUANT", sizeof(int32_t)},
+  {0, "QF_DC", sizeof(int32_t), NULL},
+  {0, "PTR", sizeof(int32_t), NULL},
+  {0, "AC_PRED_DIR", sizeof(int32_t), NULL},
+  {0, "SIGNED", sizeof(bool_t), NULL},
+  {0, "QUANT", sizeof(int32_t), NULL},
+  {0, "PREV_QUANT", sizeof(int32_t), NULL},
 };
 
 static const int portRate_in_action0__start[] = {1, 0, 0, 0, 0, 0};
