@@ -273,16 +273,16 @@ static inline void preFire(AbstractActorInstance *actor) {
     unsigned int maxAvailable = 0;
     unsigned int spaceLeft;
 
-    InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
+    InputPort *consumer = (InputPort *) dllist_first_lock(&output->consumers);
     while (consumer != NULL) {
       unsigned int available = produced - consumer->tokensConsumed;
       if (available > maxAvailable)
         maxAvailable = available;
 
-      consumer = (InputPort *) dllist_next(&output->consumers,
+      consumer = (InputPort *) dllist_next_locked(&output->consumers,
                                            &consumer->asConsumer);
     }
-
+    dllist_unlock(&output->consumers);
     spaceLeft = output->capacity - maxAvailable;
     output->localOutputPort.spaceLeft = spaceLeft;
     // fullAt: tokensProduced counter when FIFO is full
@@ -363,7 +363,7 @@ static void * workerThreadMain(void *unused_arg)
     int fired=1;
 
     while (fired) {
-      dllist_element_t *elem = dllist_first(&instances);
+      dllist_element_t *elem = dllist_first_lock(&instances);
 
       fired=0;
       while (elem) {
@@ -381,8 +381,9 @@ static void * workerThreadMain(void *unused_arg)
           pthread_mutex_unlock(&thread_state.execution_mutex);
         }
 
-        elem = dllist_next(&instances, elem);
+        elem = dllist_next_locked(&instances, elem);
       }
+      dllist_unlock(&instances);
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE

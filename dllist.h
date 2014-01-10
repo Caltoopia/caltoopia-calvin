@@ -162,4 +162,37 @@ dllist_next(dllist_head_t *list, dllist_element_t *elem)
   return next;
 }
 
+/** Assumes the list is locked.
+ * @return the successor for element 'elem' in list 'list', or NULL.
+ */
+static inline dllist_element_t *
+dllist_next_locked(dllist_head_t *list, dllist_element_t *elem)
+{
+  dllist_element_t *next;
+  
+  {
+    assert(elem != NULL);
+    
+    next = elem->suc;
+    if (next == &list->head_element) {
+      next = NULL;
+    }
+  }
+  
+  return next;
+}
+
+/**
+ * @return the first element in the list, or NULL and locks the list.
+ */
+static inline dllist_element_t * dllist_first_lock(dllist_head_t * list) {
+  pthread_mutex_lock(&list->mutex);
+  return dllist_next_locked(list,&list->head_element);
+}
+
+/** unlocks the list.
+ */
+#define dllist_unlock(LIST_PTR) \
+  pthread_mutex_unlock(&(LIST_PTR)->mutex)
+
 #endif /* DLLIST_INCLUSION_GUARD */
