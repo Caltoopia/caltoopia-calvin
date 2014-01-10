@@ -363,27 +363,27 @@ static void * workerThreadMain(void *unused_arg)
     int fired=1;
 
     while (fired) {
-      dllist_element_t *elem = dllist_first_lock(&instances);
-
-      fired=0;
-      while (elem) {
-        AbstractActorInstance *actor = (AbstractActorInstance *) elem;
-
-        {
-          pthread_mutex_lock(&thread_state.execution_mutex);
-
+      {
+        pthread_mutex_lock(&thread_state.execution_mutex);
+        
+        dllist_element_t *elem = dllist_first_lock(&instances);
+        fired=0;
+        while (elem) {
+          AbstractActorInstance *actor = (AbstractActorInstance *) elem;
+          
           preFire(actor);
           (void) actor->action_scheduler(actor);
           if (postFire(actor)) {
             fired=1;
           }
-
-          pthread_mutex_unlock(&thread_state.execution_mutex);
+          
+          elem = dllist_next_locked(&instances, elem);
         }
+        dllist_unlock(&instances);
 
-        elem = dllist_next_locked(&instances, elem);
+        pthread_mutex_unlock(&thread_state.execution_mutex);
       }
-      dllist_unlock(&instances);
+      
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE
