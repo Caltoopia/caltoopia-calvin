@@ -92,6 +92,7 @@ typedef struct {
   int port;           /* port, for the listener to find us */
   size_t bytesRead;   /* to handle incomplete reads */
 
+  uint32_t hashId;     /* A unique hashid used to identify with the action scheduler's locked busy mechanism */
   struct TokenMonitor tokenMon;
 } ActorInstance_art_SocketReceiver;
 
@@ -108,6 +109,8 @@ typedef struct {
 
   int socket; /* socket to peer */
 
+  uint32_t hashId;     /* A unique hashid used to identify with the action scheduler's locked busy mechanism */
+  int lockedBusy;     /* local sender state of locked/unlocked busy scheduler loop */
   struct TokenMonitor tokenMon;
 } ActorInstance_art_SocketSender;
 
@@ -200,6 +203,11 @@ static void *receiver_thread(void *arg)
 
     while (1) {  /* one iteration per token */
 
+      /* Enable locked busy execution during period of token monitor full,
+       * otherwise we might be waiting forever. Matched below.
+       */
+      lockedBusyNetworkToggle(instance->hashId);
+      
       /* Block until the monitor has space for a token */
       {
         pthread_mutex_lock(&instance->tokenMon.lock);
@@ -209,6 +217,10 @@ static void *receiver_thread(void *arg)
         }
         pthread_mutex_unlock(&instance->tokenMon.lock);
       }
+
+      /* Disable locked busy execution. Matched above.
+       */
+      lockedBusyNetworkToggle(instance->hashId);
 
       if(needSerialization) {
         /************************************************
@@ -300,9 +312,6 @@ static void *receiver_thread(void *arg)
         instance->tokenMon.full = 1;
         pthread_mutex_unlock(&instance->tokenMon.lock);
       }
-
-      /* Enable execution, in case network has gone idle */
-      wakeUpNetwork();
     }
   }
 }
@@ -354,6 +363,8 @@ static void receiver_constructor(AbstractActorInstance *pBase)
   }
   assert(server_addr.sin_family == AF_INET);
   instance->port = ntohs(server_addr.sin_port);
+  
+  instance->hashId = getUniqueHashid();
 
   /* since we only have the class here, not the extended class, we need
    * to take the long way to find the port description */
@@ -458,6 +469,9 @@ static void *sender_thread(void *arg)
 
   while (1) {  /* one iteration per token */
 
+    /* Enable execution, in case network has gone idle otherwise we might wait forever */
+    wakeUpNetwork();
+
     /* Block until the monitor holds a token */
     {
       pthread_mutex_lock(&instance->tokenMon.lock);
@@ -535,9 +549,6 @@ static void *sender_thread(void *arg)
       pthread_cond_signal(&instance->tokenMon.empty);
       pthread_mutex_unlock(&instance->tokenMon.lock);
     }
-
-    /* Enable execution, in case network has gone idle */
-    wakeUpNetwork();
   }
 }
 
@@ -557,6 +568,9 @@ static void sender_constructor(AbstractActorInstance *pBase)
   /* don't touch remoteHost here: it was set in
    setSenderRemoteAddress() below */
 
+  instance->hashId = getUniqueHashid();
+  instance->lockedBusy = 0;
+  
   /* since we only have the class here, not the extended class, we need
    * to take the long way to find the port description */
   initTokenMonitor(&instance->tokenMon,
@@ -577,6 +591,11 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
 
   LocalInputPort *input = &pBase->inputPort[0].localInputPort;
   if (pinAvailIn_dyn(input) > 0) {
+    /* We have data to send keep the scheduler loop locked busy, keep track locally of toggling */
+    if(!instance->lockedBusy) {
+      lockedBusyNetworkToggle(instance->hashId);
+      instance->lockedBusy=1;
+    }
     /* If there is room for a new token in the monitor, push one there */
     {
       pthread_mutex_lock(&instance->tokenMon.lock);
@@ -586,6 +605,12 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
         pthread_cond_signal(&instance->tokenMon.available);
       }
       pthread_mutex_unlock(&instance->tokenMon.lock);
+    }
+  } else {
+    /* We don't have data to send no need to have the scheduler loop locked busy, keep track locally of toggling */
+    if(instance->lockedBusy) {
+      lockedBusyNetworkToggle(instance->hashId);
+      instance->lockedBusy=0;
     }
   }
 

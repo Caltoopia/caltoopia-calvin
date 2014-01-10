@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -66,8 +67,8 @@ static dllist_head_t disabled_instances;/* disabled, non-executing instances */
 
 /* ------------------------------------------------------------------------- */
 
-/** Set this to enable power-saving idle mode (flaky) */
-/* #define CALVIN_BLOCK_ON_IDLE */
+/** Set this to enable power-saving idle mode */
+#define CALVIN_BLOCK_ON_IDLE
 
 /* ------------------------------------------------------------------------- */
 
@@ -85,6 +86,7 @@ static struct {
   pthread_cond_t wakeup_cond;       /* signaled by parser to wake up thread */
 
   enum {
+    ACTOR_THREAD_LOCKED_BUSY,       /* executing actors and continue polling them even when none fired */
     ACTOR_THREAD_BUSY,              /* executing actors */
     ACTOR_THREAD_IDLE               /* waiting for wakeup_cond */
   } state;
@@ -325,10 +327,38 @@ static inline int postFire(AbstractActorInstance *actor) {
   return fired;
 }
 
+/**
+ * Show port FIFO statistics
+ */
+
+static inline void statistics() {
+  int i;
+  dllist_element_t *elem = dllist_first(&instances);
+  
+  while (elem) {
+    AbstractActorInstance *actor = (AbstractActorInstance *) elem;
+    const ActorClass * klass = actor->actorClass;
+    for (i = 0; i < actor->numInputPorts; ++i) {
+      InputPort *input = &actor->inputPort[i];
+      if(input->localInputPort.available>0)
+        warn("Stat %s %s(I%02i) avail:%i",actor->instanceName,klass->inputPortDescriptions[i].name,i,input->localInputPort.available);
+    }
+    
+    for (i = 0; i < actor->numOutputPorts; ++i) {
+      OutputPort *output = &actor->outputPort[i];
+      if(output->localOutputPort.spaceLeft<FIFO_CAPACITY)
+        warn("Stat %s %s(O%02i) space:%i %s",actor->instanceName,klass->outputPortDescriptions[i].name,i,output->localOutputPort.spaceLeft,isReceiverFull(actor)?"FULL":"-");
+    }
+    
+    elem = dllist_next(&instances, elem);
+  }
+}
+
 /* ------------------------------------------------------------------------- */
 
 static void * workerThreadMain(void *unused_arg)
 {
+  int loops = 0;
   while (1) {
     int fired=1;
 
@@ -356,19 +386,30 @@ static void * workerThreadMain(void *unused_arg)
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE
-    /* no actor fired on last iteration -- go idle, wait for trigger */
-    /* warn("actor network idle, waiting\n"); */
+    /* no actor fired on last iteration -- go idle if not locked busy, wait for trigger */
+    /*
+    if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
+      warn("(%i) actor network idle, waiting",++loops);
+      statistics();
+    }
+    */
     {
       pthread_mutex_lock(&thread_state.signaling_mutex);
-      thread_state.state = ACTOR_THREAD_IDLE;
-      pthread_cond_signal(&thread_state.idle_cond);
-      while (thread_state.state == ACTOR_THREAD_IDLE) {
-        pthread_cond_wait(&thread_state.wakeup_cond,
-                          &thread_state.signaling_mutex);
+      if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
+        thread_state.state = ACTOR_THREAD_IDLE;
+        pthread_cond_signal(&thread_state.idle_cond);
+        while (thread_state.state == ACTOR_THREAD_IDLE) {
+          pthread_cond_wait(&thread_state.wakeup_cond,
+                            &thread_state.signaling_mutex);
+        }
       }
       pthread_mutex_unlock(&thread_state.signaling_mutex);
     }
-    /* warn("actor network reactivated\n"); */
+    /*
+    if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
+      warn("(%i) actor network reactivated",loops);
+    }
+    */
 #endif
   }
 
@@ -615,10 +656,146 @@ void wakeUpNetwork(void)
 {
 #ifdef CALVIN_BLOCK_ON_IDLE
   pthread_mutex_lock(&thread_state.signaling_mutex);
-  thread_state.state = ACTOR_THREAD_BUSY;
+  if(thread_state.state == ACTOR_THREAD_IDLE) {
+    thread_state.state = ACTOR_THREAD_BUSY;
+    pthread_cond_signal(&thread_state.wakeup_cond);
+  }
+  pthread_mutex_unlock(&thread_state.signaling_mutex);
+#endif
+}
+
+/** Mechanism to toggle action scheduler loop
+ * into locked busy state. The user must supply
+ * a unique hashid. The user must themself
+ * keep track if this is locking or unlocking,
+ * either by matched pairs in code or by a seperate
+ * variable. 
+ * This will keep the action scheduler loop in
+ * locked busy as long as at least one user has
+ * locked it into busy. It will also wakeup the
+ * network.
+ */
+void lockedBusyNetworkToggle(uint32_t hashid)
+{
+#ifdef CALVIN_BLOCK_ON_IDLE
+  /* Static status of id prints, only when 0 all locked busy mechanism users have (propably) unlocked */
+  static uint32_t idPrints = 0;
+  
+  pthread_mutex_lock(&thread_state.signaling_mutex);
+  /* XOR with the hash id to add/remove id print */
+  idPrints ^= hashid;
+  if(idPrints == 0) {
+    /* Not locked busy, step down to busy, it's for the scheduler loop to evaluate when to go to idle */
+    thread_state.state = ACTOR_THREAD_BUSY;
+  } else {
+    /* Locked busy */
+    thread_state.state = ACTOR_THREAD_LOCKED_BUSY;
+  }
   pthread_cond_signal(&thread_state.wakeup_cond);
   pthread_mutex_unlock(&thread_state.signaling_mutex);
 #endif
+}
+
+/* ------------------------------------------------------------------------- */
+
+/**
+ * Get 32-bit Murmur3 hash. MurmurHash performs well in a random
+ * distribution of regular keys.
+ *
+ * @param data      source data
+ * @param nbytes    size of data
+ *
+ * @return 32-bit unsigned hash value.
+ *
+ * @code
+ *  uint32_t hashval = qhashmurmur3_32((void*)"hello", 5);
+ * @endcode
+ *
+ * @code
+ *  MurmurHash3 was created by Austin Appleby  in 2008. The cannonical
+ *  implementations are in C++ and placed in the public.
+ *
+ *    https://sites.google.com/site/murmurhash/
+ *
+ *  Seungyoung Kim has ported it's cannonical implementation to C language
+ *  in 2012 and published it as a part of qLibc component.
+ *  qLibc is public domain code.
+ * @endcode
+ */
+static inline uint32_t hashmurmur3_32(const void *data, size_t nbytes)
+{
+  if (data == NULL || nbytes == 0) return 0;
+  
+  const uint32_t c1 = 0xcc9e2d51;
+  const uint32_t c2 = 0x1b873593;
+  
+  const int nblocks = nbytes / 4;
+  const uint32_t *blocks = (const uint32_t *)(data);
+  const uint8_t *tail = (const uint8_t *)(data + (nblocks * 4));
+  
+  uint32_t h = 0;
+  
+  int i;
+  uint32_t k;
+  for (i = 0; i < nblocks; i++) {
+    k = blocks[i];
+    
+    k *= c1;
+    k = (k << 15) | (k >> (32 - 15));
+    k *= c2;
+    
+    h ^= k;
+    h = (h << 13) | (h >> (32 - 13));
+    h = (h * 5) + 0xe6546b64;
+  }
+  
+  k = 0;
+  switch (nbytes & 3) {
+    case 3:
+      k ^= tail[2] << 16;
+    case 2:
+      k ^= tail[1] << 8;
+    case 1:
+      k ^= tail[0];
+      k *= c1;
+      k = (k << 13) | (k >> (32 - 15));
+      k *= c2;
+      h ^= k;
+  };
+  
+  h ^= nbytes;
+  
+  h ^= h >> 16;
+  h *= 0x85ebca6b;
+  h ^= h >> 13;
+  h *= 0xc2b2ae35;
+  h ^= h >> 16;
+  
+  return h;
+}
+
+/* ------------------------------------------------------------------------- */
+
+/** Thread-safe generation of unique hash id. */
+uint32_t getUniqueHashid(void)
+{
+  static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  static uint32_t n = 1;
+  uint32_t result;
+  
+  {
+    pthread_mutex_lock(&mutex);
+    result = n++;
+    pthread_mutex_unlock(&mutex);
+  }
+  
+  /*
+   * Hash the counter with the 32 bit murmurhash.
+   * If ever find that this is not enough bits
+   * to have any combination of these XOR:ed
+   * giving a zero, switch to the 128 bit version.
+   */
+  return hashmurmur3_32(&result,4);
 }
 
 /* ------------------------------------------------------------------------- */

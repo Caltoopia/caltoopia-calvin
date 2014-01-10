@@ -131,6 +131,22 @@ extern "C" {
    * given stream.
    */
   void showActor(FILE *out, const char *name);
+  
+  /** Thread-safe generation of unique hash id. */
+  uint32_t getUniqueHashid(void);
+  
+  /** Mechanism to toggle action scheduler loop
+   * into locked busy state. The user must supply
+   * a unique hashid. The user must themself
+   * keep track if this is locking or unlocking,
+   * either by matched pairs in code or by a seperate
+   * variable.
+   * This will keep the action scheduler loop in
+   * locked busy as long as at least one user has
+   * locked it into busy. It will also wakeup the
+   * network.
+   */
+  void lockedBusyNetworkToggle(uint32_t hashid);
 
 #ifdef __cplusplus
 }
