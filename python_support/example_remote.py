@@ -5,8 +5,8 @@ import calvin
 a = calvin.Node("localhost", 9000, True)
 b = calvin.Node("localhost", 9001, True)
 
-src = a.new("art_Source_txt", "src", {"fileName": "pyin.txt"})
-snk = b.new("art_Sink_txt", "snk", {"fileName": "pyout.txt"})
+src = a.new("art_Source_txt", "src", fileName="pyin.txt")
+snk = b.new("art_Sink_txt", "snk", fileName="pyout.txt")
 src.Out >> snk.In
 
 src.enable()
