@@ -327,38 +327,10 @@ static inline int postFire(AbstractActorInstance *actor) {
   return fired;
 }
 
-/**
- * Show port FIFO statistics
- */
-
-static inline void statistics() {
-  int i;
-  dllist_element_t *elem = dllist_first(&instances);
-  
-  while (elem) {
-    AbstractActorInstance *actor = (AbstractActorInstance *) elem;
-    const ActorClass * klass = actor->actorClass;
-    for (i = 0; i < actor->numInputPorts; ++i) {
-      InputPort *input = &actor->inputPort[i];
-      if(input->localInputPort.available>0)
-        warn("Stat %s %s(I%02i) avail:%i",actor->instanceName,klass->inputPortDescriptions[i].name,i,input->localInputPort.available);
-    }
-    
-    for (i = 0; i < actor->numOutputPorts; ++i) {
-      OutputPort *output = &actor->outputPort[i];
-      if(output->localOutputPort.spaceLeft<FIFO_CAPACITY)
-        warn("Stat %s %s(O%02i) space:%i %s",actor->instanceName,klass->outputPortDescriptions[i].name,i,output->localOutputPort.spaceLeft,isReceiverFull(actor)?"FULL":"-");
-    }
-    
-    elem = dllist_next(&instances, elem);
-  }
-}
-
 /* ------------------------------------------------------------------------- */
 
 static void * workerThreadMain(void *unused_arg)
 {
-  int loops = 0;
   while (1) {
     int fired=1;
 
@@ -388,12 +360,6 @@ static void * workerThreadMain(void *unused_arg)
 
 #ifdef CALVIN_BLOCK_ON_IDLE
     /* no actor fired on last iteration -- go idle if not locked busy, wait for trigger */
-    /*
-    if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
-      warn("(%i) actor network idle, waiting",++loops);
-      statistics();
-    }
-    */
     {
       pthread_mutex_lock(&thread_state.signaling_mutex);
       if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
@@ -406,11 +372,6 @@ static void * workerThreadMain(void *unused_arg)
       }
       pthread_mutex_unlock(&thread_state.signaling_mutex);
     }
-    /*
-    if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
-      warn("(%i) actor network reactivated",loops);
-    }
-    */
 #endif
   }
 

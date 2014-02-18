@@ -616,7 +616,10 @@ static void * server_main_thread(void *arg)
       fail("client connection failed: %s", strerror(errno));
     }
 
-    pthread_create(&client_pid, NULL, &client_thread, (void *) client_socket);
+    pthread_create(&client_pid,
+                   NULL,
+                   &client_thread,
+                   (void *) (long) client_socket);
   }
 }
 
@@ -673,5 +676,5 @@ void spawnServer(unsigned int port)
 {
   pthread_t pid;
   
-  pthread_create(&pid, NULL, &server_main_thread, (void *) port);
+  pthread_create(&pid, NULL, &server_main_thread, (void *) (long) port);
 }
