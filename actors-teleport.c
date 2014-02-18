@@ -323,7 +323,7 @@ static void receiver_constructor(AbstractActorInstance *pBase)
   ActorInstance_art_SocketReceiver *instance
   = (ActorInstance_art_SocketReceiver *) pBase;
   struct sockaddr_in server_addr;
-  
+
   instance->server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (instance->server_socket < 0) {
     warn("could not open server socket: %s", strerror(errno));
@@ -363,7 +363,9 @@ static void receiver_constructor(AbstractActorInstance *pBase)
   }
   assert(server_addr.sin_family == AF_INET);
   instance->port = ntohs(server_addr.sin_port);
-  
+    
+  instance->bytesRead = 0;
+
   instance->hashId = getUniqueHashid();
 
   /* since we only have the class here, not the extended class, we need
