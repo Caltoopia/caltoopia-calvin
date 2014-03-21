@@ -63,16 +63,16 @@
 		43C5406718DB272100BC6123 /* art_Source_bin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = art_Source_bin.c; path = ../art_Source_bin.c; sourceTree = "<group>"; };
 		43C5406818DB272100BC6123 /* art_Source_real.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = art_Source_real.c; path = ../art_Source_real.c; sourceTree = "<group>"; };
 		43C5406918DB272100BC6123 /* art_Source_txt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = art_Source_txt.c; path = ../art_Source_txt.c; sourceTree = "<group>"; };
-		43C5407F18DB2A6A00BC6123 /* Example__m1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m1.c; path = ../../examples/loadableActors/Example__m1.c; sourceTree = "<group>"; };
-		43C5408018DB2A6A00BC6123 /* Example__m2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m2.c; path = ../../examples/loadableActors/Example__m2.c; sourceTree = "<group>"; };
-		43C5408118DB2A6A00BC6123 /* Example__m3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m3.c; path = ../../examples/loadableActors/Example__m3.c; sourceTree = "<group>"; };
-		43C5408218DB2A6A00BC6123 /* Example__m4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m4.c; path = ../../examples/loadableActors/Example__m4.c; sourceTree = "<group>"; };
+		43C5407F18DB2A6A00BC6123 /* Example__m1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m1.c; path = ../examples/loadableActors/Example__m1.c; sourceTree = SOURCE_ROOT; };
+		43C5408018DB2A6A00BC6123 /* Example__m2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m2.c; path = ../examples/loadableActors/Example__m2.c; sourceTree = SOURCE_ROOT; };
+		43C5408118DB2A6A00BC6123 /* Example__m3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m3.c; path = ../examples/loadableActors/Example__m3.c; sourceTree = SOURCE_ROOT; };
+		43C5408218DB2A6A00BC6123 /* Example__m4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Example__m4.c; path = ../examples/loadableActors/Example__m4.c; sourceTree = SOURCE_ROOT; };
 		43C5408718DB2AA800BC6123 /* natives.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = natives.h; path = ../natives.h; sourceTree = "<group>"; };
 		43C5408E18DB2B7A00BC6123 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		43C5409B18DB30F900BC6123 /* notes.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = notes.md; sourceTree = "<group>"; };
 		43C540A418DB3C5D00BC6123 /* actors.makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = actors.makefile; sourceTree = SOURCE_ROOT; };
-		43C540A518DB444A00BC6123 /* Example.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Example.cs; path = ../../examples/loadableActors/Example.cs; sourceTree = "<group>"; };
-		43C540A618DC383200BC6123 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		43C540A518DB444A00BC6123 /* Example.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Example.cs; path = ../examples/loadableActors/Example.cs; sourceTree = SOURCE_ROOT; };
+		43C540A618DC383200BC6123 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; name = .gitignore; path = ../.gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -445,6 +445,7 @@
 				43C5405E18DB264600BC6123 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		43C5409D18DB393200BC6123 /* Build configuration list for PBXLegacyTarget "Actors" */ = {
 			isa = XCConfigurationList;
@@ -453,6 +454,7 @@
 				43C5409F18DB393200BC6123 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
