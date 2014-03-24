@@ -1,3 +1,14 @@
+/******************************************************************************
+ *
+ * Generated from CAL:
+ *
+ *  actor Multiplier (int FACTOR) int In ==> int Out :
+ *    action In:[x] ==> Out:[x * FACTOR]
+ *    end
+ *  end
+ *
+ *****************************************************************************/
+
 #include "actors-rts.h"
 #include "natives.h"
 #include "Example__toppen.h"
