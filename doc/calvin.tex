@@ -210,6 +210,16 @@ Lists actor instances.
 
 Calvin will respond with a single line, starting with 'OK', followed by a number of instance names separated by whitespace.
 
+\subsubsection*{ADDRESS}
+
+Syntax:
+\begin{verbatim}
+ADDRESS
+\end{verbatim}
+
+List the IP-address(es) of the host. (?)
+
+
 \subsubsection*{CLASSES}
 
 Syntax:
@@ -232,6 +242,17 @@ CONNECT <source actor>.<source port> <remote IP address>:<remote port>
 Connects an output port of one actor to an input of another.
 
 The destination is either a local actor, or the port of a remote host which has previously executed a LISTEN command. The remote port is then the port provided as output by that LISTEN command.
+
+\subsubsection*{DESTROY}
+
+Syntax:
+\begin{verbatim}
+DESTROY <actor1> [<actor2> ... <actorN>]
+\end{verbatim}
+
+Destroys the listed actor(s)
+
+For each listed actor all inputs are disconnected from the producers and all outputs are disconnected from the consumers, freeing output buffers, before calling the destructor of the actor.
 
 \subsubsection*{ENABLE}
 
@@ -298,6 +319,16 @@ QUIT
 \end{verbatim}
 
 Terminates a session.
+
+\subsubsection*{SHOW}
+
+Syntax:
+\begin{verbatim}
+SHOW <actor>
+\end{verbatim}
+
+Show a verbose description of the actor.
+
 
 \section{Dynamic deployment of distributed applications using Python}
 
