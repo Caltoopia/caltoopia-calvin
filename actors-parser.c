@@ -232,36 +232,36 @@ static void actors_handler(struct parser_state *state)
 static void address_handler(struct parser_state *state)
 {
   struct ifaddrs *ifa;
-
+  
   if (getifaddrs(&ifa)) {
     error(state, "could not obtain local IP addresses: %s", strerror(errno));
   } else {
     ok_begin(state);
     do {
       if (ifa->ifa_addr != NULL && ifa->ifa_addr->sa_family == AF_INET) {
-
-	/* Currently, only IPv4 supported */	
-	struct sockaddr_in *addr = (struct sockaddr_in *) ifa->ifa_addr;
-
-	int i;
-	unsigned long a = ntohl(addr->sin_addr.s_addr);
-	if (a != 0x7f000001u) { /* stay away from localhost */
-	  fprintf(state->out, " ");
-	  for (i = 0; i < 4; i++) {
-	    fprintf(state->out, "%d", (unsigned int) ((a >> 24) & 0x00ffu));
-	    if (i <= 2) {
-	      fprintf(state->out, ".");
-	    }
-	    a <<= 8;
-	  }
-	}
+        
+        /* Currently, only IPv4 supported */
+        struct sockaddr_in *addr = (struct sockaddr_in *) ifa->ifa_addr;
+        
+        int i;
+        unsigned long a = ntohl(addr->sin_addr.s_addr);
+        if (a != 0x7f000001u) { /* stay away from localhost */
+          fprintf(state->out, " ");
+          for (i = 0; i < 4; i++) {
+            fprintf(state->out, "%d", (unsigned int) ((a >> 24) & 0x00ffu));
+            if (i <= 2) {
+              fprintf(state->out, ".");
+            }
+            a <<= 8;
+          }
+        }
       }
-
+      
       ifa = ifa->ifa_next;
     } while (ifa);
-
+    
     ok_end(state);
-
+    
     freeifaddrs(ifa);
   }
 }
