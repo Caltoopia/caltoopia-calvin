@@ -6,10 +6,69 @@
 //
 //
 
-#include "actors-coder.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "actors-coder.h"
+#include "cJSON.h"
+
+/* ========================================================================= */
+
+typedef struct ActorJSONCoder {
+    ActorCoder baseCoder;
+    cJSON *root;
+    char *descr;
+} ActorJSONCoder;
+
+static void json_encode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+{
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    
+    switch (type[0]) {
+        case 's': // C string
+            cJSON_AddItemToObject(coder->root, key, cJSON_CreateString(value_ref));
+            break;
+            
+        default:
+            fprintf(stderr, "Error: Unknown type specifier '%c' in type specifier\n", type[0]);
+            break;
+    }
+}
+
+static void json_decode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+{
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+}
+
+static const char *json_string_rep(ActorCoder *this)
+{
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    free(coder->descr);
+    coder->descr = cJSON_Print(coder->root);
+
+    return coder->descr;
+}
+
+
+ActorCoder *newJSONCoder(void)
+{
+    ActorJSONCoder *coder = malloc(sizeof(ActorJSONCoder));
+    
+    coder->root = cJSON_CreateObject();
+    // cJSON *item;
+    // cJSON_AddItemToObject(coder->root, "header", item = cJSON_CreateObject());
+	// cJSON_AddStringToObject(item, "key", "value");
+    coder->descr = NULL;
+    
+    
+    coder->baseCoder.encode = json_encode;
+    coder->baseCoder.decode = json_decode;
+    coder->baseCoder._description = json_string_rep;
+    
+    return (ActorCoder *)coder;
+}
+
 
 
 /* ========================================================================= */
