@@ -50,6 +50,12 @@ static const char *json_string_rep(ActorCoder *this)
     return coder->descr;
 }
 
+static void json_destructor(ActorCoder *this)
+{
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    cJSON_Delete(coder->root);
+    free(coder->descr);
+}
 
 ActorCoder *newJSONCoder(void)
 {
@@ -61,9 +67,9 @@ ActorCoder *newJSONCoder(void)
 	// cJSON_AddStringToObject(item, "key", "value");
     coder->descr = NULL;
     
-    
     coder->baseCoder.encode = json_encode;
     coder->baseCoder.decode = json_decode;
+    coder->baseCoder.destructor = json_destructor;
     coder->baseCoder._description = json_string_rep;
     
     return (ActorCoder *)coder;
@@ -114,16 +120,21 @@ static const char *debug_string_rep(ActorCoder *this)
     return coder->storage;
 }
 
+static void debug_destructor(ActorCoder *this)
+{
+    ActorDebugCoder *coder = (ActorDebugCoder *)this;
+    free(coder->storage);
+}
 
 ActorCoder *newDebugCoder(void)
 {
     ActorDebugCoder *coder = malloc(sizeof(ActorDebugCoder));
-    
     coder->storage = calloc(DEBUG_BUFFER_SIZE, sizeof(char));
     coder->writepos = 0;
- 
+    
     coder->baseCoder.decode = debug_decode;
     coder->baseCoder.encode = debug_encode;
+    coder->baseCoder.destructor = debug_destructor;
     coder->baseCoder._description = debug_string_rep;
     
     return (ActorCoder *)coder;
@@ -131,7 +142,32 @@ ActorCoder *newDebugCoder(void)
 
 /* ========================================================================= */
 
+ActorCoder *newCoder(ActorCoderFormat fmt)
+{
+    ActorCoder *coder = NULL;
+    
+    switch (fmt) {
+        case JSON_CODER:
+            coder = newJSONCoder();
+            break;
+        case DEBUG_CODER: // Fallthrough
+        default:
+            coder = newDebugCoder();
+            fmt = DEBUG_CODER;
+            break;
+    }
+    coder->type = fmt;
+    return coder;
+}
+
+
 void destroyCoder(ActorCoder *coder)
 {
-    // free(coder);
+    if (coder->destructor) {
+        coder->destructor(coder);
+    }
+    free(coder);
 }
+
+
+

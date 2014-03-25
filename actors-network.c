@@ -796,7 +796,7 @@ void showActor(FILE *out, const char *name)
     AbstractActorInstance *actor = lookupActor(name);
     const ActorClass *klass = actor->actorClass;
 
-    ActorCoder *coder = newJSONCoder();
+    ActorCoder *coder = newCoder(JSON_CODER);
     const ActorClass *actorClass = actor->actorClass;
     if (actorClass->serialize) {
         actorClass->serialize(actor, coder);
