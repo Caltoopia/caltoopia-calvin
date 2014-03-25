@@ -21,21 +21,61 @@ typedef struct ActorJSONCoder {
     char *descr;
 } ActorJSONCoder;
 
-static void json_encode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+static CoderState *json_init(struct ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
+
+    return (void *)(coder->root);
+}
+
+static CoderState *json_encode_struct(CoderState *state, const char *key)
+{
+    cJSON *object = cJSON_CreateObject();
+    cJSON_AddItemToObject((cJSON *)state, key, object);
+
+    return (void *)object;
+}
+
+static CoderState *json_encode_array(CoderState *state, const char *key)
+{
+    cJSON *object = cJSON_CreateArray();
+    cJSON_AddItemToObject((cJSON *)state, key, object);
     
+    return (void *)object;
+}
+
+
+static void json_encode(CoderState *state, const char *key, void *value_ref, const char *type)
+{
+    cJSON *cj_state = (cJSON *)state;
+    
+    // Parameter conversion
+    cJSON *value = NULL;
     switch (type[0]) {
         case 's': // C string
-            cJSON_AddItemToObject(coder->root, key, cJSON_CreateString(value_ref));
+            value = cJSON_CreateString(value_ref);
+            break;
+        case 'i': // C int
+            value = cJSON_CreateNumber((double)*((int *)value_ref));
             break;
             
         default:
             fprintf(stderr, "Error: Unknown type specifier '%c' in type specifier\n", type[0]);
             break;
     }
+    if (cJSON_Array == cj_state->type) {
+        cJSON_AddItemToArray(cj_state, value);
+    } else {
+        cJSON_AddItemToObject(cj_state, key, value);
+    }
 }
 
+static void json_encode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+{
+    cJSON_AddItemToObject((cJSON *)state, key, cJSON_CreateString("FIXME: Base64 encoded data ..."));
+}
+
+// FIXME
 static void json_decode(ActorCoder *this, void *value_ref, const char *key, const char *type)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
@@ -62,13 +102,16 @@ ActorCoder *newJSONCoder(void)
     ActorJSONCoder *coder = malloc(sizeof(ActorJSONCoder));
     
     coder->root = cJSON_CreateObject();
-    // cJSON *item;
-    // cJSON_AddItemToObject(coder->root, "header", item = cJSON_CreateObject());
-	// cJSON_AddStringToObject(item, "key", "value");
     coder->descr = NULL;
     
+    coder->baseCoder.init = json_init;
     coder->baseCoder.encode = json_encode;
+    coder->baseCoder.encode_struct = json_encode_struct;
+    coder->baseCoder.encode_array = json_encode_array;
+    coder->baseCoder.encode_memory = json_encode_memory;
+    
     coder->baseCoder.decode = json_decode;
+
     coder->baseCoder.destructor = json_destructor;
     coder->baseCoder._description = json_string_rep;
     
@@ -83,58 +126,53 @@ ActorCoder *newJSONCoder(void)
 
 typedef struct ActorDebugCoder {
     ActorCoder baseCoder;
-    char *storage;
-    int writepos;
 } ActorDebugCoder;
 
-static void debug_encode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+CoderState *debug_init(struct ActorCoder *this)
 {
-    ActorDebugCoder *coder = (ActorDebugCoder *)this;
-    char *dst = &coder->storage[coder->writepos];
-    size_t limit = DEBUG_BUFFER_SIZE - coder->writepos - 1;
-    if (limit > 0) {
-        int written = snprintf(dst, limit, "Encoding %s @ %s\n", type, key);
-        if (written > 0) {
-            coder->writepos += written;
-        }
-    }
+    return NULL;
 }
 
-static void debug_decode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+void debug_encode(CoderState *state, const char *key, void *value_ref, const char *type)
 {
-    ActorDebugCoder *coder = (ActorDebugCoder *)this;
-    char *dst = &coder->storage[coder->writepos];
-    size_t limit = DEBUG_BUFFER_SIZE - coder->writepos - 1;
-    if (limit > 0) {
-        int written = snprintf(dst, limit, "Decoding %s @ %s\n", type, key);
-        if (written > 0) {
-            coder->writepos += written;
-        }
-    }
+}
+
+CoderState *debug_encode_struct(CoderState *state, const char *key)
+{
+    return NULL;
+}
+
+CoderState *debug_encode_array(CoderState *state, const char *key)
+{
+    return NULL;
+}
+
+void debug_encode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+{
+}
+
+void debug_decode(struct ActorCoder *this, void *value_ref, const char *key, const char *type)
+{
 }
 
 static const char *debug_string_rep(ActorCoder *this)
 {
-    ActorDebugCoder *coder = (ActorDebugCoder *)this;
-
-    return coder->storage;
-}
-
-static void debug_destructor(ActorCoder *this)
-{
-    ActorDebugCoder *coder = (ActorDebugCoder *)this;
-    free(coder->storage);
+    return "DEBUG_CODER";
 }
 
 ActorCoder *newDebugCoder(void)
 {
     ActorDebugCoder *coder = malloc(sizeof(ActorDebugCoder));
-    coder->storage = calloc(DEBUG_BUFFER_SIZE, sizeof(char));
-    coder->writepos = 0;
+    
+    coder->baseCoder.init = debug_init;
+    coder->baseCoder.encode = debug_encode;
+    coder->baseCoder.encode_struct = debug_encode_struct;
+    coder->baseCoder.encode_array = debug_encode_array;
+    coder->baseCoder.encode_memory = debug_encode_memory;
     
     coder->baseCoder.decode = debug_decode;
-    coder->baseCoder.encode = debug_encode;
-    coder->baseCoder.destructor = debug_destructor;
+    
+    coder->baseCoder.destructor = NULL;
     coder->baseCoder._description = debug_string_rep;
     
     return (ActorCoder *)coder;

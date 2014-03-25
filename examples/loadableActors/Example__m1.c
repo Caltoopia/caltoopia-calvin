@@ -18,10 +18,19 @@
 //Actor constants
 static const int32_t FACTOR = 2;
 
+typedef struct test_struct {
+    int a;
+    int b;
+    struct test_struct *another;
+} test_struct;
+
 //Actor state
 typedef struct {
-  AbstractActorInstance base;
-  int _fsmState;
+    AbstractActorInstance base;
+    int _fsmState;
+    int array[4];
+    test_struct s;
+    test_struct sa[2];
 } ActorInstance_Example_m1;
 
 //Actor functions
@@ -46,12 +55,48 @@ static const ActionDescription actionDescriptions[] = {
   {"action0", portRate_in_action0, portRate_out_action0},
 };
 
+static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
+{
+    ActorInstance_Example_m1 *this = (ActorInstance_Example_m1 *)actor;
+    CoderState *state = coder->init(coder);
+    
+    // fsmState
+    coder->encode(state, "fsmState", &this->_fsmState, "i");
+    
+    // int array
+    CoderState *array_state = coder->encode_array(state, "my_array");
+    for (int i=0; i<4; i++) {
+        coder->encode(array_state, NULL, &this->array[i], "i");
+    }
+    
+    // Structs with structs 
+    CoderState *struct_state = coder->encode_struct(state, "s");
+    coder->encode(struct_state, "a", &this->s.a, "i");
+    coder->encode(struct_state, "b", &this->s.b, "i");
+    if (this->s.another) {
+        CoderState *another_state = coder->encode_struct(struct_state, "s");
+        coder->encode(another_state, "a", &this->s.another->a, "i");
+        coder->encode(another_state, "b", &this->s.another->b, "i");
+    }
+    
+    // Array of structs
+    array_state = coder->encode_array(state, "sa");
+    struct_state = coder->encode_struct(array_state, "s");
+    coder->encode(struct_state, "a", &this->sa[0].a, "i");
+    coder->encode(struct_state, "b", &this->sa[0].b, "i");
+    struct_state = coder->encode_struct(array_state, "s");
+    coder->encode(struct_state, "a", &this->sa[1].a, "i");
+    coder->encode(struct_state, "b", &this->sa[1].b, "i");
+    
+};
+
+
 ActorClass klass = INIT_ActorClass(
   "Example_m1",
   ActorInstance_Example_m1,
   ActorInstance_Example_m1_constructor,
   0, //setParam not needed anymore (we instantiate with params)
-  0, // serialize
+  serialize,
   Example_m1_action_scheduler,
   0, // no destructor
   1, inputPortDescriptions,
@@ -77,7 +122,24 @@ static void ActorInstance_Example_m1_constructor(AbstractActorInstance *pBase) {
   thisActor->_fsmState = ActorInstance_Example_m1__defaultState_ID;//Initial state
   {
   }
-
+    thisActor->array[0] = 1;
+    thisActor->array[1] = 11;
+    thisActor->array[2] = 111;
+    thisActor->array[3] = 1111;
+    
+    thisActor->s.a = 1;
+    thisActor->s.b = 2;
+    thisActor->s.another = malloc(sizeof(test_struct));
+    thisActor->s.another->a = 11;
+    thisActor->s.another->b = 22;
+    
+    thisActor->sa[0].a= 111;
+    thisActor->sa[0].b=222;
+    thisActor->sa[0].another = NULL;
+    thisActor->sa[1].a = 1111;
+    thisActor->sa[1].b = 2222;
+    thisActor->sa[1].another = NULL;
+    
 }
 static const int exitcode_block_Any[3]={1,0,1};
 ART_ACTION_SCHEDULER(Example_m1_action_scheduler) {
