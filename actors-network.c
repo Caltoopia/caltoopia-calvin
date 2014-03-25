@@ -782,7 +782,33 @@ void listActors(FILE *out)
 }
 
 /* ------------------------------------------------------------------------- */
+#if 1
 
+/* Hijack 'show' command to test serialization of state:
+ *  1) Instantiate a coder (JSON, XML, debug, ...)
+ *  2) Tell actor to serialize itself
+ *  3) Write human readable content of coder object to <out>
+ *  4) Clean up
+ */
+
+void showActor(FILE *out, const char *name)
+{
+    AbstractActorInstance *actor = lookupActor(name);
+    const ActorClass *klass = actor->actorClass;
+
+    ActorCoder *coder = newDebugCoder();
+    const ActorClass *actorClass = actor->actorClass;
+    if (actorClass->serialize) {
+        actorClass->serialize(actor, coder);
+    }
+
+    fprintf(out, "\n====\n%s\n----\n", klass->name);
+    fprintf(out, "%s\n", coder->string_rep());
+    fprintf(out, "----\n");
+
+    destroyCoder(coder);
+}
+#else
 void showActor(FILE *out, const char *name)
 {
   AbstractActorInstance *actor = lookupActor(name);
@@ -825,3 +851,4 @@ void showActor(FILE *out, const char *name)
     fprintf(out, " o:%s:%d", descr->name, spaceLeft);
   }
 }
+#endif

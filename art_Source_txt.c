@@ -41,6 +41,7 @@
  */
 
 #include "actors-rts.h"
+#include "actors-coder.h"
 #include <stdio.h>
 #include <errno.h>
 
@@ -125,6 +126,12 @@ static void setParam(AbstractActorInstance *pBase,
   }
 }
 
+static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
+{
+    ActorInstance_art_Source *this = (ActorInstance_art_Source *)actor;
+    coder->encode(this->filename, "filename", "cstring");
+}
+
 static const PortDescription outputPortDescriptions[]={
   {0, "Out", sizeof(int32_t)}
 };
@@ -146,6 +153,7 @@ ActorClass ActorClass_art_Source_txt = INIT_ActorClass(
   ActorInstance_art_Source,
   constructor,
   setParam,
+  serialize,
   art_Source_txt_action_scheduler,
   destructor,
   0, 0,

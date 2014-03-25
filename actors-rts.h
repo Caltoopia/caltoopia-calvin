@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "actors-typedefs.h"
+#include "actors-coder.h"
 #include "dllist.h"
 
 /* make the header usable from C++ */
@@ -122,7 +123,8 @@ extern "C" {
     const int* (*action_scheduler)(AbstractActorInstance*);
     void (*constructor)(AbstractActorInstance*);
     void (*destructor)(AbstractActorInstance*);
-    void (*set_param)(AbstractActorInstance*,const char*, const char*);
+    void (*set_param)(AbstractActorInstance*, const char*, const char*);
+    void (*serialize)(AbstractActorInstance*, ActorCoder*);
   };
 
   // Creates an ActorClass initializer
@@ -131,6 +133,7 @@ extern "C" {
 instance_t,              \
 ctor,                    \
 setParam,                \
+serlize,                 \
 sched,                   \
 dtor,                    \
 nInputs, inputDescr,   \
@@ -149,7 +152,8 @@ nActions, actionDescr) { \
 .action_scheduler=sched,                     \
 .constructor=ctor,                           \
 .destructor=dtor,                            \
-.set_param=setParam                          \
+.set_param=setParam,                         \
+.serialize=serlize                           \
 }
 
 

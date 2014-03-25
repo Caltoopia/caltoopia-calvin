@@ -146,6 +146,7 @@ ActorClass ActorClass_art_Source_real = INIT_ActorClass(
   ActorInstance_art_Source,
   constructor,
   setParam,
+  NULL,
   art_Source_real_action_scheduler,
   destructor,
   0, 0,

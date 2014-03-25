@@ -138,6 +138,7 @@ ActorClass ActorClass_art_Sink_txt = INIT_ActorClass(
   ActorInstance_art_Sink,
   constructor,
   setParam,
+  NULL,
   art_Sink_txt_action_scheduler,
   destructor,
   1, inputPortDescriptions,
