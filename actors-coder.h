@@ -10,12 +10,11 @@
 #define ACTORS_CODER_H
 
 typedef struct ActorCoder {
-    void (*encode)(void *value_ref, const char *key, const char *type);
-    void (*decode)(void *value_ref, const char *key, const char *type);
+    void (*encode)(struct ActorCoder *this, void *value_ref, const char *key, const char *type);
+    void (*decode)(struct ActorCoder *this, void *value_ref, const char *key, const char *type);
     // Semi-private
-    const char *(*string_rep)(void);
+    const char *(*_description)(struct ActorCoder *this);
 } ActorCoder;
-
 
 ActorCoder *newDebugCoder(void);
 void destroyCoder(ActorCoder *coder);

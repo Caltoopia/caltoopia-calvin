@@ -803,7 +803,7 @@ void showActor(FILE *out, const char *name)
     }
 
     fprintf(out, "\n====\n%s\n----\n", klass->name);
-    fprintf(out, "%s\n", coder->string_rep());
+    fprintf(out, "%s\n", coder->_description(coder));
     fprintf(out, "----\n");
 
     destroyCoder(coder);

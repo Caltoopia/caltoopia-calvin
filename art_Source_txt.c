@@ -129,7 +129,7 @@ static void setParam(AbstractActorInstance *pBase,
 static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_art_Source *this = (ActorInstance_art_Source *)actor;
-    coder->encode(this->filename, "filename", "cstring");
+    coder->encode(coder, this->filename, "filename", "cstring");
 }
 
 static const PortDescription outputPortDescriptions[]={
