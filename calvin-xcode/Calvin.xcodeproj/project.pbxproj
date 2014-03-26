@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		430CCDDE18E0A62C00AB1266 /* actors-coder.c in Sources */ = {isa = PBXBuildFile; fileRef = 430CCDDD18E0A62C00AB1266 /* actors-coder.c */; };
+		430CCDE118E1AF0600AB1266 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = 430CCDDF18E1AF0600AB1266 /* cJSON.c */; };
 		43C5405F18DB26BC00BC6123 /* actors-network.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404518DB25EA00BC6123 /* actors-network.c */; };
 		43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404718DB25EA00BC6123 /* actors-parser.c */; };
 		43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404918DB25EA00BC6123 /* actors-registry.c */; };
@@ -43,6 +45,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		430CCDDC18E0955700AB1266 /* actors-coder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "actors-coder.h"; path = "../actors-coder.h"; sourceTree = "<group>"; };
+		430CCDDD18E0A62C00AB1266 /* actors-coder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "actors-coder.c"; path = "../actors-coder.c"; sourceTree = "<group>"; };
+		430CCDDF18E1AF0600AB1266 /* cJSON.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cJSON.c; path = ../cJSON.c; sourceTree = "<group>"; };
+		430CCDE018E1AF0600AB1266 /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cJSON.h; path = ../cJSON.h; sourceTree = "<group>"; };
 		43C5404418DB25EA00BC6123 /* actors-fifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-fifo.h"; path = "../actors-fifo.h"; sourceTree = "<group>"; };
 		43C5404518DB25EA00BC6123 /* actors-network.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "actors-network.c"; path = "../actors-network.c"; sourceTree = "<group>"; };
 		43C5404618DB25EA00BC6123 /* actors-network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-network.h"; path = "../actors-network.h"; sourceTree = "<group>"; };
@@ -86,11 +92,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		430CCDE218E1AF1200AB1266 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				430CCDDF18E1AF0600AB1266 /* cJSON.c */,
+				430CCDE018E1AF0600AB1266 /* cJSON.h */,
+			);
+			name = Helpers;
+			sourceTree = "<group>";
+		};
 		43C5403C18DB255500BC6123 = {
 			isa = PBXGroup;
 			children = (
 				43C540A618DC383200BC6123 /* .gitignore */,
+				43C5409B18DB30F900BC6123 /* notes.md */,
 				43C5404318DB258200BC6123 /* calvin */,
+				430CCDE218E1AF1200AB1266 /* Helpers */,
 				43C5407018DB272700BC6123 /* system actors */,
 				43C5407718DB29FB00BC6123 /* loadable actors */,
 				43C5408D18DB2B7A00BC6123 /* Frameworks */,
@@ -103,11 +120,11 @@
 			children = (
 				43C5407118DB290900BC6123 /* headers */,
 				43C5404518DB25EA00BC6123 /* actors-network.c */,
+				430CCDDD18E0A62C00AB1266 /* actors-coder.c */,
 				43C5404718DB25EA00BC6123 /* actors-parser.c */,
 				43C5404918DB25EA00BC6123 /* actors-registry.c */,
 				43C5404B18DB25EA00BC6123 /* actors-rts.c */,
 				43C5404D18DB25EA00BC6123 /* actors-teleport.c */,
-				43C5409B18DB30F900BC6123 /* notes.md */,
 			);
 			name = calvin;
 			sourceTree = "<group>";
@@ -137,6 +154,7 @@
 			isa = PBXGroup;
 			children = (
 				43C5408718DB2AA800BC6123 /* natives.h */,
+				430CCDDC18E0955700AB1266 /* actors-coder.h */,
 				43C5404418DB25EA00BC6123 /* actors-fifo.h */,
 				43C5404618DB25EA00BC6123 /* actors-network.h */,
 				43C5404818DB25EA00BC6123 /* actors-parser.h */,
@@ -243,11 +261,13 @@
 				43C5406C18DB272100BC6123 /* art_Sink_txt.c in Sources */,
 				43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */,
 				43C5406A18DB272100BC6123 /* art_Sink_bin.c in Sources */,
+				430CCDE118E1AF0600AB1266 /* cJSON.c in Sources */,
 				43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */,
 				43C5406218DB26CB00BC6123 /* actors-rts.c in Sources */,
 				43C5406F18DB272100BC6123 /* art_Source_txt.c in Sources */,
 				43C5406318DB26CB00BC6123 /* actors-teleport.c in Sources */,
 				43C5406B18DB272100BC6123 /* art_Sink_real.c in Sources */,
+				430CCDDE18E0A62C00AB1266 /* actors-coder.c in Sources */,
 				43C5406E18DB272100BC6123 /* art_Source_real.c in Sources */,
 				43C5406D18DB272100BC6123 /* art_Source_bin.c in Sources */,
 			);
