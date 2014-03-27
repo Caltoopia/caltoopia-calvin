@@ -469,13 +469,22 @@ void setActorParam(AbstractActorInstance *instance,
 
 /* ------------------------------------------------------------------------- */
 
-void enableActorInstance(const char *actor_name)
+void disableActorInstance(const char *actor_name)
 {
   AbstractActorInstance *instance = lookupActor(actor_name);
 
-  if (instance->actorClass->constructor) {
-    instance->actorClass->constructor(instance);
+    dllist_remove(&instances, &instance->listEntry);
+    dllist_append(&disabled_instances, &instance->listEntry);
+    
+    // wakeUpNetwork();
   }
+
+
+/* ------------------------------------------------------------------------- */
+
+void enableActorInstance(const char *actor_name)
+{
+  AbstractActorInstance *instance = lookupActor(actor_name);
 
   dllist_remove(&disabled_instances, &instance->listEntry);
   dllist_append(&instances, &instance->listEntry);

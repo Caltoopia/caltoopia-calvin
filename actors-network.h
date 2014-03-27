@@ -52,8 +52,8 @@ extern "C" {
   void initActorNetwork(void);
 
   /**
-   * Called by parser. Creates an actor instance.  The actor will not
-   * execute until enableActorInstance() below is called.
+   * Called by parser. Creates an actor instance. Runs the constructor.
+   * The actor will not execute until enableActorInstance() below is called.
    * @param actorClass an ActorClass
    */
   AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
@@ -71,8 +71,14 @@ extern "C" {
                      const char *value);
 
   /**
-   * Called by parser. Runs constructor and enables an actor for
-   * execution. If the worker thread is idle, it will be woken up.
+   * Called by parser. Prevents an actor from executing.
+   */
+  void disableActorInstance(const char *actor_name);
+
+    
+  /**
+   * Called by parser. Enables an actor for execution. 
+   * If the worker thread is idle, it will be woken up.
    */
   void enableActorInstance(const char *actor_name);
 

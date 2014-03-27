@@ -329,6 +329,24 @@ static void destroy_handler(struct parser_state *state)
 
 /* ------------------------------------------------------------------------- */
 
+static void disable_handler(struct parser_state *state)
+{
+  const char *actor_name = get_next_word(state);
+  if (! actor_name) {
+    error(state, "missing actor name");
+    return;
+  }
+  
+  do {
+    disableActorInstance(actor_name);
+    actor_name = get_next_word(state);
+  } while(actor_name);
+  
+  ok(state, "disabled");
+}
+
+/* ------------------------------------------------------------------------- */
+
 static void enable_handler(struct parser_state *state)
 {
   const char *actor_name = get_next_word(state);
@@ -436,6 +454,10 @@ static void new_handler(struct parser_state *state)
     
     setActorParam(actor, arg, splitpoint);
   }
+  
+  if (actor->actorClass->constructor) {
+    actor->actorClass->constructor(actor);
+  }
 
   ok(state, "created actor %s", actor_name);
 }
@@ -474,6 +496,7 @@ static const struct command_entry {
   { "CLASSES", &classes_handler },
   { "CONNECT", &connect_handler },
   { "DESTROY", &destroy_handler },
+  { "DISABLE", &disable_handler },
   { "ENABLE", &enable_handler },
   { "JOIN", &join_handler },
   { "LISTEN", &listen_handler },
