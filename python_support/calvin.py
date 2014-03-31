@@ -90,6 +90,10 @@ class Node:
     def enable(self):
       self.node.execute("ENABLE %s" % self.name)
 
+    def disable(self):
+        self.node.execute("DISABLE %s" % self.name)
+
+
     def destroy(self):
       self.node.execute("DESTROY %s" % self.name)
 
