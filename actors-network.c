@@ -791,7 +791,7 @@ void listActors(FILE *out)
 }
 
 /* ------------------------------------------------------------------------- */
-#if 1
+#if 0
 
 /* Hijack 'show' command to test serialization of state:
  *  1) Instantiate a coder (JSON, XML, debug, ...)
