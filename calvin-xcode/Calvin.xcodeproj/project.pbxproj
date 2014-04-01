@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		430CCDDE18E0A62C00AB1266 /* actors-coder.c in Sources */ = {isa = PBXBuildFile; fileRef = 430CCDDD18E0A62C00AB1266 /* actors-coder.c */; };
 		430CCDE118E1AF0600AB1266 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = 430CCDDF18E1AF0600AB1266 /* cJSON.c */; };
+		438FFC8E18E9885000F2C4E7 /* accumulate.c in Sources */ = {isa = PBXBuildFile; fileRef = 438FFC8D18E9885000F2C4E7 /* accumulate.c */; };
 		43C5405F18DB26BC00BC6123 /* actors-network.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404518DB25EA00BC6123 /* actors-network.c */; };
 		43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404718DB25EA00BC6123 /* actors-parser.c */; };
 		43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404918DB25EA00BC6123 /* actors-registry.c */; };
@@ -49,6 +50,13 @@
 		430CCDDD18E0A62C00AB1266 /* actors-coder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "actors-coder.c"; path = "../actors-coder.c"; sourceTree = "<group>"; };
 		430CCDDF18E1AF0600AB1266 /* cJSON.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cJSON.c; path = ../cJSON.c; sourceTree = "<group>"; };
 		430CCDE018E1AF0600AB1266 /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cJSON.h; path = ../cJSON.h; sourceTree = "<group>"; };
+		430CCDE518E3039300AB1266 /* minimal.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = minimal.cs; path = ../examples/loadableActors/minimal.cs; sourceTree = SOURCE_ROOT; };
+		430CCDE618E45A7800AB1266 /* minimal_remote.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = minimal_remote.cs; path = ../examples/loadableActors/minimal_remote.cs; sourceTree = SOURCE_ROOT; };
+		438FFC8D18E9885000F2C4E7 /* accumulate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = accumulate.c; path = ../examples/loadableActors/accumulate.c; sourceTree = SOURCE_ROOT; };
+		438FFC8F18E98EA600F2C4E7 /* migrate1.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; name = migrate1.py; path = ../examples/loadableActors/migrate1.py; sourceTree = SOURCE_ROOT; };
+		438FFC9118E9905F00F2C4E7 /* calvin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = calvin.py; path = ../python_support/calvin.py; sourceTree = "<group>"; };
+		438FFC9218E9905F00F2C4E7 /* example_local.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_local.py; path = ../python_support/example_local.py; sourceTree = "<group>"; };
+		438FFC9318E9905F00F2C4E7 /* example_remote.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_remote.py; path = ../python_support/example_remote.py; sourceTree = "<group>"; };
 		43C5404418DB25EA00BC6123 /* actors-fifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-fifo.h"; path = "../actors-fifo.h"; sourceTree = "<group>"; };
 		43C5404518DB25EA00BC6123 /* actors-network.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "actors-network.c"; path = "../actors-network.c"; sourceTree = "<group>"; };
 		43C5404618DB25EA00BC6123 /* actors-network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-network.h"; path = "../actors-network.h"; sourceTree = "<group>"; };
@@ -101,6 +109,16 @@
 			name = Helpers;
 			sourceTree = "<group>";
 		};
+		438FFC9018E98FF900F2C4E7 /* Scripting */ = {
+			isa = PBXGroup;
+			children = (
+				438FFC9118E9905F00F2C4E7 /* calvin.py */,
+				438FFC9218E9905F00F2C4E7 /* example_local.py */,
+				438FFC9318E9905F00F2C4E7 /* example_remote.py */,
+			);
+			name = Scripting;
+			sourceTree = "<group>";
+		};
 		43C5403C18DB255500BC6123 = {
 			isa = PBXGroup;
 			children = (
@@ -111,6 +129,7 @@
 				43C5407018DB272700BC6123 /* system actors */,
 				43C5407718DB29FB00BC6123 /* loadable actors */,
 				43C5408D18DB2B7A00BC6123 /* Frameworks */,
+				438FFC9018E98FF900F2C4E7 /* Scripting */,
 				43C5405618DB264600BC6123 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -170,8 +189,12 @@
 		43C5407718DB29FB00BC6123 /* loadable actors */ = {
 			isa = PBXGroup;
 			children = (
+				430CCDE618E45A7800AB1266 /* minimal_remote.cs */,
+				438FFC8F18E98EA600F2C4E7 /* migrate1.py */,
+				430CCDE518E3039300AB1266 /* minimal.cs */,
 				43C540A518DB444A00BC6123 /* Example.cs */,
 				43C5407F18DB2A6A00BC6123 /* Example__m1.c */,
+				438FFC8D18E9885000F2C4E7 /* accumulate.c */,
 				43C5408018DB2A6A00BC6123 /* Example__m2.c */,
 				43C5408118DB2A6A00BC6123 /* Example__m3.c */,
 				43C5408218DB2A6A00BC6123 /* Example__m4.c */,
@@ -262,6 +285,7 @@
 				43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */,
 				43C5406A18DB272100BC6123 /* art_Sink_bin.c in Sources */,
 				430CCDE118E1AF0600AB1266 /* cJSON.c in Sources */,
+				438FFC8E18E9885000F2C4E7 /* accumulate.c in Sources */,
 				43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */,
 				43C5406218DB26CB00BC6123 /* actors-rts.c in Sources */,
 				43C5406F18DB272100BC6123 /* art_Source_txt.c in Sources */,
