@@ -85,7 +85,7 @@ static const char *json_string_rep(ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
     free(coder->descr);
-    coder->descr = cJSON_Print(coder->root);
+    coder->descr = cJSON_PrintUnformatted(coder->root);
 
     return coder->descr;
 }
