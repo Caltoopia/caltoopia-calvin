@@ -792,6 +792,19 @@ void listActors(FILE *out)
 }
 
 /* ------------------------------------------------------------------------- */
+
+void serializeActor(const char *name, ActorCoder *coder)
+{
+    AbstractActorInstance *actor = lookupActor(name);
+    const ActorClass *actorClass = actor->actorClass;
+    
+    if (actorClass->serialize) {
+        actorClass->serialize(actor, coder);
+    }
+}
+
+/* ------------------------------------------------------------------------- */
+
 #if 0
 
 /* Hijack 'show' command to test serialization of state:

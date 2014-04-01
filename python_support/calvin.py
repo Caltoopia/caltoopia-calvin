@@ -93,6 +93,8 @@ class Node:
     def disable(self):
         self.node.execute("DISABLE %s" % self.name)
 
+    def serialize(self):
+        self.node.execute("SERIALIZE %s" % self.name)
 
     def destroy(self):
       self.node.execute("DESTROY %s" % self.name)

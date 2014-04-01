@@ -487,6 +487,25 @@ static void show_handler(struct parser_state *state)
 
 /* ------------------------------------------------------------------------- */
 
+static void serialize_handler(struct parser_state *state)
+{
+  const char *actor_name = get_next_word(state);
+  if (! actor_name) {
+    error(state, "missing actor name");
+    return;
+  }
+  ok_begin(state);
+  
+  ActorCoder *coder = newCoder(JSON_CODER);
+  serializeActor(actor_name, coder);
+  fprintf(state->out, " %s", coder->_description(coder));
+  destroyCoder(coder);
+  
+  ok_end(state);
+}
+
+/* ------------------------------------------------------------------------- */
+
 static const struct command_entry {
   const char *command;
   void (*handler)(struct parser_state *);
@@ -503,6 +522,7 @@ static const struct command_entry {
   { "LOAD", &load_handler },
   { "NEW", &new_handler },
   { "QUIT", &quit_handler },
+  { "SERIALIZE", &serialize_handler },
   { "SHOW", &show_handler },
   { NULL, NULL }
 };

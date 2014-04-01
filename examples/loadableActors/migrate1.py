@@ -22,6 +22,7 @@ acc.enable()
 time.sleep(0.1)
 
 acc.disable()
+acc.serialize()
 time.sleep(2)
 
 acc.enable()

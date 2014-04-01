@@ -40,6 +40,7 @@
 #define ACTORS_CONFIG_H
 
 #include "actors-typedefs.h"
+#include "actors-coder.h"
 
 /* make the header usable from C++ */
 #ifdef __cplusplus
@@ -132,6 +133,12 @@ extern "C" {
    */
   void listActors(FILE *out);
   
+  /**
+   * Serialize actor state using the supplied coder. May not be called on 
+   * enabled actors.
+   */
+  void serializeActor(const char *name, ActorCoder *coder);
+    
   /**
    * Called by parser. Displays an actor and its FIFO states to the
    * given stream.
