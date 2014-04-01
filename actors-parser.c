@@ -506,6 +506,29 @@ static void serialize_handler(struct parser_state *state)
 
 /* ------------------------------------------------------------------------- */
 
+static void deserialize_handler(struct parser_state *state)
+{
+  const char *actor_name = get_next_word(state);
+  if (! actor_name) {
+    error(state, "missing actor name");
+    return;
+  }
+
+  const char *closure = get_next_word(state);
+  if (! closure) {
+    error(state, "missing closure");
+    return;
+  }
+  
+  ActorCoder *coder = newCoder(JSON_CODER);
+  // deserializeActor(actor_name, coder);
+  destroyCoder(coder);
+  
+  ok(state, "%s state set", actor_name);
+}
+
+/* ------------------------------------------------------------------------- */
+
 static const struct command_entry {
   const char *command;
   void (*handler)(struct parser_state *);
@@ -514,6 +537,7 @@ static const struct command_entry {
   { "ADDRESS", &address_handler },
   { "CLASSES", &classes_handler },
   { "CONNECT", &connect_handler },
+  { "DESERIALIZE", &deserialize_handler },
   { "DESTROY", &destroy_handler },
   { "DISABLE", &disable_handler },
   { "ENABLE", &enable_handler },
