@@ -208,6 +208,7 @@ static InputPort * lookupInput(const AbstractActorInstance *instance,
 
 /* ------------------------------------------------------------------------- */
 
+// ToDo: Why asymmetric, why not connect(InputPort *in, OutputPort *out) ?
 static void connectInput(AbstractActorInstance *instance,
                          const char *portName,
                          OutputPort *producer)
