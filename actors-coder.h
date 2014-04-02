@@ -46,7 +46,11 @@ typedef struct ActorCoder {
     void (*encode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
     
     // FIXME: Decoding functions corresponding to the above
-    void (*decode)(struct ActorCoder *this, void *value_ref, const char *key, const char *type);
+    void (*decode)(struct ActorCoder *this, const char *key, void *value_ref, const char *type);
+    
+    // Get/set data
+    void *(*data)(struct ActorCoder *this);
+    void (*set_data)(struct ActorCoder *this, void *closure);
 
     // Semi-private API
     const char *(*_description)(struct ActorCoder *this);

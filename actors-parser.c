@@ -521,7 +521,8 @@ static void deserialize_handler(struct parser_state *state)
   }
   
   ActorCoder *coder = newCoder(JSON_CODER);
-  // deserializeActor(actor_name, coder);
+  coder->set_data(coder, (void *)closure);
+  deserializeActor(actor_name, coder);
   destroyCoder(coder);
   
   ok(state, "%s state set", actor_name);

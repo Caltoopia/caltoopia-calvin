@@ -805,6 +805,18 @@ void serializeActor(const char *name, ActorCoder *coder)
 
 /* ------------------------------------------------------------------------- */
 
+void deserializeActor(const char *name, ActorCoder *coder)
+{
+    AbstractActorInstance *actor = lookupActor(name);
+    const ActorClass *actorClass = actor->actorClass;
+    
+    if (actorClass->deserialize) {
+        actorClass->deserialize(actor, coder);
+    }
+}
+
+/* ------------------------------------------------------------------------- */
+
 #if 0
 
 /* Hijack 'show' command to test serialization of state:

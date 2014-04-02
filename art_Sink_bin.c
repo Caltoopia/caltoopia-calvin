@@ -138,6 +138,7 @@ ActorClass ActorClass_art_Sink_bin = INIT_ActorClass(
   constructor,
   setParam,
   NULL,
+  NULL,
   art_Sink_bin_action_scheduler,
   destructor,
   1, inputPortDescriptions,

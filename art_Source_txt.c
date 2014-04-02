@@ -155,6 +155,7 @@ ActorClass ActorClass_art_Source_txt = INIT_ActorClass(
   constructor,
   setParam,
   serialize,
+  NULL,
   art_Source_txt_action_scheduler,
   destructor,
   0, 0,

@@ -76,9 +76,51 @@ static void json_encode_memory(CoderState *state, const char *key, void *ptr, si
 }
 
 // FIXME
-static void json_decode(ActorCoder *this, void *value_ref, const char *key, const char *type)
+static void json_decode(ActorCoder *this, const char *key, void *value_ref, const char *type)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    
+    cJSON *obj = cJSON_GetObjectItem(coder->root, key);
+    if (!obj) {
+        return;
+    }
+    
+    switch (type[0]) {
+        case 's': // C string
+        {
+            const char *str = obj->valuestring;
+            // FIXME
+        }
+            break;
+        case 'i': // C int
+        {
+            int *dest = (int *)value_ref;
+            *dest = (int)(obj->valueint);
+        }
+            break;
+            
+        default:
+            fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
+            break;
+    }
+}
+
+void *json_data(struct ActorCoder *this)
+{
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    return coder->root;
+}
+
+void json_set_data(struct ActorCoder *this, void *closure)
+{
+    // If closure is NOT a C string, bad things will happen.
+    ActorJSONCoder *coder = (ActorJSONCoder *)this;
+    // FIXME: What to do if parse fails?
+    cJSON *data = cJSON_Parse(closure);
+    if (data) {
+        cJSON_Delete(coder->root);
+        coder->root = data;
+    }
 }
 
 static const char *json_string_rep(ActorCoder *this)
@@ -111,6 +153,9 @@ ActorCoder *newJSONCoder(void)
     coder->baseCoder.encode_memory = json_encode_memory;
     
     coder->baseCoder.decode = json_decode;
+    
+    coder->baseCoder.data = json_data;
+    coder->baseCoder.set_data = json_set_data;
 
     coder->baseCoder.destructor = json_destructor;
     coder->baseCoder._description = json_string_rep;
@@ -155,6 +200,16 @@ void debug_decode(struct ActorCoder *this, void *value_ref, const char *key, con
 {
 }
 
+void *debug_data(struct ActorCoder *this)
+{
+    return NULL;
+}
+
+void debug_set_data(struct ActorCoder *this, void *closure)
+{
+}
+
+
 static const char *debug_string_rep(ActorCoder *this)
 {
     return "DEBUG_CODER";
@@ -169,6 +224,9 @@ ActorCoder *newDebugCoder(void)
     coder->baseCoder.encode_struct = debug_encode_struct;
     coder->baseCoder.encode_array = debug_encode_array;
     coder->baseCoder.encode_memory = debug_encode_memory;
+    
+    coder->baseCoder.data = debug_data;
+    coder->baseCoder.set_data = debug_set_data;
     
     coder->baseCoder.decode = debug_decode;
     

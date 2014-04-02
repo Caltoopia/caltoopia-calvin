@@ -140,6 +140,12 @@ extern "C" {
   void serializeActor(const char *name, ActorCoder *coder);
     
   /**
+   * De-serialize actor state using the supplied coder. May not be called on
+   * enabled actors.
+   */
+  void deserializeActor(const char *name, ActorCoder *coder);
+
+  /**
    * Called by parser. Displays an actor and its FIFO states to the
    * given stream.
    */

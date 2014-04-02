@@ -125,6 +125,7 @@ extern "C" {
     void (*destructor)(AbstractActorInstance*);
     void (*set_param)(AbstractActorInstance*, const char*, const char*);
     void (*serialize)(AbstractActorInstance*, ActorCoder*);
+    void (*deserialize)(AbstractActorInstance*, ActorCoder*);
   };
 
   // Creates an ActorClass initializer
@@ -134,6 +135,7 @@ instance_t,              \
 ctor,                    \
 setParam,                \
 serlize,                 \
+deserlize,               \
 sched,                   \
 dtor,                    \
 nInputs, inputDescr,   \
@@ -153,7 +155,8 @@ nActions, actionDescr) { \
 .constructor=ctor,                           \
 .destructor=dtor,                            \
 .set_param=setParam,                         \
-.serialize=serlize                           \
+.serialize=serlize,                          \
+.deserialize=deserlize                       \
 }
 
 

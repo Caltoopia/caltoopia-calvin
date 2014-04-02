@@ -41,6 +41,7 @@ ActorClass klass = INIT_ActorClass(
   ActorInstance_Example_m2_constructor,
   0, //setParam not needed anymore (we instantiate with params)
   0, // serialize
+  0,
   Example_m2_action_scheduler,
   0, // no destructor
   1, inputPortDescriptions,

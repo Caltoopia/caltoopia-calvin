@@ -53,6 +53,15 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 
 };
 
+static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
+{
+    ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
+    
+    coder->decode(coder, "_fsmState", (void *)&this->_fsmState, "i");
+    coder->decode(coder, "sum", (void *)&this->sum, "i");
+    
+};
+
 
 ActorClass klass = INIT_ActorClass(
                                    "accumulate",
@@ -60,6 +69,7 @@ ActorClass klass = INIT_ActorClass(
                                    ActorInstance_accumulate_constructor,
                                    0, //setParam not needed anymore (we instantiate with params)
                                    serialize,
+                                   deserialize,
                                    accumulate_action_scheduler,
                                    0, // no destructor
                                    1, inputPortDescriptions,
