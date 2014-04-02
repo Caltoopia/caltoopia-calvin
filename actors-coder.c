@@ -60,7 +60,7 @@ static void json_encode(CoderState *state, const char *key, void *value_ref, con
             break;
             
         default:
-            fprintf(stderr, "Error: Unknown type specifier '%c' in type specifier\n", type[0]);
+            fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
     }
     if (cJSON_Array == cj_state->type) {
