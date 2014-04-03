@@ -208,19 +208,8 @@ static InputPort * lookupInput(const AbstractActorInstance *instance,
 
 /* ------------------------------------------------------------------------- */
 
-// ToDo: Why asymmetric, why not connect(InputPort *in, OutputPort *out) ?
-static void connectInput(AbstractActorInstance *instance,
-                         const char *portName,
-                         OutputPort *producer)
+static void connectInput(InputPort *input, OutputPort *producer)
 {
-  const ActorClass *actorClass = instance->actorClass;
-  unsigned int i;
-
-  for (i = 0; i < actorClass->numInputPorts; ++i) {
-    const PortDescription *descr = &actorClass->inputPortDescriptions[i];
-    if (strcmp(descr->name, portName) == 0) {
-      InputPort *input = &instance->inputPort[i];
-
       input->producer = producer;
 
       // copy FIFO pointers from the producer
@@ -233,13 +222,6 @@ static void connectInput(AbstractActorInstance *instance,
 
       dllist_init_element(&input->asConsumer);
       dllist_append(&producer->consumers, &input->asConsumer);
-
-      return;
-    }
-  }
-
-  fail("connectInput: no such port '%s.%s'\n",
-       actorClass->name, portName);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -545,9 +527,9 @@ void createLocalConnection(const char *src_actor,
                            const char *dst_actor,
                            const char *dst_port)
 {
-  connectInput(lookupActor(dst_actor),
-               dst_port,
-               lookupOutput(lookupActor(src_actor), src_port, NULL, NULL));
+  InputPort *input = lookupInput(lookupActor(dst_actor), dst_port, NULL, NULL);
+  OutputPort *output = lookupOutput(lookupActor(src_actor), src_port, NULL, NULL);
+  connectInput(input, output);
 
   wakeUpNetwork();
 }
@@ -562,7 +544,7 @@ void createRemoteConnection(const char *src_actor,
   int tokenSize;
   AbstractActorInstance *src = lookupActor(src_actor);
   tokenFn functions;
-  (void) lookupOutput(src, src_port, &tokenSize, &functions);
+  OutputPort *output = lookupOutput(src, src_port, &tokenSize, &functions);
   const ActorClass *klass = getSenderClass(tokenSize, &functions);
 
 #define MAX_SENDER_NAME   (30)
@@ -574,9 +556,11 @@ void createRemoteConnection(const char *src_actor,
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *sender
   = createActorInstance(klass, strdup(sender_name));
-
   setSenderRemoteAddress(sender, remote_host, atoi(remote_port));
-  connectInput(sender, "in", lookupOutput(src, src_port, NULL, NULL));
+
+  InputPort *input = lookupInput(sender, "in", NULL, NULL);    
+  connectInput(input, output);
+
   enableActorInstance(sender_name);
 
   wakeUpNetwork();
@@ -590,7 +574,7 @@ int createSocketReceiver(const char *actor_name,
   int tokenSize;
   AbstractActorInstance *consumer = lookupActor(actor_name);
   tokenFn functions;
-  (void) lookupInput(consumer, port, &tokenSize, &functions);
+  InputPort *input = lookupInput(consumer, port, &tokenSize, &functions);
 
   const ActorClass *klass = getReceiverClass(tokenSize, &functions);
 #define MAX_RECEIVER_NAME   (30)
@@ -602,7 +586,9 @@ int createSocketReceiver(const char *actor_name,
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *receiver
   = createActorInstance(klass, strdup(receiver_name));
-  connectInput(consumer, port, lookupOutput(receiver, "out", NULL, NULL));
+  OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);    
+  connectInput(input, output);
+
   enableActorInstance(receiver_name);
 
   return getReceiverPort(receiver);
