@@ -7,26 +7,34 @@ import calvin
 
 a = calvin.Node("localhost", 9000, True)
 a.load("./accumulate.so")
+a.load("./timed_counter.so")
 
-src = a.new("art_Source_txt", "src", fileName="indata.txt")
-snk = a.new("art_Sink_txt", "snk", fileName="outdata1.txt")
+src = a.new("timed_counter", "src")
+snk = a.new("art_Sink_txt", "snk", fileName="outdata.txt")
 acc = a.new("accumulate", "acc")
 
-src.Out >> acc.In
-acc.Out >> snk.In
+if False:
+    src.Out >> snk.In
+    src.enable()
+    snk.enable()
+else:
+    src.Out >> acc.In
+    acc.Out >> snk.In
 
-src.enable()
-snk.enable()
-acc.enable()
+    src.enable()
+    snk.enable()
+    acc.enable()
 
-time.sleep(0.1)
 
+# Let the network produce some output ...
+time.sleep(2)
+# ... before fiddling with an actor ...
 acc.disable()
 state = acc.serialize()
 acc.deserialize(state)
-time.sleep(2)
-
+# ... and finally resume normal operation
 acc.enable()
 
-a.join()
-a.destroyAll()
+
+# a.join()
+# a.destroyAll()
