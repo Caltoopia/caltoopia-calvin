@@ -52,6 +52,7 @@
 		430CCDE018E1AF0600AB1266 /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cJSON.h; path = ../cJSON.h; sourceTree = "<group>"; };
 		430CCDE518E3039300AB1266 /* minimal.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = minimal.cs; path = ../examples/loadableActors/minimal.cs; sourceTree = SOURCE_ROOT; };
 		430CCDE618E45A7800AB1266 /* minimal_remote.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = minimal_remote.cs; path = ../examples/loadableActors/minimal_remote.cs; sourceTree = SOURCE_ROOT; };
+		43581BB718EC335E001CE683 /* timed_counter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = timed_counter.c; path = ../examples/loadableActors/timed_counter.c; sourceTree = SOURCE_ROOT; };
 		438FFC8D18E9885000F2C4E7 /* accumulate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = accumulate.c; path = ../examples/loadableActors/accumulate.c; sourceTree = SOURCE_ROOT; };
 		438FFC8F18E98EA600F2C4E7 /* migrate1.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; name = migrate1.py; path = ../examples/loadableActors/migrate1.py; sourceTree = SOURCE_ROOT; };
 		438FFC9118E9905F00F2C4E7 /* calvin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = calvin.py; path = ../python_support/calvin.py; sourceTree = "<group>"; };
@@ -195,6 +196,7 @@
 				43C540A518DB444A00BC6123 /* Example.cs */,
 				43C5407F18DB2A6A00BC6123 /* Example__m1.c */,
 				438FFC8D18E9885000F2C4E7 /* accumulate.c */,
+				43581BB718EC335E001CE683 /* timed_counter.c */,
 				43C5408018DB2A6A00BC6123 /* Example__m2.c */,
 				43C5408118DB2A6A00BC6123 /* Example__m3.c */,
 				43C5408218DB2A6A00BC6123 /* Example__m4.c */,
