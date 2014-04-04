@@ -45,12 +45,44 @@ static const ActionDescription actionDescriptions[] = {
 static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
+    const ActorClass *actorClass = actor->actorClass;
     CoderState *state = coder->init(coder);
     
-    // fsmState
+    // Class info
+    coder->encode(state, "class", actorClass->name, "s");
+    // Instance state
     coder->encode(state, "_fsmState", &this->_fsmState, "i");
     coder->encode(state, "sum", &this->sum, "i");
-
+    // Output ports
+    if (actorClass->numOutputPorts) {
+        CoderState *ports = coder->encode_struct(state, "outports");
+        for (int i = 0; i < actorClass->numOutputPorts; i++) {
+            // ToDo: Let ports serialize themselves
+            const char *portname = actorClass->outputPortDescriptions[i].name;
+            CoderState *port = coder->encode_struct(ports, portname);
+            CoderState *buffer = coder->encode_array(port, "buffer");
+            int count = 0;
+            OutputPort *output = &actor->outputPort[i];
+            InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
+            // FIXME: Multiple consumers (fan-out) not supported
+            if (!consumer) {
+                fail("No consumer connected");
+            }
+            // FIXME: Assume FIFO is int32_t for now
+            int32_t *bufferEnd = (int32_t *)output->localOutputPort.bufferEnd;
+            int32_t *writePtr = (int32_t *)output->localOutputPort.writePtr;
+            int32_t *readPtr = (int32_t *)consumer->localInputPort.readPtr;
+            while(readPtr != writePtr) {
+                coder->encode(buffer, NULL, readPtr, "i");
+                count++;
+                readPtr++;
+                if (readPtr >= bufferEnd) {
+                    readPtr = (int32_t *)output->localOutputPort.bufferStart;
+                }
+            }
+            coder->encode(port, "length", &count, "i");
+        }
+    }
 };
 
 static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
