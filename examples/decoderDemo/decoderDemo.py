@@ -260,7 +260,9 @@ actors = (ART_sourceBits,ART_display,ART_sinkWIDTH,ART_sinkHEIGHT,RVC_decoder__s
 for actor in actors:
   actor.enable()
 
-time.sleep(10)
+# time.sleep(1)
+
+n.join()
 
 for actor in actors:
   actor.destroy()
