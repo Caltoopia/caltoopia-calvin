@@ -39,6 +39,7 @@ CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 	$(CC) -I$(CALVIN_HOME) -Wall -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
-	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<
+	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<
+    
 
 .INTERMEDIATE: $(OBJECTS)
