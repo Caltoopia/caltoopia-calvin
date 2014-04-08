@@ -56,6 +56,7 @@ ActorClass klass=INIT_ActorClass(
   ActorInstance_RVC_decoder__GEN_mgnt_Merger420,
   ActorInstance_RVC_decoder__GEN_mgnt_Merger420_constructor,
   0, //setParam not needed anymore (we instantiate with params)
+  0, 0, // serialize/deserialize
   RVC_decoder__GEN_mgnt_Merger420_action_scheduler,
   0, // no destructor
   3, inputPortDescriptions,

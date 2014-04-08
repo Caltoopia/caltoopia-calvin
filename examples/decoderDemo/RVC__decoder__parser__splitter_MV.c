@@ -97,6 +97,7 @@ ActorClass klass=INIT_ActorClass(
   ActorInstance_RVC_decoder__parser__splitter_MV,
   ActorInstance_RVC_decoder__parser__splitter_MV_constructor,
   0, //setParam not needed anymore (we instantiate with params)
+  0, 0, // serialize/deserialize
   RVC_decoder__parser__splitter_MV_action_scheduler,
   0, // no destructor
   2, inputPortDescriptions,

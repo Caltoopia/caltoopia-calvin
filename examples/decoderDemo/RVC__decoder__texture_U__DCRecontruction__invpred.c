@@ -154,6 +154,7 @@ ActorClass klass=INIT_ActorClass(
   ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred,
   ActorInstance_RVC_decoder__texture_U__DCRecontruction__invpred_constructor,
   0, //setParam not needed anymore (we instantiate with params)
+  0, 0, // serialize/deserialize
   RVC_decoder__texture_U__DCRecontruction__invpred_action_scheduler,
   0, // no destructor
   6, inputPortDescriptions,

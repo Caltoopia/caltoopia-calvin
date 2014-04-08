@@ -11,6 +11,9 @@
 		430CCDE118E1AF0600AB1266 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = 430CCDDF18E1AF0600AB1266 /* cJSON.c */; };
 		4329115818F3F8520082E10F /* actors-debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 4329115618F3F8520082E10F /* actors-debug.c */; };
 		438FFC8E18E9885000F2C4E7 /* accumulate.c in Sources */ = {isa = PBXBuildFile; fileRef = 438FFC8D18E9885000F2C4E7 /* accumulate.c */; };
+		43BE0B1318F421D100928F5F /* art_Display_yuv.c in Sources */ = {isa = PBXBuildFile; fileRef = 43BE0B1218F421D100928F5F /* art_Display_yuv.c */; };
+		43BE0B1718F422AC00928F5F /* display-file.c in Sources */ = {isa = PBXBuildFile; fileRef = 43BE0B1418F422AC00928F5F /* display-file.c */; };
+		43BE0B1818F422AC00928F5F /* display.c in Sources */ = {isa = PBXBuildFile; fileRef = 43BE0B1518F422AC00928F5F /* display.c */; };
 		43C5405F18DB26BC00BC6123 /* actors-network.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404518DB25EA00BC6123 /* actors-network.c */; };
 		43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404718DB25EA00BC6123 /* actors-parser.c */; };
 		43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5404918DB25EA00BC6123 /* actors-registry.c */; };
@@ -25,6 +28,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		43BE0AD218F41BC500928F5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 43C5403D18DB255500BC6123 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43C5405418DB264600BC6123;
+			remoteInfo = calvin;
+		};
+		43BE0B1A18F424AD00928F5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 43C5403D18DB255500BC6123 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43C5409C18DB393200BC6123;
+			remoteInfo = Actors;
+		};
 		43C540A218DB3B5C00BC6123 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 43C5403D18DB255500BC6123 /* Project object */;
@@ -61,6 +78,72 @@
 		438FFC9118E9905F00F2C4E7 /* calvin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = calvin.py; path = ../python_support/calvin.py; sourceTree = "<group>"; };
 		438FFC9218E9905F00F2C4E7 /* example_local.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_local.py; path = ../python_support/example_local.py; sourceTree = "<group>"; };
 		438FFC9318E9905F00F2C4E7 /* example_remote.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_remote.py; path = ../python_support/example_remote.py; sourceTree = "<group>"; };
+		43BE0AD418F41D0700928F5F /* rvc.makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = rvc.makefile; sourceTree = "<group>"; };
+		43BE0AD518F41E4700928F5F /* decoderDemo.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; name = decoderDemo.py; path = ../examples/decoderDemo/decoderDemo.py; sourceTree = SOURCE_ROOT; };
+		43BE0AD618F41E4700928F5F /* foreman_qcif_30.bit */ = {isa = PBXFileReference; lastKnownFileType = file; name = foreman_qcif_30.bit; path = ../examples/decoderDemo/foreman_qcif_30.bit; sourceTree = "<group>"; };
+		43BE0AD718F41E4700928F5F /* RVC__decoder__GEN_mgnt_Merger420.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RVC__decoder__GEN_mgnt_Merger420.c; path = ../examples/decoderDemo/RVC__decoder__GEN_mgnt_Merger420.c; sourceTree = "<group>"; };
+		43BE0AD818F41E4700928F5F /* RVC__decoder__motion_U__add.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_U__add.c; path = ../examples/decoderDemo/RVC__decoder__motion_U__add.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AD918F41E4700928F5F /* RVC__decoder__motion_U__framebuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_U__framebuf.c; path = ../examples/decoderDemo/RVC__decoder__motion_U__framebuf.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADA18F41E4700928F5F /* RVC__decoder__motion_U__interpolation.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_U__interpolation.c; path = ../examples/decoderDemo/RVC__decoder__motion_U__interpolation.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADB18F41E4700928F5F /* RVC__decoder__motion_V__add.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_V__add.c; path = ../examples/decoderDemo/RVC__decoder__motion_V__add.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADC18F41E4700928F5F /* RVC__decoder__motion_V__framebuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_V__framebuf.c; path = ../examples/decoderDemo/RVC__decoder__motion_V__framebuf.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADD18F41E4700928F5F /* RVC__decoder__motion_V__interpolation.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_V__interpolation.c; path = ../examples/decoderDemo/RVC__decoder__motion_V__interpolation.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADE18F41E4700928F5F /* RVC__decoder__motion_Y__add.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_Y__add.c; path = ../examples/decoderDemo/RVC__decoder__motion_Y__add.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0ADF18F41E4700928F5F /* RVC__decoder__motion_Y__framebuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_Y__framebuf.c; path = ../examples/decoderDemo/RVC__decoder__motion_Y__framebuf.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE018F41E4700928F5F /* RVC__decoder__motion_Y__interpolation.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__motion_Y__interpolation.c; path = ../examples/decoderDemo/RVC__decoder__motion_Y__interpolation.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE118F41E4700928F5F /* RVC__decoder__parser__blkexp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__blkexp.c; path = ../examples/decoderDemo/RVC__decoder__parser__blkexp.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE218F41E4700928F5F /* RVC__decoder__parser__mvrecon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__mvrecon.c; path = ../examples/decoderDemo/RVC__decoder__parser__mvrecon.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE318F41E4700928F5F /* RVC__decoder__parser__mvseq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__mvseq.c; path = ../examples/decoderDemo/RVC__decoder__parser__mvseq.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE418F41E4700928F5F /* RVC__decoder__parser__parseheaders.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__parseheaders.c; path = ../examples/decoderDemo/RVC__decoder__parser__parseheaders.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE518F41E4700928F5F /* RVC__decoder__parser__splitter_420_B.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__splitter_420_B.c; path = ../examples/decoderDemo/RVC__decoder__parser__splitter_420_B.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE618F41E4700928F5F /* RVC__decoder__parser__splitter_BTYPE.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__splitter_BTYPE.c; path = ../examples/decoderDemo/RVC__decoder__parser__splitter_BTYPE.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE718F41E4700928F5F /* RVC__decoder__parser__splitter_MV.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__splitter_MV.c; path = ../examples/decoderDemo/RVC__decoder__parser__splitter_MV.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE818F41E4700928F5F /* RVC__decoder__parser__splitter_Qp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__parser__splitter_Qp.c; path = ../examples/decoderDemo/RVC__decoder__parser__splitter_Qp.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AE918F41E4700928F5F /* RVC__decoder__serialize.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__serialize.c; path = ../examples/decoderDemo/RVC__decoder__serialize.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AEA18F41E4700928F5F /* RVC__decoder__texture_U__DCRecontruction__addressing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__DCRecontruction__addressing.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__DCRecontruction__addressing.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AEB18F41E4700928F5F /* RVC__decoder__texture_U__DCRecontruction__invpred.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__DCRecontruction__invpred.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__DCRecontruction__invpred.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AEC18F41E4700928F5F /* RVC__decoder__texture_U__DCsplit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__DCsplit.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__DCsplit.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AED18F41E4700928F5F /* RVC__decoder__texture_U__IAP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__IAP.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__IAP.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AEE18F41E4700928F5F /* RVC__decoder__texture_U__idct2d__clip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__clip.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__clip.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AEF18F41E4700928F5F /* RVC__decoder__texture_U__idct2d__column.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__column.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__column.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF018F41E4700928F5F /* RVC__decoder__texture_U__idct2d__retranspose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__retranspose.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__retranspose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF118F41E4700928F5F /* RVC__decoder__texture_U__idct2d__row.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__row.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__row.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF218F41E4700928F5F /* RVC__decoder__texture_U__idct2d__scale.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__scale.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__scale.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF318F41E4700928F5F /* RVC__decoder__texture_U__idct2d__shift.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__shift.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__shift.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF418F41E4700928F5F /* RVC__decoder__texture_U__idct2d__transpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__idct2d__transpose.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__idct2d__transpose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF518F41E4700928F5F /* RVC__decoder__texture_U__IQ.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__IQ.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__IQ.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF618F41E4700928F5F /* RVC__decoder__texture_U__IS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_U__IS.c; path = ../examples/decoderDemo/RVC__decoder__texture_U__IS.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF718F41E4700928F5F /* RVC__decoder__texture_V__DCRecontruction__addressing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__DCRecontruction__addressing.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__DCRecontruction__addressing.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF818F41E4700928F5F /* RVC__decoder__texture_V__DCRecontruction__invpred.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__DCRecontruction__invpred.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__DCRecontruction__invpred.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AF918F41E4700928F5F /* RVC__decoder__texture_V__DCsplit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__DCsplit.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__DCsplit.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFA18F41E4700928F5F /* RVC__decoder__texture_V__IAP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__IAP.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__IAP.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFB18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__clip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__clip.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__clip.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFC18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__column.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__column.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__column.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFD18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__retranspose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__retranspose.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__retranspose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFE18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__row.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__row.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__row.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0AFF18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__scale.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__scale.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__scale.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0018F41E4700928F5F /* RVC__decoder__texture_V__idct2d__shift.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__shift.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__shift.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0118F41E4700928F5F /* RVC__decoder__texture_V__idct2d__transpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__idct2d__transpose.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__idct2d__transpose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0218F41E4700928F5F /* RVC__decoder__texture_V__IQ.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__IQ.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__IQ.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0318F41E4700928F5F /* RVC__decoder__texture_V__IS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_V__IS.c; path = ../examples/decoderDemo/RVC__decoder__texture_V__IS.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0418F41E4700928F5F /* RVC__decoder__texture_Y__DCRecontruction__addressing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__DCRecontruction__addressing.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__DCRecontruction__addressing.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0518F41E4700928F5F /* RVC__decoder__texture_Y__DCRecontruction__invpred.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__DCRecontruction__invpred.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__DCRecontruction__invpred.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0618F41E4700928F5F /* RVC__decoder__texture_Y__DCsplit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__DCsplit.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__DCsplit.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0718F41E4700928F5F /* RVC__decoder__texture_Y__IAP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__IAP.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__IAP.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0818F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__clip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__clip.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__clip.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0918F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__column.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__column.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__column.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0A18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__retranspose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__retranspose.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__retranspose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0B18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__row.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__row.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__row.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0C18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__scale.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__scale.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__scale.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0D18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__shift.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__shift.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__shift.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0E18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__transpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__idct2d__transpose.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__idct2d__transpose.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B0F18F41E4700928F5F /* RVC__decoder__texture_Y__IQ.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__IQ.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__IQ.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B1018F41E4700928F5F /* RVC__decoder__texture_Y__IS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RVC__decoder__texture_Y__IS.c; path = ../examples/decoderDemo/RVC__decoder__texture_Y__IS.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		43BE0B1118F41E4700928F5F /* RVC__decoderDemo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RVC__decoderDemo.h; path = ../examples/decoderDemo/RVC__decoderDemo.h; sourceTree = "<group>"; };
+		43BE0B1218F421D100928F5F /* art_Display_yuv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = art_Display_yuv.c; path = ../art_Display_yuv.c; sourceTree = "<group>"; };
+		43BE0B1418F422AC00928F5F /* display-file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "display-file.c"; path = "../display-file.c"; sourceTree = "<group>"; };
+		43BE0B1518F422AC00928F5F /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = display.c; path = ../display.c; sourceTree = "<group>"; };
+		43BE0B1618F422AC00928F5F /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = display.h; path = ../display.h; sourceTree = "<group>"; };
 		43C5404418DB25EA00BC6123 /* actors-fifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-fifo.h"; path = "../actors-fifo.h"; sourceTree = "<group>"; };
 		43C5404518DB25EA00BC6123 /* actors-network.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "actors-network.c"; path = "../actors-network.c"; sourceTree = "<group>"; };
 		43C5404618DB25EA00BC6123 /* actors-network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-network.h"; path = "../actors-network.h"; sourceTree = "<group>"; };
@@ -123,6 +206,85 @@
 			name = Scripting;
 			sourceTree = "<group>";
 		};
+		43BE0ACD18F41B7400928F5F /* RVC decoder */ = {
+			isa = PBXGroup;
+			children = (
+				43BE0AD518F41E4700928F5F /* decoderDemo.py */,
+				43BE0AD618F41E4700928F5F /* foreman_qcif_30.bit */,
+				43BE0AD718F41E4700928F5F /* RVC__decoder__GEN_mgnt_Merger420.c */,
+				43BE0AD818F41E4700928F5F /* RVC__decoder__motion_U__add.c */,
+				43BE0AD918F41E4700928F5F /* RVC__decoder__motion_U__framebuf.c */,
+				43BE0ADA18F41E4700928F5F /* RVC__decoder__motion_U__interpolation.c */,
+				43BE0ADB18F41E4700928F5F /* RVC__decoder__motion_V__add.c */,
+				43BE0ADC18F41E4700928F5F /* RVC__decoder__motion_V__framebuf.c */,
+				43BE0ADD18F41E4700928F5F /* RVC__decoder__motion_V__interpolation.c */,
+				43BE0ADE18F41E4700928F5F /* RVC__decoder__motion_Y__add.c */,
+				43BE0ADF18F41E4700928F5F /* RVC__decoder__motion_Y__framebuf.c */,
+				43BE0AE018F41E4700928F5F /* RVC__decoder__motion_Y__interpolation.c */,
+				43BE0AE118F41E4700928F5F /* RVC__decoder__parser__blkexp.c */,
+				43BE0AE218F41E4700928F5F /* RVC__decoder__parser__mvrecon.c */,
+				43BE0AE318F41E4700928F5F /* RVC__decoder__parser__mvseq.c */,
+				43BE0AE418F41E4700928F5F /* RVC__decoder__parser__parseheaders.c */,
+				43BE0AE518F41E4700928F5F /* RVC__decoder__parser__splitter_420_B.c */,
+				43BE0AE618F41E4700928F5F /* RVC__decoder__parser__splitter_BTYPE.c */,
+				43BE0AE718F41E4700928F5F /* RVC__decoder__parser__splitter_MV.c */,
+				43BE0AE818F41E4700928F5F /* RVC__decoder__parser__splitter_Qp.c */,
+				43BE0AE918F41E4700928F5F /* RVC__decoder__serialize.c */,
+				43BE0AEA18F41E4700928F5F /* RVC__decoder__texture_U__DCRecontruction__addressing.c */,
+				43BE0AEB18F41E4700928F5F /* RVC__decoder__texture_U__DCRecontruction__invpred.c */,
+				43BE0AEC18F41E4700928F5F /* RVC__decoder__texture_U__DCsplit.c */,
+				43BE0AED18F41E4700928F5F /* RVC__decoder__texture_U__IAP.c */,
+				43BE0AEE18F41E4700928F5F /* RVC__decoder__texture_U__idct2d__clip.c */,
+				43BE0AEF18F41E4700928F5F /* RVC__decoder__texture_U__idct2d__column.c */,
+				43BE0AF018F41E4700928F5F /* RVC__decoder__texture_U__idct2d__retranspose.c */,
+				43BE0AF118F41E4700928F5F /* RVC__decoder__texture_U__idct2d__row.c */,
+				43BE0AF218F41E4700928F5F /* RVC__decoder__texture_U__idct2d__scale.c */,
+				43BE0AF318F41E4700928F5F /* RVC__decoder__texture_U__idct2d__shift.c */,
+				43BE0AF418F41E4700928F5F /* RVC__decoder__texture_U__idct2d__transpose.c */,
+				43BE0AF518F41E4700928F5F /* RVC__decoder__texture_U__IQ.c */,
+				43BE0AF618F41E4700928F5F /* RVC__decoder__texture_U__IS.c */,
+				43BE0AF718F41E4700928F5F /* RVC__decoder__texture_V__DCRecontruction__addressing.c */,
+				43BE0AF818F41E4700928F5F /* RVC__decoder__texture_V__DCRecontruction__invpred.c */,
+				43BE0AF918F41E4700928F5F /* RVC__decoder__texture_V__DCsplit.c */,
+				43BE0AFA18F41E4700928F5F /* RVC__decoder__texture_V__IAP.c */,
+				43BE0AFB18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__clip.c */,
+				43BE0AFC18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__column.c */,
+				43BE0AFD18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__retranspose.c */,
+				43BE0AFE18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__row.c */,
+				43BE0AFF18F41E4700928F5F /* RVC__decoder__texture_V__idct2d__scale.c */,
+				43BE0B0018F41E4700928F5F /* RVC__decoder__texture_V__idct2d__shift.c */,
+				43BE0B0118F41E4700928F5F /* RVC__decoder__texture_V__idct2d__transpose.c */,
+				43BE0B0218F41E4700928F5F /* RVC__decoder__texture_V__IQ.c */,
+				43BE0B0318F41E4700928F5F /* RVC__decoder__texture_V__IS.c */,
+				43BE0B0418F41E4700928F5F /* RVC__decoder__texture_Y__DCRecontruction__addressing.c */,
+				43BE0B0518F41E4700928F5F /* RVC__decoder__texture_Y__DCRecontruction__invpred.c */,
+				43BE0B0618F41E4700928F5F /* RVC__decoder__texture_Y__DCsplit.c */,
+				43BE0B0718F41E4700928F5F /* RVC__decoder__texture_Y__IAP.c */,
+				43BE0B0818F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__clip.c */,
+				43BE0B0918F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__column.c */,
+				43BE0B0A18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__retranspose.c */,
+				43BE0B0B18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__row.c */,
+				43BE0B0C18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__scale.c */,
+				43BE0B0D18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__shift.c */,
+				43BE0B0E18F41E4700928F5F /* RVC__decoder__texture_Y__idct2d__transpose.c */,
+				43BE0B0F18F41E4700928F5F /* RVC__decoder__texture_Y__IQ.c */,
+				43BE0B1018F41E4700928F5F /* RVC__decoder__texture_Y__IS.c */,
+				43BE0B1118F41E4700928F5F /* RVC__decoderDemo.h */,
+				43BE0AD418F41D0700928F5F /* rvc.makefile */,
+			);
+			name = "RVC decoder";
+			sourceTree = "<group>";
+		};
+		43BE0B1918F422B600928F5F /* Display helpers */ = {
+			isa = PBXGroup;
+			children = (
+				43BE0B1418F422AC00928F5F /* display-file.c */,
+				43BE0B1518F422AC00928F5F /* display.c */,
+				43BE0B1618F422AC00928F5F /* display.h */,
+			);
+			name = "Display helpers";
+			sourceTree = "<group>";
+		};
 		43C5403C18DB255500BC6123 = {
 			isa = PBXGroup;
 			children = (
@@ -132,6 +294,7 @@
 				430CCDE218E1AF1200AB1266 /* Helpers */,
 				43C5407018DB272700BC6123 /* system actors */,
 				43C5407718DB29FB00BC6123 /* loadable actors */,
+				43BE0ACD18F41B7400928F5F /* RVC decoder */,
 				43C5408D18DB2B7A00BC6123 /* Frameworks */,
 				438FFC9018E98FF900F2C4E7 /* Scripting */,
 				43C5405618DB264600BC6123 /* Products */,
@@ -164,6 +327,8 @@
 		43C5407018DB272700BC6123 /* system actors */ = {
 			isa = PBXGroup;
 			children = (
+				43BE0B1918F422B600928F5F /* Display helpers */,
+				43BE0B1218F421D100928F5F /* art_Display_yuv.c */,
 				43C5406418DB272100BC6123 /* art_Sink_bin.c */,
 				43C5406518DB272100BC6123 /* art_Sink_real.c */,
 				43C5406618DB272100BC6123 /* art_Sink_txt.c */,
@@ -221,6 +386,22 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
+		43BE0ACE18F41BBD00928F5F /* RVC */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-f /Users/eperspe/Source/caltoopia-calvin/calvin-xcode/rvc.makefile $(ACTION)";
+			buildConfigurationList = 43BE0ACF18F41BBD00928F5F /* Build configuration list for PBXLegacyTarget "RVC" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "/Users/eperspe/Source/caltoopia-calvin/examples/decoderDemo";
+			dependencies = (
+				43BE0AD318F41BC500928F5F /* PBXTargetDependency */,
+				43BE0B1B18F424AD00928F5F /* PBXTargetDependency */,
+			);
+			name = RVC;
+			passBuildSettingsInEnvironment = 1;
+			productName = RVC;
+		};
 		43C5409C18DB393200BC6123 /* Actors */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "-f /Users/eperspe/Source/caltoopia-calvin/calvin-xcode/actors.makefile $(ACTION)";
@@ -278,6 +459,7 @@
 			targets = (
 				43C5405418DB264600BC6123 /* calvin */,
 				43C5409C18DB393200BC6123 /* Actors */,
+				43BE0ACE18F41BBD00928F5F /* RVC */,
 			);
 		};
 /* End PBXProject section */
@@ -288,6 +470,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				43C5405F18DB26BC00BC6123 /* actors-network.c in Sources */,
+				43BE0B1318F421D100928F5F /* art_Display_yuv.c in Sources */,
 				43C5406C18DB272100BC6123 /* art_Sink_txt.c in Sources */,
 				43C5406018DB26CB00BC6123 /* actors-parser.c in Sources */,
 				43C5406A18DB272100BC6123 /* art_Sink_bin.c in Sources */,
@@ -295,12 +478,14 @@
 				438FFC8E18E9885000F2C4E7 /* accumulate.c in Sources */,
 				43C5406118DB26CB00BC6123 /* actors-registry.c in Sources */,
 				43C5406218DB26CB00BC6123 /* actors-rts.c in Sources */,
+				43BE0B1718F422AC00928F5F /* display-file.c in Sources */,
 				43C5406F18DB272100BC6123 /* art_Source_txt.c in Sources */,
 				43C5406318DB26CB00BC6123 /* actors-teleport.c in Sources */,
 				4329115818F3F8520082E10F /* actors-debug.c in Sources */,
 				43C5406B18DB272100BC6123 /* art_Sink_real.c in Sources */,
 				430CCDDE18E0A62C00AB1266 /* actors-coder.c in Sources */,
 				43C5406E18DB272100BC6123 /* art_Source_real.c in Sources */,
+				43BE0B1818F422AC00928F5F /* display.c in Sources */,
 				43C5406D18DB272100BC6123 /* art_Source_bin.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -308,6 +493,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		43BE0AD318F41BC500928F5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43C5405418DB264600BC6123 /* calvin */;
+			targetProxy = 43BE0AD218F41BC500928F5F /* PBXContainerItemProxy */;
+		};
+		43BE0B1B18F424AD00928F5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43C5409C18DB393200BC6123 /* Actors */;
+			targetProxy = 43BE0B1A18F424AD00928F5F /* PBXContainerItemProxy */;
+		};
 		43C540A318DB3B5C00BC6123 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 43C5405418DB264600BC6123 /* calvin */;
@@ -316,6 +511,84 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		43BE0AD018F41BBD00928F5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		43BE0AD118F41BBD00928F5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 		43C5404118DB255500BC6123 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -362,6 +635,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-DCALVIN_DISPLAY_SUPPORT";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -395,6 +669,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_CFLAGS = "-DCALVIN_DISPLAY_SUPPORT";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -481,6 +756,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		43BE0ACF18F41BBD00928F5F /* Build configuration list for PBXLegacyTarget "RVC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43BE0AD018F41BBD00928F5F /* Debug */,
+				43BE0AD118F41BBD00928F5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		43C5404018DB255500BC6123 /* Build configuration list for PBXProject "Calvin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

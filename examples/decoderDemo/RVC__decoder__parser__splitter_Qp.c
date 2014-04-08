@@ -44,6 +44,7 @@ ActorClass klass=INIT_ActorClass(
   ActorInstance_RVC_decoder__parser__splitter_Qp,
   ActorInstance_RVC_decoder__parser__splitter_Qp_constructor,
   0, //setParam not needed anymore (we instantiate with params)
+  0, 0, // serialize/deserialize
   RVC_decoder__parser__splitter_Qp_action_scheduler,
   0, // no destructor
   1, inputPortDescriptions,

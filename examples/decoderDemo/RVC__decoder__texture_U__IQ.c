@@ -66,6 +66,7 @@ ActorClass klass=INIT_ActorClass(
   ActorInstance_RVC_decoder__texture_U__IQ,
   ActorInstance_RVC_decoder__texture_U__IQ_constructor,
   0, //setParam not needed anymore (we instantiate with params)
+  0, 0, // serialize/deserialize
   RVC_decoder__texture_U__IQ_action_scheduler,
   0, // no destructor
   3, inputPortDescriptions,

@@ -203,6 +203,7 @@ ActorClass ActorClass_art_Display_yuv = INIT_ActorClass(
   ActorInstance_art_Display_yuv,
   art_Display_yuv_constructor,
   art_Display_yuv_setParam,
+  0, 0, // serialize/deserialize
   art_Display_yuv_action_scheduler,
   art_Display_yuv_destructor,
   1, inputPortDescriptions,
