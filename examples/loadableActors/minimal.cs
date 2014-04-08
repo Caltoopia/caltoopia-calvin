@@ -2,7 +2,7 @@
 # a network
 
 # Load classes
-LOAD ./Example__m1.so
+LOAD ./Example__m1
 
 # Create instances with parameters
 NEW art_Source_txt src fileName=indata.txt

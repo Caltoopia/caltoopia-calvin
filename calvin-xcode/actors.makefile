@@ -1,7 +1,7 @@
-all: Example__m1.so Example__m2.so Example__m3.so Example__m4.so accumulate.so timed_counter.so
+all: Example__m1.bundle Example__m2.bundle Example__m3.bundle Example__m4.bundle accumulate.bundle timed_counter.bundle
 
 clean:
-	@rm -f *.o *.so
+	@rm -f *.o *.bundle *.so
 
-%.so : %.c
+%.bundle : %.c
 	$(CC) -I$(SRCROOT)/.. -g -Wall -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<

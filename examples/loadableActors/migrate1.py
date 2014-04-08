@@ -6,8 +6,8 @@ import calvin
 # expects a calvin node to be running at localhost:9000
 
 a = calvin.Node("localhost", 9000, True)
-a.load("./accumulate.so")
-a.load("./timed_counter.so")
+a.load("./accumulate")
+a.load("./timed_counter")
 
 src = a.new("timed_counter", "src")
 snk = a.new("art_Sink_txt", "snk", fileName="outdata.txt")
