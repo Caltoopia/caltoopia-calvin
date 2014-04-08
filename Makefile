@@ -8,14 +8,13 @@ OBJECTS=actors-registry.o actors-network.o \
 ifeq ($(shell uname -s),Linux)
   LDFLAGS += -rdynamic $(shell sdl-config --libs)
   OBJECTS += display-sdl.o display.o art_Display_yuv.o
-  CFLAGS += $(shell sdl-config --cflags) -DCALVIN_SDL_SUPPORT
+  CFLAGS += $(shell sdl-config --cflags) -DCALVIN_DISPLAY_SUPPORT
 endif
 # set up linker flags Mac OS X
 ifeq ($(shell uname -s),Darwin)
   LDFLAGS += -rdynamic
   OBJECTS += display-file.o display.o art_Display_yuv.o
-# This is using the file display not SDL for the YUV display actor
-  CFLAGS += -DCALVIN_SDL_SUPPORT
+  CFLAGS += -DCALVIN_DISPLAY_SUPPORT
 endif
 
 all: $(REAL_NAME)

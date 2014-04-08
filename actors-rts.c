@@ -58,9 +58,11 @@ extern const ActorClass ActorClass_art_Source_bin;
 extern const ActorClass ActorClass_art_Source_real;
 extern const ActorClass ActorClass_art_Source_txt;
 
-#ifdef CALVIN_SDL_SUPPORT
+#ifdef CALVIN_DISPLAY_SUPPORT
 extern const ActorClass ActorClass_art_Display_yuv;
-#endif /* CALVIN_SDL_SUPPORT */
+#else
+#warning Not adding support for display actor
+#endif /* CALVIN_DISPLAY_SUPPORT */
 
 // ============================================================================
 
@@ -168,9 +170,9 @@ int main(int argc, char **argv)
   registryAddClass(&ActorClass_art_Source_real);
   registryAddClass(&ActorClass_art_Source_txt);
 
-#ifdef CALVIN_SDL_SUPPORT
+#ifdef CALVIN_DISPLAY_SUPPORT
   registryAddClass(&ActorClass_art_Display_yuv);
-#endif /* CALVIN_SDL_SUPPORT */
+#endif /* CALVIN_DISPLAY_SUPPORT */
 
   /* execute each named file in non-interactive mode */
   for (i = 1; i < argc; i++) {

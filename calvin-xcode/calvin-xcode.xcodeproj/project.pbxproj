@@ -298,7 +298,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				KEEP_PRIVATE_EXTERNS = YES;
-				"OTHER_CFLAGS[arch=*]" = "-DCALVIN_SDL_SUPPORT";
+				OTHER_CFLAGS = "";
+				"OTHER_CFLAGS[arch=*]" = "-DCALVIN_IMAGE_SUPPORT";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -307,7 +308,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				KEEP_PRIVATE_EXTERNS = YES;
-				"OTHER_CFLAGS[arch=*]" = "-DCALVIN_SDL_SUPPORT";
+				OTHER_CFLAGS = "";
+				"OTHER_CFLAGS[arch=*]" = "-DCALVIN_IMAGE_SUPPORT";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
