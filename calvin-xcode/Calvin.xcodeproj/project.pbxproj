@@ -78,7 +78,6 @@
 		438FFC9118E9905F00F2C4E7 /* calvin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = calvin.py; path = ../python_support/calvin.py; sourceTree = "<group>"; };
 		438FFC9218E9905F00F2C4E7 /* example_local.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_local.py; path = ../python_support/example_local.py; sourceTree = "<group>"; };
 		438FFC9318E9905F00F2C4E7 /* example_remote.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = example_remote.py; path = ../python_support/example_remote.py; sourceTree = "<group>"; };
-		43BE0AD418F41D0700928F5F /* rvc.makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = rvc.makefile; sourceTree = "<group>"; };
 		43BE0AD518F41E4700928F5F /* decoderDemo.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; name = decoderDemo.py; path = ../examples/decoderDemo/decoderDemo.py; sourceTree = SOURCE_ROOT; };
 		43BE0AD618F41E4700928F5F /* foreman_qcif_30.bit */ = {isa = PBXFileReference; lastKnownFileType = file; name = foreman_qcif_30.bit; path = ../examples/decoderDemo/foreman_qcif_30.bit; sourceTree = "<group>"; };
 		43BE0AD718F41E4700928F5F /* RVC__decoder__GEN_mgnt_Merger420.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RVC__decoder__GEN_mgnt_Merger420.c; path = ../examples/decoderDemo/RVC__decoder__GEN_mgnt_Merger420.c; sourceTree = "<group>"; };
@@ -144,6 +143,8 @@
 		43BE0B1418F422AC00928F5F /* display-file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "display-file.c"; path = "../display-file.c"; sourceTree = "<group>"; };
 		43BE0B1518F422AC00928F5F /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = display.c; path = ../display.c; sourceTree = "<group>"; };
 		43BE0B1618F422AC00928F5F /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = display.h; path = ../display.h; sourceTree = "<group>"; };
+		43BE0B1C18F4341F00928F5F /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = ../Makefile; sourceTree = "<group>"; };
+		43BE0B1D18F4379900928F5F /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = ../examples/decoderDemo/Makefile; sourceTree = "<group>"; };
 		43C5404418DB25EA00BC6123 /* actors-fifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-fifo.h"; path = "../actors-fifo.h"; sourceTree = "<group>"; };
 		43C5404518DB25EA00BC6123 /* actors-network.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "actors-network.c"; path = "../actors-network.c"; sourceTree = "<group>"; };
 		43C5404618DB25EA00BC6123 /* actors-network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "actors-network.h"; path = "../actors-network.h"; sourceTree = "<group>"; };
@@ -209,8 +210,9 @@
 		43BE0ACD18F41B7400928F5F /* RVC decoder */ = {
 			isa = PBXGroup;
 			children = (
-				43BE0AD518F41E4700928F5F /* decoderDemo.py */,
+				43BE0B1D18F4379900928F5F /* Makefile */,
 				43BE0AD618F41E4700928F5F /* foreman_qcif_30.bit */,
+				43BE0AD518F41E4700928F5F /* decoderDemo.py */,
 				43BE0AD718F41E4700928F5F /* RVC__decoder__GEN_mgnt_Merger420.c */,
 				43BE0AD818F41E4700928F5F /* RVC__decoder__motion_U__add.c */,
 				43BE0AD918F41E4700928F5F /* RVC__decoder__motion_U__framebuf.c */,
@@ -270,7 +272,6 @@
 				43BE0B0F18F41E4700928F5F /* RVC__decoder__texture_Y__IQ.c */,
 				43BE0B1018F41E4700928F5F /* RVC__decoder__texture_Y__IS.c */,
 				43BE0B1118F41E4700928F5F /* RVC__decoderDemo.h */,
-				43BE0AD418F41D0700928F5F /* rvc.makefile */,
 			);
 			name = "RVC decoder";
 			sourceTree = "<group>";
@@ -289,6 +290,7 @@
 			isa = PBXGroup;
 			children = (
 				43C540A618DC383200BC6123 /* .gitignore */,
+				43BE0B1C18F4341F00928F5F /* Makefile */,
 				43C5409B18DB30F900BC6123 /* notes.md */,
 				43C5404318DB258200BC6123 /* calvin */,
 				430CCDE218E1AF1200AB1266 /* Helpers */,
@@ -388,7 +390,7 @@
 /* Begin PBXLegacyTarget section */
 		43BE0ACE18F41BBD00928F5F /* RVC */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-f /Users/eperspe/Source/caltoopia-calvin/calvin-xcode/rvc.makefile $(ACTION)";
+			buildArgumentsString = "$(ACTION)";
 			buildConfigurationList = 43BE0ACF18F41BBD00928F5F /* Build configuration list for PBXLegacyTarget "RVC" */;
 			buildPhases = (
 			);
