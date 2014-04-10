@@ -3,8 +3,8 @@ import time
 
 n = calvin.Node("localhost", 9000, True)
 # k = calvin.Node("136.225.61.113", 9000, True)
-# k = calvin.Node("localhost", 9001, True)
-k = n
+k = calvin.Node("localhost", 9001, True)
+# k = n
 
 n.load("./RVC__decoder__GEN_mgnt_Merger420")
 n.load("./RVC__decoder__motion_U__add")
@@ -263,6 +263,7 @@ for actor in actors:
 # time.sleep(1)
 
 n.join()
+k.join()
 
 for actor in actors:
   actor.destroy()
