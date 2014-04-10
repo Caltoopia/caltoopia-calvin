@@ -602,7 +602,6 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
     {
       pthread_mutex_lock(&instance->tokenMon.lock);
       if (! instance->tokenMon.full) {
-        assert(instance->tokenMon.tokenBuffer);
         pinRead_dyn(input, instance->tokenMon.tokenBuffer, tokenSize);
         instance->tokenMon.full = 1;
         pthread_cond_signal(&instance->tokenMon.available);

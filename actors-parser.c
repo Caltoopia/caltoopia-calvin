@@ -428,14 +428,13 @@ static void new_handler(struct parser_state *state)
     return;
   }
 
-  AbstractActorInstance *actor = createActorInstance(klass, actor_name);
-
   /* check for actor parameters, if any */
-  for(;;) {
-    const char *arg = get_next_word(state);
-    if (! arg) {
-      break;
-    }
+  /* A NULL-terminated array to hold key/value pairs. */
+  char *params[2*MAX_PARAMS+2];
+  int i;
+  const char *arg = get_next_word(state);
+  
+  for(i=0; arg && i<MAX_PARAMS; i++) {
     char *splitpoint = index(arg, '=');
     if (! splitpoint) {
       error(state, "invalid argument: %s", arg);
@@ -451,15 +450,23 @@ static void new_handler(struct parser_state *state)
     } else {
       splitpoint++;
     }
+    params[2*i] = strdup(arg);
+    params[2*i + 1] = strdup(splitpoint);
     
-    setActorParam(actor, arg, splitpoint);
+    arg = get_next_word(state);
   }
-  
-  if (actor->actorClass->constructor) {
-    actor->actorClass->constructor(actor);
+  params[2*i] = NULL;
+  params[2*i + 1] = NULL;
+
+  AbstractActorInstance *actor = createActorInstance(klass, actor_name, params);
+
+  /* Free parameters */
+  for (i=0; params[i]; i++) {
+    free(params[i]);
   }
 
-  ok(state, "created actor %s", actor_name);
+  
+  ok(state, "created actor %s", actor->instanceName);
 }
 
 /* ------------------------------------------------------------------------- */

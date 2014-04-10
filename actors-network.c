@@ -387,7 +387,8 @@ void initActorNetwork(void)
 /* ------------------------------------------------------------------------- */
 
 AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
-                                            const char *actor_name)
+                                            const char *actor_name,
+                                            const char *params[])
 {
   AbstractActorInstance *instance = malloc(actorClass->sizeActorInstance);
   unsigned int i;
@@ -429,6 +430,15 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
       output->functions=(tokenFn){NULL,NULL,NULL,NULL};
 
     dllist_create(&output->consumers);
+  }
+
+  /* Set parameters (if any) */
+  for (int i=0; params && params[2*i] && i<MAX_PARAMS; i++) {
+    setActorParam(instance, params[2*i], params[2*i + 1]);
+  }
+  
+  if (instance->actorClass->constructor) {
+    instance->actorClass->constructor(instance);
   }
 
   return instance;
@@ -555,7 +565,7 @@ void createRemoteConnection(const char *src_actor,
 
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *sender
-  = createActorInstance(klass, strdup(sender_name));
+  = createActorInstance(klass, strdup(sender_name), NULL);
   setSenderRemoteAddress(sender, remote_host, atoi(remote_port));
 
   InputPort *input = lookupInput(sender, "in", NULL, NULL);    
@@ -585,7 +595,7 @@ int createSocketReceiver(const char *actor_name,
 
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *receiver
-  = createActorInstance(klass, strdup(receiver_name));
+  = createActorInstance(klass, strdup(receiver_name), NULL);
   OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);    
   connectInput(input, output);
 

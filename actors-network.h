@@ -46,6 +46,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+  
+  #define MAX_PARAMS 16
 
   /**
    * Initialize actor list and launch worker thread
@@ -56,9 +58,12 @@ extern "C" {
    * Called by parser. Creates an actor instance. Runs the constructor.
    * The actor will not execute until enableActorInstance() below is called.
    * @param actorClass an ActorClass
+   * @param actor_name the name of the ActorClass
+   * @param params a NULL-terminated array of alternating keys and values.
    */
   AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
-                                              const char *actor_name);
+                                              const char *actor_name,
+                                              const char *params[]);
 
   /**
    * Called by parser. Sets an actor parameter.
