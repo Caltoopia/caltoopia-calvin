@@ -176,4 +176,34 @@ typedef struct {int a; int b;} struct_t;
   }
 }
 
+- (void)testStructOfArraysEncodeDecode
+{
+  struct {int a[ARRAY_LEN]; int b[ARRAY_LEN];} original = {.a={1,2,3}, .b={4,5,6}};
+  struct {int a[ARRAY_LEN]; int b[ARRAY_LEN];} target = {0};
+  
+  XCTAssertNotEqual(target.a[0], original.a[0], "Bad setup");
+  
+  CoderState *state = coder->init(coder);
+  
+  CoderState *strct = coder->encode_struct(state, "key");
+  CoderState *array_a = coder->encode_array(strct, "a");
+  CoderState *array_b = coder->encode_array(strct, "b");
+  for (int i = 0; i<ARRAY_LEN; i++) {
+    coder->encode(array_a, NULL, &original.a[i], "i");
+    coder->encode(array_b, NULL, &original.b[i], "i");
+  }
+  
+  strct = coder->decode_struct(state, "key");
+  XCTAssert(strct != NULL, "decode_struct returned bad state");
+  array_a = coder->decode_array(strct, "a");
+  array_b = coder->decode_array(strct, "b");
+  for (int i = 0; i<ARRAY_LEN; i++) {
+    coder->decode(array_a, NULL, &target.a[i], "i");
+    coder->decode(array_b, NULL, &target.b[i], "i");
+    XCTAssertEqual(target.a[i], original.a[i], "Coding of struct of arrays failed");
+    XCTAssertEqual(target.b[i], original.b[i], "Coding of struct of arrays failed");
+  }
+}
+
+
 @end
