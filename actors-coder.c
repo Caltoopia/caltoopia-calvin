@@ -58,7 +58,10 @@ static void json_encode(CoderState *state, const char *key, void *value_ref, con
         case 'i': // C int
             value = cJSON_CreateNumber((double)*((int *)value_ref));
             break;
-            
+        case 'f': // C float
+            value = cJSON_CreateNumber((double)*((float *)value_ref));
+            break;
+        
         default:
             fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
@@ -92,13 +95,18 @@ static void json_decode(CoderState *state, const char *key, void *value_ref, con
         {
             *(char **)value_ref = strdup(value->valuestring);
         }
-            break;
+        break;
         case 'i': // C int
         {
             *(int *)value_ref = (int)(value->valueint);
         }
-            break;
-            
+        break;
+        case 'f': // C float
+        {
+            *(float *)value_ref = (float)(value->valuedouble);
+        }
+        break;
+        
         default:
             fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
