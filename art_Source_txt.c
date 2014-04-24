@@ -63,21 +63,21 @@ ART_ACTION_SCHEDULER(art_Source_txt_action_scheduler)
   ActorInstance_art_Source *thisActor = (ActorInstance_art_Source*)pBase;
   int n;
   ART_ACTION_SCHEDULER_ENTER(0, 1);
-
+  
   n = pinAvailOut_int32_t(ART_OUTPUT(0));
   ART_ACTION_SCHEDULER_LOOP {
     ART_ACTION_SCHEDULER_LOOP_TOP;
     if (n > 0) {
       int token;
-
+      
       if (fscanf(thisActor->file, "%d", &token) < 0) {
-	result = EXITCODE_TERMINATE;
-	goto out;
+        result = EXITCODE_TERMINATE;
+        goto out;
       } else {
-	n--;
-	ART_ACTION_ENTER(action1, 0);
-	pinWrite_int32_t(ART_OUTPUT(0), token);
-	ART_ACTION_EXIT(action1, 0);
+        n--;
+        ART_ACTION_ENTER(action1, 0);
+        pinWrite_int32_t(ART_OUTPUT(0), token);
+        ART_ACTION_EXIT(action1, 0);
       }
     } else {
       result = exitcode_block_Out_1;
@@ -88,7 +88,7 @@ ART_ACTION_SCHEDULER(art_Source_txt_action_scheduler)
 out:
   ART_ACTION_SCHEDULER_EXIT(0, 1);
   return result;
-
+  
 }
 
 static void constructor(AbstractActorInstance *pBase) 
