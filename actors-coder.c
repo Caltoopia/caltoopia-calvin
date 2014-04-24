@@ -53,7 +53,7 @@ static void json_encode(CoderState *state, const char *key, void *value_ref, con
     cJSON *value = NULL;
     switch (type[0]) {
         case 's': // C string
-            value = cJSON_CreateString(value_ref);
+            value = cJSON_CreateString(*(const char **)value_ref);
             break;
         case 'i': // C int
             value = cJSON_CreateNumber((double)*((int *)value_ref));
@@ -90,8 +90,7 @@ static void json_decode(CoderState *state, const char *key, void *value_ref, con
     switch (type[0]) {
         case 's': // C string
         {
-            *(char **)value_ref = value->valuestring;
-            // FIXME: Copy needed? Probably
+            *(char **)value_ref = strdup(value->valuestring);
         }
             break;
         case 'i': // C int

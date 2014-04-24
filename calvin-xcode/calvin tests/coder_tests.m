@@ -47,7 +47,7 @@
   coder->decode(state, "key", &target, type);
 
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
- }
+}
 
 - (void)testStringTypeEncodeDecode
 {
@@ -64,6 +64,7 @@
   coder->decode(state, "key", &target, type);
 
   XCTAssertEqual(strncmp(target, original, strlen(original)), 0, "Coding of type \"%s\" failed", type);
+  free(target);
 }
 
 
