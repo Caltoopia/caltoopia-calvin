@@ -76,26 +76,27 @@ static void json_encode_memory(CoderState *state, const char *key, void *ptr, si
 }
 
 // FIXME
-static void json_decode(ActorCoder *this, const char *key, void *value_ref, const char *type)
+static void json_decode(CoderState *state, const char *key, void *value_ref, const char *type)
 {
-    ActorJSONCoder *coder = (ActorJSONCoder *)this;
-    
-    cJSON *obj = cJSON_GetObjectItem(coder->root, key);
-    if (!obj) {
-        return;
+    cJSON *cj_state = (cJSON *)state;
+    cJSON *value = NULL;
+
+    if (cJSON_Array == cj_state->type) {
+      value = cJSON_DetachItemFromArray(cj_state, 0);
+    } else {
+      value = cJSON_DetachItemFromObject(cj_state, key);
     }
-    
+  
     switch (type[0]) {
         case 's': // C string
         {
-            const char *str = obj->valuestring;
-            // FIXME
+            *(char **)value_ref = value->valuestring;
+            // FIXME: Copy needed? Probably
         }
             break;
         case 'i': // C int
         {
-            int *dest = (int *)value_ref;
-            *dest = (int)(obj->valueint);
+            *(int *)value_ref = (int)(value->valueint);
         }
             break;
             
@@ -103,6 +104,32 @@ static void json_decode(ActorCoder *this, const char *key, void *value_ref, cons
             fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
     }
+    cJSON_Delete(value);
+}
+
+static CoderState *json_decode_struct(CoderState *state, const char *key)
+{
+  cJSON *object = cJSON_GetObjectItem((cJSON *)state, key);
+  if (cJSON_Object != object->type) {
+    fprintf(stderr, "Error: Requested object NOT a struct.");
+  }
+  
+  return (void *)object;
+}
+
+static CoderState *json_decode_array(CoderState *state, const char *key)
+{
+  cJSON *object = cJSON_GetObjectItem((cJSON *)state, key);
+  if (cJSON_Array != object->type) {
+    fprintf(stderr, "Error: Requested object NOT an array.");
+  }
+  
+  return (void *)object;
+}
+
+void json_decode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+{
+    // FIXME:
 }
 
 void *json_data(struct ActorCoder *this)
@@ -153,7 +180,10 @@ ActorCoder *newJSONCoder(void)
     coder->baseCoder.encode_memory = json_encode_memory;
     
     coder->baseCoder.decode = json_decode;
-    
+    coder->baseCoder.decode_struct = json_decode_struct;
+    coder->baseCoder.decode_array = json_decode_array;
+    coder->baseCoder.decode_memory = json_decode_memory;
+  
     coder->baseCoder.data = json_data;
     coder->baseCoder.set_data = json_set_data;
 
@@ -196,7 +226,7 @@ void debug_encode_memory(CoderState *state, const char *key, void *ptr, size_t l
 {
 }
 
-void debug_decode(struct ActorCoder *this, void *value_ref, const char *key, const char *type)
+void debug_decode(CoderState *state, void *value_ref, const char *key, const char *type)
 {
 }
 

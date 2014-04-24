@@ -39,15 +39,21 @@ typedef void CoderState;
 typedef struct ActorCoder {
     // Public API
     ActorCoderFormat type;
+  
     CoderState *(*init)(struct ActorCoder *this);
+  
     void (*encode)(CoderState *state, const char *key, void *value_ref, const char *type);
     CoderState *(*encode_struct)(CoderState *state, const char *key);
     CoderState *(*encode_array)(CoderState *state, const char *key);
     void (*encode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
     
     // FIXME: Decoding functions corresponding to the above
-    void (*decode)(struct ActorCoder *this, const char *key, void *value_ref, const char *type);
-    
+    void (*decode)(CoderState *state, const char *key, void *value_ref, const char *type);
+    CoderState *(*decode_struct)(CoderState *state, const char *key);
+    CoderState *(*decode_array)(CoderState *state, const char *key);
+    void (*decode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
+
+  
     // Get/set data
     void *(*data)(struct ActorCoder *this);
     void (*set_data)(struct ActorCoder *this, void *closure);
