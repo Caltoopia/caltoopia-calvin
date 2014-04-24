@@ -49,6 +49,24 @@
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
 }
 
+- (void)testIntTypeEncodeTxDecode
+{
+  int original = 732654;
+  int target = 0;
+  const char *type = "i";
+  
+  XCTAssertNotEqual(target, original, "Bad setup");
+  
+  CoderState *state = coder->init(coder);
+  
+  coder->encode(state, "key", &original, type);
+  decoder->set_data(decoder, coder->data(coder));
+  decoder->decode(state, "key", &target, type);
+  
+  XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
+}
+
+
 - (void)testStringTypeEncodeDecode
 {
   const char *original = "hello";
@@ -67,5 +85,20 @@
   free(target);
 }
 
+- (void)testFloatTypeEncodeDecode
+{
+  float original = 732.654;
+  float target = 0;
+  const char *type = "f";
+  
+  XCTAssertNotEqual(target, original, "Bad setup");
+  
+  CoderState *state = coder->init(coder);
+  
+  coder->encode(state, "key", &original, type);
+  coder->decode(state, "key", &target, type);
+  
+  XCTAssertEqual(target, original, "Coding of type \"%s\" failed", type);
+}
 
 @end
