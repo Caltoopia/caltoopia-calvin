@@ -11,6 +11,9 @@
 
 #define TX_DATA decoder->set_data(decoder, coder->data(coder))
 
+#define ARRAY_LEN 3
+typedef struct {int a; int b;} struct_t;
+
 @interface coder_tests : XCTestCase
 {
   ActorCoder *coder;
@@ -100,6 +103,50 @@
   coder->decode(state, "key", &target, type);
   
   XCTAssertEqual(target, original, "Coding of type \"%s\" failed", type);
+}
+
+- (void)testArrayEncodeDecode
+{
+  int original[ARRAY_LEN] = {1,2,3};
+  int target[ARRAY_LEN] = {0};
+  const char *type = "i";
+  
+  XCTAssertNotEqual(target[0], original[0], "Bad setup");
+  
+  CoderState *state = coder->init(coder);
+  
+  CoderState *array = coder->encode_array(state, "key");
+  for (int i = 0; i<ARRAY_LEN; i++) {
+    coder->encode(array, NULL, &original[i], "i");
+  }
+  
+  array = coder->decode_array(state, "key");
+  for (int i = 0; i<ARRAY_LEN; i++) {
+    coder->decode(array, NULL, &target[i], "i");
+    XCTAssertEqual(target[i], original[i], "Coding of type \"%s\" failed", type);
+  }
+}
+
+- (void)testStructEncodeDecode
+{
+  struct_t original = {1,2};
+  struct_t target = {0};
+  const char *type = "i";
+  
+  XCTAssertNotEqual(target.a, original.a, "Bad setup");
+  
+  CoderState *state = coder->init(coder);
+  
+  CoderState *strct = coder->encode_struct(state, "key");
+  coder->encode(strct, "a", &original.a, "i");
+  coder->encode(strct, "b", &original.b, "i");
+  
+  strct = coder->decode_struct(state, "key");
+  coder->decode(strct, "a", &target.a, "i");
+  coder->decode(strct, "b", &target.b, "i");
+  
+  XCTAssertEqual(target.a, original.a, "Coding of type \"%s\" failed", type);
+  XCTAssertEqual(target.b, original.b, "Coding of type \"%s\" failed", type);
 }
 
 @end
