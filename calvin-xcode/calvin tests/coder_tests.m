@@ -109,7 +109,6 @@ typedef struct {int a; int b;} struct_t;
 {
   int original[ARRAY_LEN] = {1,2,3};
   int target[ARRAY_LEN] = {0};
-  const char *type = "i";
   
   XCTAssertNotEqual(target[0], original[0], "Bad setup");
   
@@ -123,7 +122,7 @@ typedef struct {int a; int b;} struct_t;
   array = coder->decode_array(state, "key");
   for (int i = 0; i<ARRAY_LEN; i++) {
     coder->decode(array, NULL, &target[i], "i");
-    XCTAssertEqual(target[i], original[i], "Coding of type \"%s\" failed", type);
+    XCTAssertEqual(target[i], original[i], "Coding of array failed");
   }
 }
 
@@ -131,7 +130,6 @@ typedef struct {int a; int b;} struct_t;
 {
   struct_t original = {1,2};
   struct_t target = {0};
-  const char *type = "i";
   
   XCTAssertNotEqual(target.a, original.a, "Bad setup");
   
@@ -145,8 +143,8 @@ typedef struct {int a; int b;} struct_t;
   coder->decode(strct, "a", &target.a, "i");
   coder->decode(strct, "b", &target.b, "i");
   
-  XCTAssertEqual(target.a, original.a, "Coding of type \"%s\" failed", type);
-  XCTAssertEqual(target.b, original.b, "Coding of type \"%s\" failed", type);
+  XCTAssertEqual(target.a, original.a, "Coding of struct failed");
+  XCTAssertEqual(target.b, original.b, "Coding of struct failed");
 }
 
 - (void)testArrayOfStructsEncodeDecode
@@ -204,6 +202,5 @@ typedef struct {int a; int b;} struct_t;
     XCTAssertEqual(target.b[i], original.b[i], "Coding of struct of arrays failed");
   }
 }
-
 
 @end
