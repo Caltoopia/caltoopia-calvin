@@ -31,7 +31,13 @@ static CoderState *json_init(struct ActorCoder *this)
 static CoderState *json_encode_struct(CoderState *state, const char *key)
 {
     cJSON *object = cJSON_CreateObject();
-    cJSON_AddItemToObject((cJSON *)state, key, object);
+    cJSON *cj_state = (cJSON *)state;
+    
+    if (cJSON_Array == cj_state->type) {
+        cJSON_AddItemToArray(cj_state, object);
+    } else {
+        cJSON_AddItemToObject(cj_state, key, object);
+    }
 
     return (void *)object;
 }
@@ -39,11 +45,16 @@ static CoderState *json_encode_struct(CoderState *state, const char *key)
 static CoderState *json_encode_array(CoderState *state, const char *key)
 {
     cJSON *object = cJSON_CreateArray();
-    cJSON_AddItemToObject((cJSON *)state, key, object);
-    
+    cJSON *cj_state = (cJSON *)state;
+  
+    if (cJSON_Array == cj_state->type) {
+        cJSON_AddItemToArray(cj_state, object);
+    } else {
+        cJSON_AddItemToObject(cj_state, key, object);
+    }
+  
     return (void *)object;
 }
-
 
 static void json_encode(CoderState *state, const char *key, void *value_ref, const char *type)
 {
@@ -116,7 +127,15 @@ static void json_decode(CoderState *state, const char *key, void *value_ref, con
 
 static CoderState *json_decode_struct(CoderState *state, const char *key)
 {
-  cJSON *object = cJSON_GetObjectItem((cJSON *)state, key);
+  cJSON *cj_state = (cJSON *)state;
+  cJSON *object = NULL;
+  
+  if (cJSON_Array == cj_state->type) {
+    object = cJSON_DetachItemFromArray(cj_state, 0);
+  } else {
+    object = cJSON_DetachItemFromObject(cj_state, key);
+  }
+
   if (cJSON_Object != object->type) {
     fprintf(stderr, "Error: Requested object NOT a struct.");
   }
@@ -126,7 +145,15 @@ static CoderState *json_decode_struct(CoderState *state, const char *key)
 
 static CoderState *json_decode_array(CoderState *state, const char *key)
 {
-  cJSON *object = cJSON_GetObjectItem((cJSON *)state, key);
+  cJSON *cj_state = (cJSON *)state;
+  cJSON *object = NULL;
+  
+  if (cJSON_Array == cj_state->type) {
+    object = cJSON_DetachItemFromArray(cj_state, 0);
+  } else {
+    object = cJSON_DetachItemFromObject(cj_state, key);
+  }
+
   if (cJSON_Array != object->type) {
     fprintf(stderr, "Error: Requested object NOT an array.");
   }
