@@ -233,7 +233,7 @@ void debug_encode_memory(CoderState *state, const char *key, void *ptr, size_t l
 {
 }
 
-void debug_decode(CoderState *state, void *value_ref, const char *key, const char *type)
+void debug_decode(CoderState *state, const char *key, void *value_ref, const char *type)
 {
 }
 
