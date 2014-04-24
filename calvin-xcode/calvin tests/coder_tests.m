@@ -9,6 +9,7 @@
 #import <XCTest/XCTest.h>
 #import "actors-coder.h"
 
+#define TX_DATA decoder->set_data(decoder, coder->data(coder))
 
 @interface coder_tests : XCTestCase
 {
@@ -60,7 +61,7 @@
   CoderState *state = coder->init(coder);
   
   coder->encode(state, "key", &original, type);
-  decoder->set_data(decoder, coder->data(coder));
+  TX_DATA;
   decoder->decode(state, "key", &target, type);
   
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
