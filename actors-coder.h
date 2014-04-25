@@ -89,7 +89,7 @@ void destroyCoder(ActorCoder *coder);
  *   Data is not prepared for transport as-is
  *
  */
-typedef struct ActorCoder {
+struct ActorCoder {
     /** 
      * The encoding/decoding format set for the coder
      */
@@ -219,6 +219,6 @@ typedef struct ActorCoder {
      */
     void (*destructor)(ActorCoder *this);
     
-} ActorCoder;
+};
 
 #endif // ACTORS_CODER_H
