@@ -18,6 +18,7 @@
 typedef struct ActorJSONCoder {
     ActorCoder baseCoder;
     cJSON *root;
+    cJSON *garbage;
     char *descr;
 } ActorJSONCoder;
 
@@ -78,17 +79,25 @@ static void json_encode_memory(ActorCoder *this, CoderState *state, const char *
     cJSON_AddItemToObject((cJSON *)state, key, cJSON_CreateString("FIXME: Base64 encoded data ..."));
 }
 
-// FIXME
+// Utility function to detach an object from a container.
+// Adds object to garbage list for later collection.
+// Returns the detached object
+static cJSON *_detach_and_track_object(ActorJSONCoder *this, cJSON *container, const char *key)
+{
+    cJSON *object = NULL;
+    if (cJSON_Array == container->type) {
+        object = cJSON_DetachItemFromArray(container, 0);
+    } else {
+        object = cJSON_DetachItemFromObject(container, key);
+    }
+    cJSON_AddItemToArray(this->garbage, object);
+
+    return object;
+}
+
 static void json_decode(ActorCoder *this, CoderState *state, const char *key, void *value_ref, const char *type)
 {
-    cJSON *cj_state = (cJSON *)state;
-    cJSON *value = NULL;
-
-    if (cJSON_Array == cj_state->type) {
-      value = cJSON_DetachItemFromArray(cj_state, 0);
-    } else {
-      value = cJSON_DetachItemFromObject(cj_state, key);
-    }
+    cJSON *value = _detach_and_track_object((ActorJSONCoder *)this, (cJSON *)state, key);
   
     switch (type[0]) {
         case 's': // C string
@@ -111,43 +120,24 @@ static void json_decode(ActorCoder *this, CoderState *state, const char *key, vo
             fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
     }
-    cJSON_Delete(value);
 }
 
 static CoderState *json_decode_struct(ActorCoder *this, CoderState *state, const char *key)
 {
-  cJSON *cj_state = (cJSON *)state;
-  cJSON *object = NULL;
-  
-  if (cJSON_Array == cj_state->type) {
-    object = cJSON_DetachItemFromArray(cj_state, 0);
-  } else {
-    object = cJSON_DetachItemFromObject(cj_state, key);
-  }
-
-  if (cJSON_Object != object->type) {
-    fprintf(stderr, "Error: Requested object NOT a struct.");
-  }
-  
-  return (void *)object;
+    cJSON *object = _detach_and_track_object((ActorJSONCoder *)this, (cJSON *)state, key);
+    if (cJSON_Object != object->type) {
+        fprintf(stderr, "Error: Requested object NOT a struct.");
+    }
+    return (void *)object;
 }
 
 static CoderState *json_decode_array(ActorCoder *this, CoderState *state, const char *key)
 {
-  cJSON *cj_state = (cJSON *)state;
-  cJSON *object = NULL;
-  
-  if (cJSON_Array == cj_state->type) {
-    object = cJSON_DetachItemFromArray(cj_state, 0);
-  } else {
-    object = cJSON_DetachItemFromObject(cj_state, key);
-  }
-
-  if (cJSON_Array != object->type) {
-    fprintf(stderr, "Error: Requested object NOT an array.");
-  }
-  
-  return (void *)object;
+    cJSON *object = _detach_and_track_object((ActorJSONCoder *)this, (cJSON *)state, key);
+    if (cJSON_Array != object->type) {
+        fprintf(stderr, "Error: Requested object NOT an array.");
+    }
+    return (void *)object;
 }
 
 void json_decode_memory(ActorCoder *this, CoderState *state, const char *key, void *ptr, size_t length)
@@ -186,6 +176,7 @@ static void json_destructor(ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
     cJSON_Delete(coder->root);
+    cJSON_Delete(coder->garbage);
     free(coder->descr);
 }
 
@@ -213,9 +204,11 @@ ActorCoder *newJSONCoder(void)
     coder->baseCoder.destructor = json_destructor;
     coder->baseCoder._description = json_string_rep;
     
+    // Store consumed objects so that we won't leak them
+    coder->garbage = cJSON_CreateArray();
+    
     return (ActorCoder *)coder;
 }
-
 
 
 /* ========================================================================= */
