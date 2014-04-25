@@ -9,63 +9,203 @@
 #ifndef ACTORS_CODER_H
 #define ACTORS_CODER_H
 
+/**
+ * Known serialization formats
+ */
 typedef enum CODER_FORMAT {
     JSON_CODER,
     DEBUG_CODER
 } ActorCoderFormat;
 
+/**
+ * Opaque state object type
+ */
 typedef void CoderState;
 
-/* ==== API sketch ====
- 
- Types
- -----
- c : char, int8
- s : C-string
- i : int32
- I : int64
- f : float
- b : boolean
- 
- ref = root(this)
- encode(ref, key, value_ptr, type);
- encode_memory(ref, value_ptr, length); // Base64 encoded
- ref' = encode_array(ref, key);
- ref' = encode_struct(ref, key);
- 
+/******************************************************************************
+ * ActorCoder is an object that encapsulates serialization of data so that
+ *   1) there is a single API to use
+ *   2) the actual serialization format is independent of the coding operations
+ *   3) memory handling is automatic
+ *
+ * Example usage:
+ *    To encode the following C data:
+ *
+ *    struct {int a, float b, int x[XSIZE]} foo;
+ *
+ *    ActorsCoder *coder = newCoder(JSON_CODER);
+ *    CoderState *state = coder->init(coder);
+ *    CoderState *strct = coder->encode_struct(state, "foo");
+ *    coder->encode(strct, "a", &foo.a, "i");
+ *    coder->encode(strct, "b", &foo.b, "f");
+ *    CoderState *array = coder->encode_array(strct, "x");
+ *    for (int i=0; i<XSIZE; i++) {
+ *         coder->encode(array, NULL, &foo.x[i], "i");
+ *    }
+ *    data = coder->data(coder);
+ *    // send data ...
+ *    destroyCoder(coder);
+ *
+ * To decode the above:
+ *
+ *    ActorsCoder *coder = newCoder(JSON_CODER);
+ *    CoderState *state = coder->init(coder);
+ *    coder->set_data(coder, data);
+ *    CoderState *strct = coder->decode_struct(state, "foo");
+ *    coder->decode(strct, "a", &foo.a, "i");
+ *    coder->decode(strct, "b", &foo.b, "f");
+ *    CoderState *array = coder->decode_array(strct, "x");
+ *    for (int i=0; i<XSIZE; i++) {
+ *        coder->decode(array, NULL, &foo.x[i], "i");
+ *    }
+ *    destroyCoder(coder);
+ *
+ * See testsuite for more examples.
+ *
+ * ToDo:
+ *   Add appropriate formats
+ *   Elaborate formats (uint16_t, etc.)
+ *   Memory handling for data
+ *
+ * Known bugs:
+ *   Memory leak when using "detach" methods
+ *   Data is not prepared for transport as-is
+ *
  */
-
-
 typedef struct ActorCoder {
-    // Public API
+    /** 
+     * The encoding/decoding format set for the coder
+     */
     ActorCoderFormat type;
   
+    /**
+     * Initialize an instance
+     */
     CoderState *(*init)(struct ActorCoder *this);
   
+    /** 
+     * Encode a "basic" type, i.e. int, float, string, etc.
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - a key to reference a specific value
+     *     value_ref - a pointer to the value to store for 'key'
+     *     type      - a type specifier for value ref, available types are:
+     *                      "s" : C-string
+     *                      "i" : int32
+     *                      "f" : float
+     *
+     * Oddities: 
+     *     When the state represents an array (see encode_array) parameter key
+     *     is unused, and instead order of encode operations becomes important.
+     *
+     * FIXME: The types and type specifiers should be given some thought.
+     */
     void (*encode)(CoderState *state, const char *key, void *value_ref, const char *type);
+    
+    /** 
+     * Encode a struct (N.B. just the container, not the contents)
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - a key to reference a specific value
+     * Returns:
+     *     a reference to the the container created for the struct data
+     */
     CoderState *(*encode_struct)(CoderState *state, const char *key);
+    
+    /**
+     * Encode an array (N.B. just the container, not the contents)
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - a key to reference a specific value
+     * Returns:
+     *     a reference to the the container created for the array data
+     */
     CoderState *(*encode_array)(CoderState *state, const char *key);
+    
+    /**
+     * Not yet implemented
+     */
     void (*encode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
     
-    // FIXME: Decoding functions corresponding to the above
+    /**
+     * Decode a "basic" type, i.e. int, float, string, etc.
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - a key to reference a specific value
+     *     value_ref - a pointer to the value to store for 'key'
+     *     type      - a type specifier for value ref, see decode for details
+     *
+     * Oddities:
+     *     When the state represents an array (see encode_array) parameter key
+     *     is unused, and instead order of decode operations becomes important.
+     *
+     *     When a string is decoded, the caller takes ownership and is thus
+     *     responsible for freeing it.
+     */
     void (*decode)(CoderState *state, const char *key, void *value_ref, const char *type);
+    
+    /**
+     * Decode a struct (N.B. just the container, not the contents)
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - the key referencing a specific struct
+     * Returns:
+     *     a reference to the the container corresponding to the given key
+     */
     CoderState *(*decode_struct)(CoderState *state, const char *key);
-    CoderState *(*decode_array)(CoderState *state, const char *key);
-    void (*decode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
 
+    /**
+     * Decode an array (N.B. just the container, not the contents)
+     * Parameters:
+     *     state     - an opaque reference to the current container
+     *     key       - the key referencing a specific array
+     * Returns:
+     *     a reference to the the container corresponding to the given key
+     */
+    CoderState *(*decode_array)(CoderState *state, const char *key);
+    
+    /**
+     * Not implemented yet
+     */
+    void (*decode_memory)(CoderState *state, const char *key, void *ptr, size_t length);
   
-    // Get/set data
+    /**
+     * Return an opaque object that contains the serialized data ready for transport
+     * 
+     * FIXME: Likely to change in details
+     */
     void *(*data)(struct ActorCoder *this);
+
+    /**
+     * Load serialized data for subsequential decoding
+     *
+     * FIXME: Likely to change in details
+     */
     void (*set_data)(struct ActorCoder *this, void *closure);
 
-    // Semi-private API
+    /**
+     * Return a human-readable description of the data held by the coder as a 
+     * single string (no newlines anywhere in the string).
+     */
     const char *(*_description)(struct ActorCoder *this);
     
-    // Private API
+    /**
+     * Private. Called by destroyCoder()
+     */
     void (*destructor)(struct ActorCoder *this);
+    
 } ActorCoder;
 
+/**
+ * Create a new coder instance that serializes to/from the format specified by fmt.
+ * All memory management is internal to the coder except for decoding of strings, 
+ * see documentation for decode() method.
+ */
 ActorCoder *newCoder(ActorCoderFormat fmt);
+
+/**
+ * Destroy a coder instance and free its associated resources.
+ */
 void destroyCoder(ActorCoder *coder);
 
 #endif // ACTORS_CODER_H
