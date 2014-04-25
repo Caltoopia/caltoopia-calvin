@@ -28,38 +28,31 @@ static CoderState *json_init(ActorCoder *this)
     return (void *)(coder->root);
 }
 
-static CoderState *json_encode_struct(CoderState *state, const char *key)
+// Utility function to add object to container.
+// Returns the object passed as parameter (for chaining)
+static cJSON  *_store_object(cJSON *container, cJSON *object, const char *key)
 {
-    cJSON *object = cJSON_CreateObject();
-    cJSON *cj_state = (cJSON *)state;
-    
-    if (cJSON_Array == cj_state->type) {
-        cJSON_AddItemToArray(cj_state, object);
+    if (cJSON_Array == container->type) {
+        cJSON_AddItemToArray(container, object);
     } else {
-        cJSON_AddItemToObject(cj_state, key, object);
+        cJSON_AddItemToObject(container, key, object);
     }
-
-    return (void *)object;
+    
+    return object;
 }
 
-static CoderState *json_encode_array(CoderState *state, const char *key)
+static CoderState *json_encode_struct(ActorCoder *this, CoderState *state, const char *key)
 {
-    cJSON *object = cJSON_CreateArray();
-    cJSON *cj_state = (cJSON *)state;
-  
-    if (cJSON_Array == cj_state->type) {
-        cJSON_AddItemToArray(cj_state, object);
-    } else {
-        cJSON_AddItemToObject(cj_state, key, object);
-    }
-  
-    return (void *)object;
+    return (void *)_store_object((cJSON *)state, cJSON_CreateObject(), key);
 }
 
-static void json_encode(CoderState *state, const char *key, void *value_ref, const char *type)
+static CoderState *json_encode_array(ActorCoder *this, CoderState *state, const char *key)
 {
-    cJSON *cj_state = (cJSON *)state;
-    
+    return (void *)_store_object((cJSON *)state, cJSON_CreateArray(), key);
+}
+
+static void json_encode(ActorCoder *this, CoderState *state, const char *key, void *value_ref, const char *type)
+{
     // Parameter conversion
     cJSON *value = NULL;
     switch (type[0]) {
@@ -77,20 +70,16 @@ static void json_encode(CoderState *state, const char *key, void *value_ref, con
             fprintf(stderr, "Error: Unknown type specifier '%c'\n", type[0]);
             break;
     }
-    if (cJSON_Array == cj_state->type) {
-        cJSON_AddItemToArray(cj_state, value);
-    } else {
-        cJSON_AddItemToObject(cj_state, key, value);
-    }
+    (void)_store_object((cJSON *)state, value, key);
 }
 
-static void json_encode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+static void json_encode_memory(ActorCoder *this, CoderState *state, const char *key, void *ptr, size_t length)
 {
     cJSON_AddItemToObject((cJSON *)state, key, cJSON_CreateString("FIXME: Base64 encoded data ..."));
 }
 
 // FIXME
-static void json_decode(CoderState *state, const char *key, void *value_ref, const char *type)
+static void json_decode(ActorCoder *this, CoderState *state, const char *key, void *value_ref, const char *type)
 {
     cJSON *cj_state = (cJSON *)state;
     cJSON *value = NULL;
@@ -125,7 +114,7 @@ static void json_decode(CoderState *state, const char *key, void *value_ref, con
     cJSON_Delete(value);
 }
 
-static CoderState *json_decode_struct(CoderState *state, const char *key)
+static CoderState *json_decode_struct(ActorCoder *this, CoderState *state, const char *key)
 {
   cJSON *cj_state = (cJSON *)state;
   cJSON *object = NULL;
@@ -143,7 +132,7 @@ static CoderState *json_decode_struct(CoderState *state, const char *key)
   return (void *)object;
 }
 
-static CoderState *json_decode_array(CoderState *state, const char *key)
+static CoderState *json_decode_array(ActorCoder *this, CoderState *state, const char *key)
 {
   cJSON *cj_state = (cJSON *)state;
   cJSON *object = NULL;
@@ -161,7 +150,7 @@ static CoderState *json_decode_array(CoderState *state, const char *key)
   return (void *)object;
 }
 
-void json_decode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+void json_decode_memory(ActorCoder *this, CoderState *state, const char *key, void *ptr, size_t length)
 {
     // FIXME:
 }
@@ -242,25 +231,25 @@ CoderState *debug_init(ActorCoder *this)
     return NULL;
 }
 
-void debug_encode(CoderState *state, const char *key, void *value_ref, const char *type)
+void debug_encode(ActorCoder *this, CoderState *state, const char *key, void *value_ref, const char *type)
 {
 }
 
-CoderState *debug_encode_struct(CoderState *state, const char *key)
-{
-    return NULL;
-}
-
-CoderState *debug_encode_array(CoderState *state, const char *key)
+CoderState *debug_encode_struct(ActorCoder *this, CoderState *state, const char *key)
 {
     return NULL;
 }
 
-void debug_encode_memory(CoderState *state, const char *key, void *ptr, size_t length)
+CoderState *debug_encode_array(ActorCoder *this, CoderState *state, const char *key)
+{
+    return NULL;
+}
+
+void debug_encode_memory(ActorCoder *this, CoderState *state, const char *key, void *ptr, size_t length)
 {
 }
 
-void debug_decode(CoderState *state, const char *key, void *value_ref, const char *type)
+void debug_decode(ActorCoder *this, CoderState *state, const char *key, void *value_ref, const char *type)
 {
 }
 

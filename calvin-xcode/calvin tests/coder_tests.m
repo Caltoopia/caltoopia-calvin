@@ -47,8 +47,8 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
 
-  coder->encode(state, "key", &original, type);
-  coder->decode(state, "key", &target, type);
+  coder->encode(coder, state, "key", &original, type);
+  coder->decode(coder, state, "key", &target, type);
 
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
 }
@@ -63,9 +63,9 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  coder->encode(state, "key", &original, type);
+  coder->encode(coder, state, "key", &original, type);
   TX_DATA;
-  decoder->decode(state, "key", &target, type);
+  decoder->decode(coder, state, "key", &target, type);
   
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
 }
@@ -82,8 +82,8 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  coder->encode(state, "key", &original, type);
-  coder->decode(state, "key", &target, type);
+  coder->encode(coder, state, "key", &original, type);
+  coder->decode(coder, state, "key", &target, type);
 
   XCTAssertEqual(strncmp(target, original, strlen(original)), 0, "Coding of type \"%s\" failed", type);
   free(target);
@@ -99,8 +99,8 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  coder->encode(state, "key", &original, type);
-  coder->decode(state, "key", &target, type);
+  coder->encode(coder, state, "key", &original, type);
+  coder->decode(coder, state, "key", &target, type);
   
   XCTAssertEqual(target, original, "Coding of type \"%s\" failed", type);
 }
@@ -114,14 +114,14 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  CoderState *array = coder->encode_array(state, "key");
+  CoderState *array = coder->encode_array(coder, state, "key");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    coder->encode(array, NULL, &original[i], "i");
+    coder->encode(coder, array, NULL, &original[i], "i");
   }
   
-  array = coder->decode_array(state, "key");
+  array = coder->decode_array(coder, state, "key");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    coder->decode(array, NULL, &target[i], "i");
+    coder->decode(coder, array, NULL, &target[i], "i");
     XCTAssertEqual(target[i], original[i], "Coding of array failed");
   }
 }
@@ -135,13 +135,13 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  CoderState *strct = coder->encode_struct(state, "key");
-  coder->encode(strct, "a", &original.a, "i");
-  coder->encode(strct, "b", &original.b, "i");
+  CoderState *strct = coder->encode_struct(coder, state, "key");
+  coder->encode(coder, strct, "a", &original.a, "i");
+  coder->encode(coder, strct, "b", &original.b, "i");
   
-  strct = coder->decode_struct(state, "key");
-  coder->decode(strct, "a", &target.a, "i");
-  coder->decode(strct, "b", &target.b, "i");
+  strct = coder->decode_struct(coder, state, "key");
+  coder->decode(coder, strct, "a", &target.a, "i");
+  coder->decode(coder, strct, "b", &target.b, "i");
   
   XCTAssertEqual(target.a, original.a, "Coding of struct failed");
   XCTAssertEqual(target.b, original.b, "Coding of struct failed");
@@ -156,19 +156,19 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  CoderState *array = coder->encode_array(state, "key");
+  CoderState *array = coder->encode_array(coder, state, "key");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    CoderState *strct = coder->encode_struct(array, "dummy");
-    coder->encode(strct, "a", &original[i].a, "i");
-    coder->encode(strct, "b", &original[i].b, "i");
+    CoderState *strct = coder->encode_struct(coder, array, "dummy");
+    coder->encode(coder, strct, "a", &original[i].a, "i");
+    coder->encode(coder, strct, "b", &original[i].b, "i");
   }
   
-  array = coder->decode_array(state, "key");
+  array = coder->decode_array(coder, state, "key");
   XCTAssert(array != NULL, "decode_array returned bad state");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    CoderState *strct = coder->decode_struct(array, "dummy");
-    coder->decode(strct, "a", &target[i].a, "i");
-    coder->decode(strct, "b", &target[i].b, "i");
+    CoderState *strct = coder->decode_struct(coder, array, "dummy");
+    coder->decode(coder, strct, "a", &target[i].a, "i");
+    coder->decode(coder, strct, "b", &target[i].b, "i");
     XCTAssertEqual(target[i].a, original[i].a, "Coding of array of structs failed");
     XCTAssertEqual(target[i].b, original[i].b, "Coding of array of structs failed");
   }
@@ -183,21 +183,21 @@ typedef struct {int a; int b;} struct_t;
   
   CoderState *state = coder->init(coder);
   
-  CoderState *strct = coder->encode_struct(state, "key");
-  CoderState *array_a = coder->encode_array(strct, "a");
-  CoderState *array_b = coder->encode_array(strct, "b");
+  CoderState *strct = coder->encode_struct(coder, state, "key");
+  CoderState *array_a = coder->encode_array(coder, strct, "a");
+  CoderState *array_b = coder->encode_array(coder, strct, "b");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    coder->encode(array_a, NULL, &original.a[i], "i");
-    coder->encode(array_b, NULL, &original.b[i], "i");
+    coder->encode(coder, array_a, NULL, &original.a[i], "i");
+    coder->encode(coder, array_b, NULL, &original.b[i], "i");
   }
   
-  strct = coder->decode_struct(state, "key");
+  strct = coder->decode_struct(coder, state, "key");
   XCTAssert(strct != NULL, "decode_struct returned bad state");
-  array_a = coder->decode_array(strct, "a");
-  array_b = coder->decode_array(strct, "b");
+  array_a = coder->decode_array(coder, strct, "a");
+  array_b = coder->decode_array(coder, strct, "b");
   for (int i = 0; i<ARRAY_LEN; i++) {
-    coder->decode(array_a, NULL, &target.a[i], "i");
-    coder->decode(array_b, NULL, &target.b[i], "i");
+    coder->decode(coder, array_a, NULL, &target.a[i], "i");
+    coder->decode(coder, array_b, NULL, &target.b[i], "i");
     XCTAssertEqual(target.a[i], original.a[i], "Coding of struct of arrays failed");
     XCTAssertEqual(target.b[i], original.b[i], "Coding of struct of arrays failed");
   }

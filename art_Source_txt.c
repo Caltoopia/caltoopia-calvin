@@ -130,7 +130,7 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_art_Source *this = (ActorInstance_art_Source *)actor;
     void *state = coder->init(coder);
-    coder->encode(state, "filename", this->filename, "s");
+    coder->encode(coder, state, "filename", this->filename, "s");
 }
 
 static const PortDescription outputPortDescriptions[]={

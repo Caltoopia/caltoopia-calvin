@@ -49,18 +49,18 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
     CoderState *state = coder->init(coder);
     
     // Class info
-    coder->encode(state, "class", actorClass->name, "s");
+    coder->encode(coder, state, "class", actorClass->name, "s");
     // Instance state
-    coder->encode(state, "_fsmState", &this->_fsmState, "i");
-    coder->encode(state, "sum", &this->sum, "i");
+    coder->encode(coder, state, "_fsmState", &this->_fsmState, "i");
+    coder->encode(coder, state, "sum", &this->sum, "i");
     // Output ports
     if (actorClass->numOutputPorts) {
-        CoderState *ports = coder->encode_struct(state, "outports");
+        CoderState *ports = coder->encode_struct(coder, state, "outports");
         for (int i = 0; i < actorClass->numOutputPorts; i++) {
             // ToDo: Let ports serialize themselves
             const char *portname = actorClass->outputPortDescriptions[i].name;
-            CoderState *port = coder->encode_struct(ports, portname);
-            CoderState *buffer = coder->encode_array(port, "buffer");
+            CoderState *port = coder->encode_struct(coder, ports, portname);
+            CoderState *buffer = coder->encode_array(coder, port, "buffer");
             int count = 0;
             OutputPort *output = &actor->outputPort[i];
             InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
@@ -73,14 +73,14 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
             int32_t *writePtr = (int32_t *)output->localOutputPort.writePtr;
             int32_t *readPtr = (int32_t *)consumer->localInputPort.readPtr;
             while(readPtr != writePtr) {
-                coder->encode(buffer, NULL, readPtr, "i");
+                coder->encode(coder, buffer, NULL, readPtr, "i");
                 count++;
                 readPtr++;
                 if (readPtr >= bufferEnd) {
                     readPtr = (int32_t *)output->localOutputPort.bufferStart;
                 }
             }
-            coder->encode(port, "length", &count, "i");
+            coder->encode(coder, port, "length", &count, "i");
         }
     }
 };
@@ -88,9 +88,9 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
-    
-    coder->decode(coder, "_fsmState", (void *)&this->_fsmState, "i");
-    coder->decode(coder, "sum", (void *)&this->sum, "i");
+    CoderState *state = coder->init(coder);
+    coder->decode(coder, state, "_fsmState", (void *)&this->_fsmState, "i");
+    coder->decode(coder, state, "sum", (void *)&this->sum, "i");
     
 };
 
