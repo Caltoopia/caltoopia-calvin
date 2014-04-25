@@ -9,7 +9,7 @@
 #import <XCTest/XCTest.h>
 #import "actors-coder.h"
 
-#define TX_DATA decoder->set_data(decoder, coder->data(coder))
+#define TX_DATA(encoder, decoder) (decoder)->set_data((decoder), (encoder)->data((encoder)))
 
 #define ARRAY_LEN 3
 #define MAX_STRING_SIZE 256
@@ -63,10 +63,9 @@ typedef struct {int a; int b;} struct_t;
   XCTAssertNotEqual(target, original, "Bad setup");
   
   CoderState *state = coder->init(coder);
-  
   coder->encode(coder, state, "key", &original, type);
-  TX_DATA;
-  decoder->decode(coder, state, "key", &target, type);
+  state = TX_DATA(coder, decoder);
+  decoder->decode(decoder, state, "key", &target, type);
   
   XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
 }
