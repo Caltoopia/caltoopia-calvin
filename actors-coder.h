@@ -98,7 +98,7 @@ typedef struct ActorCoder {
     /**
      * Initialize an instance
      */
-    CoderState *(*init)(struct ActorCoder *this);
+    CoderState *(*init)(ActorCoder *this);
   
     /** 
      * Encode a "basic" type, i.e. int, float, string, etc.
@@ -191,25 +191,25 @@ typedef struct ActorCoder {
      * 
      * FIXME: Likely to change in details
      */
-    void *(*data)(struct ActorCoder *this);
+    void *(*data)(ActorCoder *this);
 
     /**
      * Load serialized data for subsequential decoding
      *
      * FIXME: Likely to change in details
      */
-    void (*set_data)(struct ActorCoder *this, void *closure);
+    void (*set_data)(ActorCoder *this, void *closure);
 
     /**
      * Return a human-readable description of the data held by the coder as a 
      * single string (no newlines anywhere in the string).
      */
-    const char *(*_description)(struct ActorCoder *this);
+    const char *(*_description)(ActorCoder *this);
     
     /**
      * Private. Called by destroyCoder()
      */
-    void (*destructor)(struct ActorCoder *this);
+    void (*destructor)(ActorCoder *this);
     
 } ActorCoder;
 

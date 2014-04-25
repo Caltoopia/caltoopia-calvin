@@ -21,7 +21,7 @@ typedef struct ActorJSONCoder {
     char *descr;
 } ActorJSONCoder;
 
-static CoderState *json_init(struct ActorCoder *this)
+static CoderState *json_init(ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
 
@@ -166,13 +166,13 @@ void json_decode_memory(CoderState *state, const char *key, void *ptr, size_t le
     // FIXME:
 }
 
-void *json_data(struct ActorCoder *this)
+void *json_data(ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
     return coder->root;
 }
 
-void json_set_data(struct ActorCoder *this, void *closure)
+void json_set_data(ActorCoder *this, void *closure)
 {
     // If closure is NOT a C string, bad things will happen.
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
@@ -237,7 +237,7 @@ typedef struct ActorDebugCoder {
     ActorCoder baseCoder;
 } ActorDebugCoder;
 
-CoderState *debug_init(struct ActorCoder *this)
+CoderState *debug_init(ActorCoder *this)
 {
     return NULL;
 }
@@ -264,12 +264,12 @@ void debug_decode(CoderState *state, const char *key, void *value_ref, const cha
 {
 }
 
-void *debug_data(struct ActorCoder *this)
+void *debug_data(ActorCoder *this)
 {
     return NULL;
 }
 
-void debug_set_data(struct ActorCoder *this, void *closure)
+void debug_set_data(ActorCoder *this, void *closure)
 {
 }
 
