@@ -10,6 +10,11 @@
 #define ACTORS_CODER_H
 
 /**
+ * "Class" for coder. See struct declaration below for API.
+ */
+typedef struct ActorCoder ActorCoder;
+
+/**
  * Known serialization formats
  */
 typedef enum CODER_FORMAT {
@@ -21,6 +26,18 @@ typedef enum CODER_FORMAT {
  * Opaque state object type
  */
 typedef void CoderState;
+
+/**
+ * Create a new coder instance that serializes to/from the format specified by fmt.
+ * All memory management is internal to the coder except for decoding of strings,
+ * see documentation for decode() method.
+ */
+ActorCoder *newCoder(ActorCoderFormat fmt);
+
+/**
+ * Destroy a coder instance and free its associated resources.
+ */
+void destroyCoder(ActorCoder *coder);
 
 /******************************************************************************
  * ActorCoder is an object that encapsulates serialization of data so that
@@ -195,17 +212,5 @@ typedef struct ActorCoder {
     void (*destructor)(struct ActorCoder *this);
     
 } ActorCoder;
-
-/**
- * Create a new coder instance that serializes to/from the format specified by fmt.
- * All memory management is internal to the coder except for decoding of strings, 
- * see documentation for decode() method.
- */
-ActorCoder *newCoder(ActorCoderFormat fmt);
-
-/**
- * Destroy a coder instance and free its associated resources.
- */
-void destroyCoder(ActorCoder *coder);
 
 #endif // ACTORS_CODER_H
