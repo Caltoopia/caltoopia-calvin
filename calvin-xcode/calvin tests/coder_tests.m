@@ -12,6 +12,7 @@
 #define TX_DATA decoder->set_data(decoder, coder->data(coder))
 
 #define ARRAY_LEN 3
+#define MAX_STRING_SIZE 256
 typedef struct {int a; int b;} struct_t;
 
 @interface coder_tests : XCTestCase
@@ -202,5 +203,27 @@ typedef struct {int a; int b;} struct_t;
     XCTAssertEqual(target.b[i], original.b[i], "Coding of struct of arrays failed");
   }
 }
+
+- (void)testJSONDataFormat
+{
+    int original = 732654;
+    int target = 0;
+    const char *type = "i";
+    const char *key = "key";
+    char expected[MAX_STRING_SIZE];
+    
+    snprintf(expected, MAX_STRING_SIZE, "{\"%s\":%d}", key, original);
+    
+    CoderState *state = coder->init(coder);
+    coder->encode(coder, state, key, &original, type);
+    const char *json = coder->data(coder);
+    XCTAssert(strncmp(json, expected, MAX_STRING_SIZE) == 0, "Wrong JSON format");
+    
+    state = decoder->set_data(decoder, (void *)json);
+    decoder->decode(decoder, state, key, &target, type);
+    
+    XCTAssertEqual(target, original, "Coding of type \"%s\"failed", type);
+}
+
 
 @end

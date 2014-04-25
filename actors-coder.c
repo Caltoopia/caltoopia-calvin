@@ -145,13 +145,21 @@ void json_decode_memory(ActorCoder *this, CoderState *state, const char *key, vo
     // FIXME:
 }
 
-void *json_data(ActorCoder *this)
+static const char *json_string_rep(ActorCoder *this)
 {
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
-    return coder->root;
+    free(coder->descr);
+    coder->descr = cJSON_PrintUnformatted(coder->root);
+
+    return coder->descr;
 }
 
-void json_set_data(ActorCoder *this, void *closure)
+void *json_data(ActorCoder *this)
+{
+    return (void *)json_string_rep(this);
+}
+
+CoderState *json_set_data(ActorCoder *this, void *closure)
 {
     // If closure is NOT a C string, bad things will happen.
     ActorJSONCoder *coder = (ActorJSONCoder *)this;
@@ -161,15 +169,7 @@ void json_set_data(ActorCoder *this, void *closure)
         cJSON_Delete(coder->root);
         coder->root = data;
     }
-}
-
-static const char *json_string_rep(ActorCoder *this)
-{
-    ActorJSONCoder *coder = (ActorJSONCoder *)this;
-    free(coder->descr);
-    coder->descr = cJSON_PrintUnformatted(coder->root);
-
-    return coder->descr;
+    return coder->root;
 }
 
 static void json_destructor(ActorCoder *this)
@@ -251,10 +251,10 @@ void *debug_data(ActorCoder *this)
     return NULL;
 }
 
-void debug_set_data(ActorCoder *this, void *closure)
+CoderState *debug_set_data(ActorCoder *this, void *closure)
 {
+    return NULL;
 }
-
 
 static const char *debug_string_rep(ActorCoder *this)
 {

@@ -103,7 +103,7 @@ typedef struct ActorCoder {
     /** 
      * Encode a "basic" type, i.e. int, float, string, etc.
      * Parameters:
-     *     state     - an opaque reference to the current container
+     *     state     - an opaque reference to the root container
      *     key       - a key to reference a specific value
      *     value_ref - a pointer to the value to store for 'key'
      *     type      - a type specifier for value ref, available types are:
@@ -200,10 +200,13 @@ typedef struct ActorCoder {
 
     /**
      * Load serialized data for subsequential decoding
-     *
-     * FIXME: Likely to change in details
+     * Parameters:
+     *     this    - the coder instance itself
+     *     closure - data returned by encoder->data()
+     * Returns:
+     *     state   - an opaque reference to the root container
      */
-    void (*set_data)(ActorCoder *this, void *closure);
+    CoderState *(*set_data)(ActorCoder *this, void *closure);
 
     /**
      * Return a human-readable description of the data held by the coder as a 
