@@ -62,23 +62,22 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_timed_counter *this = (ActorInstance_timed_counter *)actor;
     CoderState *state = coder->init(coder);
-    
     // fsmState
-    coder->encode(state, "_fsmState", &this->_fsmState, "i");
-    coder->encode(state, "counter", &this->counter, "i");
-    coder->encode(coder, "next_firing", &this->next_firing, "i");
-    coder->encode(coder, "firing_interval", &this->firing_interval, "i");
+    coder->encode(coder, state, "_fsmState", &this->_fsmState, "i");
+    coder->encode(coder, state, "counter", &this->counter, "i");
+    coder->encode(coder, state, "next_firing", &this->next_firing, "i");
+    coder->encode(coder, state, "firing_interval", &this->firing_interval, "i");
     
 };
 
 static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_timed_counter *this = (ActorInstance_timed_counter *)actor;
-    
-    coder->decode(coder, "_fsmState", (void *)&this->_fsmState, "i");
-    coder->decode(coder, "counter", (void *)&this->counter, "i");
-    coder->decode(coder, "next_firing", (void *)&this->next_firing, "i");
-    coder->decode(coder, "firing_interval", (void *)&this->firing_interval, "i");
+    CoderState *state = coder->data(coder);
+    coder->decode(coder, state, "_fsmState", (void *)&this->_fsmState, "i");
+    coder->decode(coder, state, "counter", (void *)&this->counter, "i");
+    coder->decode(coder, state, "next_firing", (void *)&this->next_firing, "i");
+    coder->decode(coder, state, "firing_interval", (void *)&this->firing_interval, "i");
     
 };
 

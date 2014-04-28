@@ -61,32 +61,32 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
     CoderState *state = coder->init(coder);
     
     // fsmState
-    coder->encode(state, "fsmState", &this->_fsmState, "i");
+    coder->encode(coder, state, "fsmState", &this->_fsmState, "i");
     
     // int array
-    CoderState *array_state = coder->encode_array(state, "my_array");
+    CoderState *array_state = coder->encode_array(coder, state, "my_array");
     for (int i=0; i<4; i++) {
-        coder->encode(array_state, NULL, &this->array[i], "i");
+        coder->encode(coder, array_state, NULL, &this->array[i], "i");
     }
     
     // Structs with structs 
-    CoderState *struct_state = coder->encode_struct(state, "s");
-    coder->encode(struct_state, "a", &this->s.a, "i");
-    coder->encode(struct_state, "b", &this->s.b, "i");
+    CoderState *struct_state = coder->encode_struct(coder, state, "s");
+    coder->encode(coder, struct_state, "a", &this->s.a, "i");
+    coder->encode(coder, struct_state, "b", &this->s.b, "i");
     if (this->s.another) {
-        CoderState *another_state = coder->encode_struct(struct_state, "s");
-        coder->encode(another_state, "a", &this->s.another->a, "i");
-        coder->encode(another_state, "b", &this->s.another->b, "i");
+        CoderState *another_state = coder->encode_struct(coder, struct_state, "s");
+        coder->encode(coder, another_state, "a", &this->s.another->a, "i");
+        coder->encode(coder, another_state, "b", &this->s.another->b, "i");
     }
     
     // Array of structs
-    array_state = coder->encode_array(state, "sa");
-    struct_state = coder->encode_struct(array_state, "s");
-    coder->encode(struct_state, "a", &this->sa[0].a, "i");
-    coder->encode(struct_state, "b", &this->sa[0].b, "i");
-    struct_state = coder->encode_struct(array_state, "s");
-    coder->encode(struct_state, "a", &this->sa[1].a, "i");
-    coder->encode(struct_state, "b", &this->sa[1].b, "i");
+    array_state = coder->encode_array(coder, state, "sa");
+    struct_state = coder->encode_struct(coder, array_state, "s");
+    coder->encode(coder, struct_state, "a", &this->sa[0].a, "i");
+    coder->encode(coder, struct_state, "b", &this->sa[0].b, "i");
+    struct_state = coder->encode_struct(coder, array_state, "s");
+    coder->encode(coder, struct_state, "a", &this->sa[1].a, "i");
+    coder->encode(coder, struct_state, "b", &this->sa[1].b, "i");
     
 };
 

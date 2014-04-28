@@ -49,7 +49,7 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
     CoderState *state = coder->init(coder);
     
     // Class info
-    coder->encode(coder, state, "class", actorClass->name, "s");
+    coder->encode(coder, state, "class", (void *)&actorClass->name, "s");
     // Instance state
     coder->encode(coder, state, "_fsmState", &this->_fsmState, "i");
     coder->encode(coder, state, "sum", &this->sum, "i");
