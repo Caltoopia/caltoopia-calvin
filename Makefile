@@ -1,32 +1,47 @@
-REAL_NAME=calvin
-OBJECTS=actors-registry.o actors-network.o \
-	actors-rts.o actors-parser.o actors-teleport.o actors-debug.o \
-        art_Sink_bin.o art_Sink_txt.o art_Sink_real.o \
-	art_Source_bin.o art_Source_txt.o art_Source_real.o
+PROGRAM = calvin
+SOURCES = $(wildcard *.c)
+DISPLAY_SOURCES = $(wildcard display-*.c)
+SOURCES := $(filter-out $(DISPLAY_SOURCES), $(SOURCES))
 
-# set up linker flags Linux
+CFLAGS = -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99
+
+LDFLAGS := -rdynamic -ldl -pthread
+
+# set up linux specifics
 ifeq ($(shell uname -s),Linux)
-  LDFLAGS += -rdynamic $(shell sdl-config --libs)
-  OBJECTS += display-sdl.o display.o art_Display_yuv.o
-  CFLAGS += $(shell sdl-config --cflags) -DCALVIN_DISPLAY_SUPPORT
+
+ifeq ($(shell uname -m),armv6l)
+  # Raspberries
+  SOURCES += display-null.c
+  LDFLAGS += -lm
+  CFLAGS += -ggdb -pedantic
+else
+  # Other
+  LDFLAGS += $(shell sdl-config --libs) -lm
+  SOURCES += display-sdl.c
+  CFLAGS += $(shell sdl-config --cflags) -ggdb -pedantic
 endif
-# set up linker flags Mac OS X
+endif
+
+# set up Mac OS X specifics
 ifeq ($(shell uname -s),Darwin)
-  LDFLAGS += -rdynamic
-  OBJECTS += display-file.o display.o art_Display_yuv.o
-  CFLAGS += -DCALVIN_DISPLAY_SUPPORT
+  LDFLAGS +=
+  SOURCES += display-file.c
+  CFLAGS += 
 endif
 
-all: $(REAL_NAME)
+OBJECTS = $(SOURCES:.c=.o)
 
-$(REAL_NAME): $(OBJECTS)
-	$(CC) -o $@ $^ -ldl -lpthread $(LDFLAGS)
+all: $(PROGRAM)
+
+$(PROGRAM): $(OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJECTS) : %.o : %.c
-	$(CC) -c -Wall $(CFLAGS) -g -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:
-	@rm -f *.o *.so $(REAL_NAME)
+	$(RM) *.o *.so $(PROGRAM)
 
 
 # Rule for compiling actors for dynamic loading
@@ -36,10 +51,11 @@ MAKEFILE_PATH = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 
 %.so : %.c
-	$(CC) -I$(CALVIN_HOME) -Wall -fPIC -shared -Wl,-soname,$@ -o $@ $<
+	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
 	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<
     
 
 .INTERMEDIATE: $(OBJECTS)
+
