@@ -51,7 +51,7 @@ MAKEFILE_PATH = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 
 %.so : %.c
-	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -fPIC -shared -Wl,-soname,$@ -o $@ $<
+	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -ggdb -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
 	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<

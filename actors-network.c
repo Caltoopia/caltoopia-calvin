@@ -51,6 +51,7 @@
 #include "actors-network.h"
 #include "actors-teleport.h"
 #include "actors-rts.h"
+#include "io_port.h"
 
 /* ------------------------------------------------------------------------- */
 
@@ -68,7 +69,7 @@ static dllist_head_t disabled_instances;/* disabled, non-executing instances */
 /* ------------------------------------------------------------------------- */
 
 /** Set this to enable power-saving idle mode */
-#define CALVIN_BLOCK_ON_IDLE
+/* #define CALVIN_BLOCK_ON_IDLE */
 
 /* ------------------------------------------------------------------------- */
 
@@ -208,20 +209,21 @@ static InputPort * lookupInput(const AbstractActorInstance *instance,
 
 /* ------------------------------------------------------------------------- */
 
-static void connectInput(InputPort *input, OutputPort *producer)
+static void connectInput(InputPort *consumer, OutputPort *producer)
 {
-      input->producer = producer;
+      consumer->producer = producer;
 
       // copy FIFO pointers from the producer
+      consumer->localInputPort.bufferStart = producer->localOutputPort.bufferStart;
+      consumer->localInputPort.readPtr = producer->localOutputPort.bufferStart;
+      consumer->localInputPort.bufferEnd = producer->localOutputPort.bufferEnd;
 
-      input->localInputPort.bufferStart =
-      input->localInputPort.readPtr = producer->localOutputPort.bufferStart;
-      input->localInputPort.bufferEnd = producer->localOutputPort.bufferEnd;
-      input->capacity = producer->capacity;
-      memcpy(&input->functions, &producer->functions, sizeof(tokenFn));
+      consumer->capacity = producer->capacity;
 
-      dllist_init_element(&input->asConsumer);
-      dllist_append(&producer->consumers, &input->asConsumer);
+      memcpy(&consumer->functions, &producer->functions, sizeof producer->functions);
+
+      dllist_init_element(&consumer->asConsumer);
+      dllist_append(&producer->consumers, &consumer->asConsumer);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -240,36 +242,17 @@ static inline void preFire(AbstractActorInstance *actor) {
   for (i = 0; i < actor->numInputPorts; ++i) {
     InputPort *input = &actor->inputPort[i];
 
-    if (input->producer) {
-      unsigned int available
-      = input->producer->tokensProduced - input->tokensConsumed;
+    if (input_port_has_producer(input)) {
+      input_port_update_available(input);
 
-      input->localInputPort.available=available;
       // drainedAt: tokensConsumed counter when zero tokens available
-      input->drainedAt=input->tokensConsumed + available;
+      input_port_update_drained_at(input);
     }
   }
 
   for (i = 0; i < actor->numOutputPorts; ++i) {
     OutputPort *output = &actor->outputPort[i];
-    unsigned int produced = output->tokensProduced;
-    unsigned int maxAvailable = 0;
-    unsigned int spaceLeft;
-
-    InputPort *consumer = (InputPort *) dllist_first_lock(&output->consumers);
-    while (consumer != NULL) {
-      unsigned int available = produced - consumer->tokensConsumed;
-      if (available > maxAvailable)
-        maxAvailable = available;
-
-      consumer = (InputPort *) dllist_next_locked(&output->consumers,
-                                           &consumer->asConsumer);
-    }
-    dllist_unlock(&output->consumers);
-    spaceLeft = output->capacity - maxAvailable;
-    output->localOutputPort.spaceLeft = spaceLeft;
-    // fullAt: tokensProduced counter when FIFO is full
-    output->fullAt = output->tokensProduced + spaceLeft;
+    output_port_update_full_at(output);
   }
 }
 
@@ -289,22 +272,14 @@ static inline int postFire(AbstractActorInstance *actor) {
   // Counter at which the FIFO is drained less tokens still available
   for (i=0; i<actor->numInputPorts; ++i) {
     InputPort *input=&actor->inputPort[i];
-    unsigned counter = input->drainedAt - input->localInputPort.available;
-    if (counter!=input->tokensConsumed) {
-      input->tokensConsumed=counter;
-      fired=1;
-    }
+    fired = input_port_update_counter(input);
   }
 
   // Update tokensProduced counter of each OutputPort:
   // Counter at which the FIFO is full less space still left
   for (i=0; i<actor->numOutputPorts; ++i) {
     OutputPort *output=&actor->outputPort[i];
-    unsigned counter = output->fullAt - output->localOutputPort.spaceLeft;
-    if (counter!=output->tokensProduced) {
-      output->tokensProduced=counter;
-      fired=1;
-    }
+    fired = output_port_update_tokens_produced(output);
   }
 
   return fired;
@@ -318,27 +293,19 @@ static void * workerThreadMain(void *unused_arg)
     int fired=1;
 
     while (fired) {
-      {
-        pthread_mutex_lock(&thread_state.execution_mutex);
-        
-        dllist_element_t *elem = dllist_first_lock(&instances);
-        fired=0;
-        while (elem) {
-          AbstractActorInstance *actor = (AbstractActorInstance *) elem;
-          
-          preFire(actor);
-          (void) actor->action_scheduler(actor);
-          if (postFire(actor)) {
-            fired=1;
-          }
-          
-          elem = dllist_next_locked(&instances, elem);
-        }
-        dllist_unlock(&instances);
-
-        pthread_mutex_unlock(&thread_state.execution_mutex);
+      pthread_mutex_lock(&thread_state.execution_mutex);
+      dllist_element_t *elem = dllist_first_lock(&instances);
+      fired=0;
+      while (elem) {
+        AbstractActorInstance *actor = (AbstractActorInstance *) elem;
+        preFire(actor);
+        actor->action_scheduler(actor);
+        fired = postFire(actor);
+        elem = dllist_next_locked(&instances, elem);
       }
-      
+      dllist_unlock(&instances);
+
+      pthread_mutex_unlock(&thread_state.execution_mutex);
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE
@@ -388,7 +355,7 @@ void initActorNetwork(void)
 
 AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
                                             const char *actor_name,
-                                            const char *params[])
+                                            char **params)
 {
   AbstractActorInstance *instance = malloc(actorClass->sizeActorInstance);
   unsigned int i;
@@ -436,7 +403,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
   for (int i=0; params && params[2*i] && i<MAX_PARAMS; i++) {
     setActorParam(instance, params[2*i], params[2*i + 1]);
   }
-  
+
   if (instance->actorClass->constructor) {
     instance->actorClass->constructor(instance);
   }
@@ -468,7 +435,7 @@ void disableActorInstance(const char *actor_name)
 
     dllist_remove(&instances, &instance->listEntry);
     dllist_append(&disabled_instances, &instance->listEntry);
-    
+
     // wakeUpNetwork();
   }
 
@@ -565,10 +532,10 @@ void createRemoteConnection(const char *src_actor,
 
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *sender
-  = createActorInstance(klass, strdup(sender_name), NULL);
+    = createActorInstance(klass, strdup(sender_name), NULL);
   setSenderRemoteAddress(sender, remote_host, atoi(remote_port));
 
-  InputPort *input = lookupInput(sender, "in", NULL, NULL);    
+  InputPort *input = lookupInput(sender, "in", NULL, NULL);
   connectInput(input, output);
 
   enableActorInstance(sender_name);
@@ -596,7 +563,7 @@ int createSocketReceiver(const char *actor_name,
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *receiver
   = createActorInstance(klass, strdup(receiver_name), NULL);
-  OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);    
+  OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);
   connectInput(input, output);
 
   enableActorInstance(receiver_name);
@@ -637,7 +604,7 @@ void wakeUpNetwork(void)
  * a unique hashid. The user must themself
  * keep track if this is locking or unlocking,
  * either by matched pairs in code or by a seperate
- * variable. 
+ * variable.
  * This will keep the action scheduler loop in
  * locked busy as long as at least one user has
  * locked it into busy. It will also wakeup the
@@ -648,7 +615,7 @@ void lockedBusyNetworkToggle(uint32_t hashid)
 #ifdef CALVIN_BLOCK_ON_IDLE
   /* Static status of id prints, only when 0 all locked busy mechanism users have (propably) unlocked */
   static uint32_t idPrints = 0;
-  
+
   pthread_mutex_lock(&thread_state.signaling_mutex);
   /* XOR with the hash id to add/remove id print */
   idPrints ^= hashid;
@@ -693,30 +660,30 @@ void lockedBusyNetworkToggle(uint32_t hashid)
 static inline uint32_t hashmurmur3_32(const void *data, size_t nbytes)
 {
   if (data == NULL || nbytes == 0) return 0;
-  
+
   const uint32_t c1 = 0xcc9e2d51;
   const uint32_t c2 = 0x1b873593;
-  
+
   const int nblocks = nbytes / 4;
   const uint32_t *blocks = (const uint32_t *)(data);
-  const uint8_t *tail = (const uint8_t *)(data + (nblocks * 4));
-  
+  const uint8_t *tail = (const uint8_t *)((const uint8_t*)data + (nblocks * 4));
+
   uint32_t h = 0;
-  
+
   int i;
   uint32_t k;
   for (i = 0; i < nblocks; i++) {
     k = blocks[i];
-    
+
     k *= c1;
     k = (k << 15) | (k >> (32 - 15));
     k *= c2;
-    
+
     h ^= k;
     h = (h << 13) | (h >> (32 - 13));
     h = (h * 5) + 0xe6546b64;
   }
-  
+
   k = 0;
   switch (nbytes & 3) {
     case 3:
@@ -730,15 +697,15 @@ static inline uint32_t hashmurmur3_32(const void *data, size_t nbytes)
       k *= c2;
       h ^= k;
   };
-  
+
   h ^= nbytes;
-  
+
   h ^= h >> 16;
   h *= 0x85ebca6b;
   h ^= h >> 13;
   h *= 0xc2b2ae35;
   h ^= h >> 16;
-  
+
   return h;
 }
 
@@ -750,13 +717,13 @@ uint32_t getUniqueHashid(void)
   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   static uint32_t n = 1;
   uint32_t result;
-  
+
   {
     pthread_mutex_lock(&mutex);
     result = n++;
     pthread_mutex_unlock(&mutex);
   }
-  
+
   /*
    * Hash the counter with the 32 bit murmurhash.
    * If ever find that this is not enough bits
@@ -793,7 +760,7 @@ void serializeActor(const char *name, ActorCoder *coder)
 {
     AbstractActorInstance *actor = lookupActor(name);
     const ActorClass *actorClass = actor->actorClass;
-    
+
     if (actorClass->serialize) {
         actorClass->serialize(actor, coder);
     }
@@ -805,7 +772,7 @@ void deserializeActor(const char *name, ActorCoder *coder)
 {
     AbstractActorInstance *actor = lookupActor(name);
     const ActorClass *actorClass = actor->actorClass;
-    
+
     if (actorClass->deserialize) {
         actorClass->deserialize(actor, coder);
     }
@@ -859,13 +826,13 @@ void showActor(FILE *out, const char *name)
       fprintf(out, " i:%s:-", descr->name);
     }
   }
-  
+
   for (i = 0; i < actor->numOutputPorts; ++i) {
     OutputPort *output = &actor->outputPort[i];
     const PortDescription *descr = &klass->outputPortDescriptions[i];
-    
+
     unsigned int produced = output->tokensProduced;
-    
+
     unsigned int maxAvailable = 0;
     unsigned int spaceLeft;
     InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
@@ -873,12 +840,12 @@ void showActor(FILE *out, const char *name)
       unsigned int available = produced - consumer->tokensConsumed;
       if (available > maxAvailable)
         maxAvailable = available;
-      
+
       consumer = (InputPort *) dllist_next(&output->consumers,
                                            &consumer->asConsumer);
     }
     spaceLeft = output->capacity - maxAvailable;
-    
+
     fprintf(out, " o:%s:%d", descr->name, spaceLeft);
   }
 }

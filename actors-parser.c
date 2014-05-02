@@ -624,7 +624,7 @@ static void parserLoop(struct parser_state *state, FILE *in)
 
 static void * client_thread(void *arg)
 {
-  FILE *f = fdopen((int) arg, "r+");
+  FILE *f = fdopen((long) arg, "r+");
 
   struct parser_state state = {
     .quit_flag = 0,
@@ -654,7 +654,7 @@ static void * server_main_thread(void *arg)
   struct sockaddr_in server_addr;
   static const int one = 1;
 
-  unsigned int server_port = (unsigned int) arg;
+  long server_port = (long) arg;
 
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (server_socket < 0) {

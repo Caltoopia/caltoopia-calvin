@@ -679,10 +679,13 @@ const ActorClass *getReceiverClass(int tokenSize, tokenFn *functions)
   struct extended_class *xclass = calloc(1, sizeof(struct extended_class));
 
   /* make up a name */
-  if(needSerialization)
-    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB%8p", tokenSize, functions->serialize);
-  else
-    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB", tokenSize);
+  if(needSerialization) {
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB%08lx",
+        tokenSize, (intptr_t)functions->serialize);
+  } else {
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_receiver_%dB",
+        tokenSize);
+  }
 
   xclass->portDescription.name = "out";
   xclass->portDescription.tokenSize = tokenSize;
@@ -741,10 +744,13 @@ const ActorClass *getSenderClass(int tokenSize, tokenFn *functions)
   struct extended_class *xclass = calloc(1, sizeof(struct extended_class));
 
   /* make up a name */
-  if(needSerialization)
-    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB%8p", tokenSize, functions->serialize);
-  else
-    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB", tokenSize);
+  if(needSerialization) {
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB%08lx",
+        tokenSize, (intptr_t)functions->serialize);
+  } else {
+    snprintf(xclass->className, GENERATED_CLASS_NAME_MAX, "_sender_%dB",
+        tokenSize);
+  }
 
   xclass->portDescription.name = "in";
   xclass->portDescription.tokenSize = tokenSize;

@@ -281,8 +281,8 @@ static const int *name(AbstractActorInstance *pBase)
    * to be customized
    */
 
-#define ART_ACTION(name, thistype)          \
-static void name(thistype *thisActor)
+#define ART_ACTION(name, thistype) \
+    static void name(thistype *thisActor)
 
 #define ART_FIRE_ACTION(name)      \
   name(thisActor)

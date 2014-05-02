@@ -25,6 +25,7 @@ ART_ACTION_CONTEXT(1, 1)
 
 ART_ACTION(action0, ActorInstance_accumulate);
 ART_ACTION_SCHEDULER(accumulate_action_scheduler);
+
 static void ActorInstance_accumulate_constructor(AbstractActorInstance *);
 
 static const PortDescription inputPortDescriptions[]={
@@ -42,12 +43,13 @@ static const ActionDescription actionDescriptions[] = {
     {"action0", portRate_in_action0, portRate_out_action0},
 };
 
-static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
+static void
+serialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
     ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
     const ActorClass *actorClass = actor->actorClass;
     CoderState *state = coder->init(coder);
-    
+
     // Class info
     coder->encode(coder, state, "class", (void *)&actorClass->name, "s");
     // Instance state
@@ -80,19 +82,75 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
                     readPtr = (int32_t *)output->localOutputPort.bufferStart;
                 }
             }
+            {
+              int j = 0xdeadbeef;
+              coder->encode(coder, buffer, NULL, &j, "i");
+              count++;
+            }
             coder->encode(coder, port, "length", &count, "i");
         }
     }
 };
 
-static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
+static void
+deserialize_buffer(OutputPort *output_port, ActorCoder *coder, CoderState *port)
 {
-    ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
-    CoderState *state = coder->init(coder);
-    coder->decode(coder, state, "_fsmState", (void *)&this->_fsmState, "i");
-    coder->decode(coder, state, "sum", (void *)&this->sum, "i");
-    
-};
+  int32_t *write_ptr;
+  int buffer_size;
+  int idx;
+  int32_t buffer_value;
+  CoderState *buffer;
+
+  write_ptr = (int32_t *)output_port->localOutputPort.writePtr;
+  buffer = coder->decode_array(coder, port, "buffer");
+  coder->decode(coder, port, "length", &buffer_size, "i");
+
+  for (idx = 0; idx < buffer_size; ++idx) {
+    coder->decode(coder, buffer, NULL, &buffer_value, "i");
+    *write_ptr = buffer_value;
+    write_ptr++;
+  }
+  output_port->localOutputPort.writePtr = write_ptr;
+  puts(" --- check --- ");
+}
+
+static void
+deserialize_port(AbstractActorInstance *actor, ActorCoder *coder,
+    CoderState *ports, int port_number)
+{
+  const char *portname;
+  CoderState *port;
+  OutputPort *output_port;
+
+  portname = actor->actorClass->outputPortDescriptions[port_number].name;
+  port = coder->decode_struct(coder, ports, portname);
+  output_port = &actor->outputPort[port_number];
+
+  deserialize_buffer(output_port, coder, port);
+}
+
+static void
+deserialize(AbstractActorInstance *actor, ActorCoder *coder)
+{
+  ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
+  CoderState *state;
+  CoderState *ports;
+  int idx;
+
+  state = coder->init(coder);
+  coder->decode(coder, state, "_fsmState", (void *)&this->_fsmState, "i");
+  coder->decode(coder, state, "sum", (void *)&this->sum, "i");
+  ports = coder->decode_struct(coder, state, "outports");
+  for (idx = 0; idx < actor->actorClass->numOutputPorts; ++idx) {
+    deserialize_port(actor, coder, ports, idx);
+  }
+    for (idx = 0; idx < actor->numInputPorts; ++idx) {
+      InputPort *consumer = &actor->inputPort[idx];
+      OutputPort *producer = (OutputPort *)&consumer->asConsumer;
+      consumer->localInputPort.readPtr = (int32_t *)producer->localOutputPort.writePtr - 1;
+    }
+
+}
 
 
 ActorClass klass = INIT_ActorClass(

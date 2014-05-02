@@ -63,7 +63,7 @@ extern "C" {
    */
   AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
                                               const char *actor_name,
-                                              const char *params[]);
+                                              char **params);
 
   /**
    * Called by parser. Sets an actor parameter.
