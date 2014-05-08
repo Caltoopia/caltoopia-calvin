@@ -462,7 +462,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "/Users/eperspe/Source/caltoopia-calvin/examples/decoderDemo";
+			buildWorkingDirectory = "$(PROJECT_DIR)/../examples/decoderDemo";
 			dependencies = (
 				43BE0AD318F41BC500928F5F /* PBXTargetDependency */,
 				43BE0B1B18F424AD00928F5F /* PBXTargetDependency */,
@@ -473,12 +473,12 @@
 		};
 		43C5409C18DB393200BC6123 /* Actors */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-f /Users/eperspe/Source/caltoopia-calvin/calvin-xcode/actors.makefile $(ACTION)";
+			buildArgumentsString = "-f $(PROJECT_DIR)/actors.makefile $(ACTION)";
 			buildConfigurationList = 43C5409D18DB393200BC6123 /* Build configuration list for PBXLegacyTarget "Actors" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "/Users/eperspe/Source/caltoopia-calvin/examples/loadableActors";
+			buildWorkingDirectory = "$(PROJECT_DIR)/../examples/loadableActors";
 			dependencies = (
 				43C540A318DB3B5C00BC6123 /* PBXTargetDependency */,
 			);
