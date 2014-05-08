@@ -31,6 +31,7 @@
 		43C5406D18DB272100BC6123 /* art_Source_bin.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5406718DB272100BC6123 /* art_Source_bin.c */; };
 		43C5406E18DB272100BC6123 /* art_Source_real.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5406818DB272100BC6123 /* art_Source_real.c */; };
 		43C5406F18DB272100BC6123 /* art_Source_txt.c in Sources */ = {isa = PBXBuildFile; fileRef = 43C5406918DB272100BC6123 /* art_Source_txt.c */; };
+		F018AFB8191BAA71006DA0D1 /* io_port.c in Sources */ = {isa = PBXBuildFile; fileRef = F018AFB7191BAA71006DA0D1 /* io_port.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -206,6 +207,8 @@
 		43C540A418DB3C5D00BC6123 /* actors.makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = actors.makefile; sourceTree = SOURCE_ROOT; };
 		43C540A518DB444A00BC6123 /* Example.cs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Example.cs; path = ../examples/loadableActors/Example.cs; sourceTree = SOURCE_ROOT; };
 		43C540A618DC383200BC6123 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; name = .gitignore; path = ../.gitignore; sourceTree = "<group>"; };
+		F018AFB7191BAA71006DA0D1 /* io_port.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io_port.c; path = ../io_port.c; sourceTree = "<group>"; };
+		F018AFB9191BAA88006DA0D1 /* io_port.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = io_port.h; path = ../io_port.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -374,6 +377,7 @@
 				43C5404918DB25EA00BC6123 /* actors-registry.c */,
 				43C5404B18DB25EA00BC6123 /* actors-rts.c */,
 				43C5404D18DB25EA00BC6123 /* actors-teleport.c */,
+				F018AFB7191BAA71006DA0D1 /* io_port.c */,
 			);
 			name = calvin;
 			sourceTree = "<group>";
@@ -416,6 +420,7 @@
 				43C5404E18DB25EA00BC6123 /* actors-teleport.h */,
 				43C5404F18DB25EA00BC6123 /* actors-typedefs.h */,
 				43C5405018DB25EA00BC6123 /* dllist.h */,
+				F018AFB9191BAA88006DA0D1 /* io_port.h */,
 			);
 			name = headers;
 			sourceTree = "<group>";
@@ -593,6 +598,7 @@
 				43C5406F18DB272100BC6123 /* art_Source_txt.c in Sources */,
 				43C5406318DB26CB00BC6123 /* actors-teleport.c in Sources */,
 				4329115818F3F8520082E10F /* actors-debug.c in Sources */,
+				F018AFB8191BAA71006DA0D1 /* io_port.c in Sources */,
 				43C5406B18DB272100BC6123 /* art_Sink_real.c in Sources */,
 				430CCDDE18E0A62C00AB1266 /* actors-coder.c in Sources */,
 				43C5406E18DB272100BC6123 /* art_Source_real.c in Sources */,
@@ -978,6 +984,7 @@
 				4394022719095CD600A58A33 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		43BE0ACF18F41BBD00928F5F /* Build configuration list for PBXLegacyTarget "RVC" */ = {
 			isa = XCConfigurationList;
