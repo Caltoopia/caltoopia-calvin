@@ -139,7 +139,8 @@ int rangeError(int x, int y, const char *filename, int line) {
 
 // ============================================================================
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   int i;
   int keep_other_threads = 0; /* Allow other pthreads to stay on exit? */

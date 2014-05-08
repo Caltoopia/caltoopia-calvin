@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "io_port.h"
 #include "actors-network.h"
 #include "actors-teleport.h"
 #include "dllist.h"
@@ -386,7 +387,9 @@ ART_ACTION_SCHEDULER(receiver_action_scheduler)
 
   ART_ACTION_SCHEDULER_ENTER(0, 1);
 
-  LocalOutputPort *output = &pBase->outputPort[0].localOutputPort;
+  // LocalOutputPort *output = &pBase->outputPort[0].localOutputPort;
+  LocalOutputPort *output = output_port_local_port(
+      output_port_array_get(pBase->outputPort, 0));
   if (pinAvailOut_dyn(output) > 0) {
     /* If there is a new token in the monitor, take it */
     {
@@ -591,7 +594,9 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
 
   ART_ACTION_SCHEDULER_ENTER(0, 1);
 
-  LocalInputPort *input = &pBase->inputPort[0].localInputPort;
+  // LocalInputPort *input = &pBase->inputPort[0].localInputPort;
+  LocalInputPort *input = input_port_local_port(
+      input_port_array_get(pBase->inputPort, 0));
   if (pinAvailIn_dyn(input) > 0) {
     /* We have data to send keep the scheduler loop locked busy, keep track locally of toggling */
     if(!instance->lockedBusy) {

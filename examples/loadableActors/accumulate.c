@@ -64,23 +64,25 @@ serialize(AbstractActorInstance *actor, ActorCoder *coder)
             CoderState *port = coder->encode_struct(coder, ports, portname);
             CoderState *buffer = coder->encode_array(coder, port, "buffer");
             int count = 0;
-            OutputPort *output = &actor->outputPort[i];
-            InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
+            // OutputPort *output = &actor->outputPort[i];
+            OutputPort *output = output_port_array_get(actor->outputPort, i);
+            // InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
+            InputPort *consumer = output_port_first_consumer(output);
             // FIXME: Multiple consumers (fan-out) not supported
             if (!consumer) {
                 fail("No consumer connected");
             }
             // FIXME: Assume FIFO is int32_t for now
-            int32_t *bufferEnd = (int32_t *)output->localOutputPort.bufferEnd;
-            int32_t *writePtr = (int32_t *)output->localOutputPort.writePtr;
-            int32_t *readPtr = (int32_t *)consumer->localInputPort.readPtr;
+            intptr_t *bufferEnd = (intptr_t*)output_port_buffer_end(output);
+            intptr_t *writePtr = (intptr_t *)output_port_write_ptr(output);
+            intptr_t *readPtr = (intptr_t *)input_port_read_ptr(consumer);
             while(readPtr != writePtr) {
-                coder->encode(coder, buffer, NULL, readPtr, "i");
-                count++;
-                readPtr++;
-                if (readPtr >= bufferEnd) {
-                    readPtr = (int32_t *)output->localOutputPort.bufferStart;
-                }
+              coder->encode(coder, buffer, NULL, readPtr, "i");
+              count++;
+              readPtr++;
+              if (readPtr >= bufferEnd) {
+                readPtr = (intptr_t *)output_port_buffer_start(output);
+              }
             }
             {
               int j = 0xdeadbeef;
@@ -95,13 +97,14 @@ serialize(AbstractActorInstance *actor, ActorCoder *coder)
 static void
 deserialize_buffer(OutputPort *output_port, ActorCoder *coder, CoderState *port)
 {
-  int32_t *write_ptr;
+  intptr_t *write_ptr;
   int buffer_size;
   int idx;
   int32_t buffer_value;
   CoderState *buffer;
 
-  write_ptr = (int32_t *)output_port->localOutputPort.writePtr;
+  write_ptr = (intptr_t *)output_port_write_ptr(output_port);
+  // write_ptr = (int32_t *)output_port->localOutputPort.writePtr;
   buffer = coder->decode_array(coder, port, "buffer");
   coder->decode(coder, port, "length", &buffer_size, "i");
 
@@ -110,7 +113,8 @@ deserialize_buffer(OutputPort *output_port, ActorCoder *coder, CoderState *port)
     *write_ptr = buffer_value;
     write_ptr++;
   }
-  output_port->localOutputPort.writePtr = write_ptr;
+  output_port_set_write_ptr(output_port, write_ptr);
+  // output_port->localOutputPort.writePtr = write_ptr;
   puts(" --- check --- ");
 }
 
@@ -124,7 +128,8 @@ deserialize_port(AbstractActorInstance *actor, ActorCoder *coder,
 
   portname = actor->actorClass->outputPortDescriptions[port_number].name;
   port = coder->decode_struct(coder, ports, portname);
-  output_port = &actor->outputPort[port_number];
+  output_port = output_port_array_get(actor->outputPort, port_number);
+  // output_port = &actor->outputPort[port_number];
 
   deserialize_buffer(output_port, coder, port);
 }
@@ -145,9 +150,14 @@ deserialize(AbstractActorInstance *actor, ActorCoder *coder)
     deserialize_port(actor, coder, ports, idx);
   }
     for (idx = 0; idx < actor->numInputPorts; ++idx) {
-      InputPort *consumer = &actor->inputPort[idx];
-      OutputPort *producer = (OutputPort *)&consumer->asConsumer;
-      consumer->localInputPort.readPtr = (int32_t *)producer->localOutputPort.writePtr - 1;
+      InputPort *consumer = input_port_array_get(actor->inputPort, idx);
+      // InputPort *consumer = &actor->inputPort[idx];
+      // OutputPort *producer = (OutputPort *)&consumer->asConsumer;
+      OutputPort *producer = input_port_as_consumer(consumer);
+      input_port_set_read_ptr(consumer,
+          output_port_write_ptr(producer)-1);
+
+      // consumer->localInputPort.readPtr = (int32_t *)producer->localOutputPort.writePtr - 1;
     }
 
 }

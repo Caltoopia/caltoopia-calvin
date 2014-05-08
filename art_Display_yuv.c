@@ -40,6 +40,7 @@
 #include <time.h>
 #include <sys/timeb.h>
 
+#include "io_port.h"
 #include "actors-rts.h"
 #include "display.h"
 

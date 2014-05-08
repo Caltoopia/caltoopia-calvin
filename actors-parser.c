@@ -450,7 +450,9 @@ static void new_handler(struct parser_state *state)
     } else {
       splitpoint++;
     }
+    printf("arg: %s\n", arg);
     params[2*i] = strdup(arg);
+    printf("split: %s\n", splitpoint);
     params[2*i + 1] = strdup(splitpoint);
     
     arg = get_next_word(state);
@@ -648,7 +650,7 @@ static void * client_thread(void *arg)
 
 /* ------------------------------------------------------------------------- */
 
-static void * server_main_thread(void *arg)
+static void *server_main_thread(void *arg)
 {
   int server_socket;
   struct sockaddr_in server_addr;
@@ -747,7 +749,8 @@ void parseInteractively(void)
 
 /* ------------------------------------------------------------------------- */
 
-void spawnServer(unsigned int port)
+void
+spawnServer(unsigned int port)
 {
   pthread_t pid;
   

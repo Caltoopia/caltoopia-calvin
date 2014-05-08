@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "io_port.h"
 #include "actors-typedefs.h"
 #include "actors-coder.h"
 #include "dllist.h"
@@ -90,13 +91,7 @@ extern "C" {
     const int   *production;    // token rates of output 0,...,numOutputs-1
   } ActionDescription;
 
-  typedef struct {
-    char * (*serialize)(void *, char*);
-    char * (*deserialize)(void **, char*);
-    long (*size)(void *);
-    int  (*free)(void *, int);
-  } tokenFn;
-  
+
   typedef struct {
     int dummy;                  // FIXME: remove this from generated code
     const char  *name;          // port name
@@ -159,8 +154,7 @@ nActions, actionDescr) { \
 .deserialize=deserlize                       \
 }
 
-
-  /*
+/*
    * LocalInputPort (used by FIFO operations)
    */
   struct LocalInputPort {
@@ -181,39 +175,6 @@ nActions, actionDescr) { \
     unsigned spaceLeft;         // number of available tokens
   };
 
-  /*
-   * InputPort
-   * Extends LocalInputPort, computes available tokens in pre-fire step,
-   * updates tokensConsumed in post-fire step
-   */
-  struct InputPort {
-    dllist_element_t asConsumer;        // member of producer's 'consumers' list
-
-    OutputPort *producer;
-
-    LocalInputPort localInputPort;
-    unsigned tokensConsumed;          // number of tokens consumed
-    unsigned drainedAt;               // point at which all tokensConsumed
-    unsigned capacity;                // minimum capacity of buffer (in tokens)
-
-    tokenFn functions;                // functions to handle structured tokens
-  };
-
-  /*
-   * OutputPort
-   * Extends LocalOutputPort: computes spaceLeft in pre-fire step,
-   * updates tokensProduced in post-fire step
-   */
-  struct OutputPort {
-    LocalOutputPort localOutputPort;
-    unsigned capacity;                   // capacity of buffer (in tokens)
-    unsigned tokensProduced;             // number of tokens produced
-    unsigned fullAt;                     // tokensProduced when FIFO is full
-    
-    tokenFn functions;                   // functions to handle structured tokens
-
-    dllist_head_t consumers;
-  };
 
   /*
    * AbstractActorInstance, the "base class" which is common
@@ -233,12 +194,13 @@ nActions, actionDescr) { \
     OutputPort *outputPort;
 
     const int* (*action_scheduler)(AbstractActorInstance*);
+    int enabled;
   };
 
-#define ART_INPUT(index) &(thisActor->base.inputPort[index].localInputPort)
-
-#define ART_OUTPUT(index) &(thisActor->base.outputPort[index].localOutputPort)
-
+// #define ART_INPUT(index) &(thisActor->base.inputPort[index].localInputPort)
+#define ART_INPUT(index) input_port_local_port(input_port_array_get(thisActor->base.inputPort, index))
+// #define ART_OUTPUT(index) &(thisActor->base.outputPort[index].localOutputPort)
+#define ART_OUTPUT(index) output_port_local_port(output_port_array_get(thisActor->base.outputPort, index))
 
   // Action-scheduler exit code (first element of array)
   // EXITCODE_TERMINATE = actor is dead
