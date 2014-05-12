@@ -3,9 +3,9 @@ SOURCES = $(wildcard *.c)
 DISPLAY_SOURCES = $(wildcard display-*.c)
 SOURCES := $(filter-out $(DISPLAY_SOURCES), $(SOURCES))
 
-CFLAGS = -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99
+CFLAGS = -pg -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99
 
-LDFLAGS := -rdynamic -ldl -pthread
+LDFLAGS := -rdynamic -ldl -pthread -pg
 
 # set up linux specifics
 ifeq ($(shell uname -s),Linux)

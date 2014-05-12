@@ -132,7 +132,7 @@ ART_ACTION_SCHEDULER(timed_counter_action_scheduler)
     int32_t now = _now_ms();
     
     if (now >= thisActor->next_firing) {
-        if ((pinAvailOut_int32_t(ART_OUTPUT(0)) >= 1)) {
+        if ((pinAvailOut_int32_t(ART_OUTPUT(0)) > 0)) {
             ART_FIRE_ACTION(action0);
             // Update firing based on the time of this firing; alternatively,
             // the next firing could be based on the last wanted firing time.

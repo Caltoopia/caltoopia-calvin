@@ -43,7 +43,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "io_port.h"
+#include "io-port.h"
 #include "actors-typedefs.h"
 #include "actors-coder.h"
 #include "dllist.h"
@@ -78,8 +78,6 @@ extern "C" {
   // FIXME: temporary workaround
   typedef void art_action_context_t;
 
-  typedef struct LocalOutputPort LocalOutputPort;
-  typedef struct LocalInputPort LocalInputPort;
 
   /*
    * ActorClass and related descriptions
@@ -154,27 +152,6 @@ nActions, actionDescr) { \
 .deserialize=deserlize                       \
 }
 
-/*
-   * LocalInputPort (used by FIFO operations)
-   */
-  struct LocalInputPort {
-    const void *bufferStart;          // Start of cyclic buffer
-    const void *bufferEnd;            // One past end of cyclic buffer
-    const void *readPtr;              // position in cyclic buffer
-    unsigned available;               // number of available tokens
-  };
-
-  /*
-   * LocalOutputPort (used by FIFO operations)
-   */
-
-  struct LocalOutputPort {
-    void *bufferStart;          // Start of cyclic buffer
-    void *bufferEnd;            // One past end of cyclic buffer
-    void *writePtr;             // position in cyclic buffer
-    unsigned spaceLeft;         // number of available tokens
-  };
-
 
   /*
    * AbstractActorInstance, the "base class" which is common
@@ -197,10 +174,10 @@ nActions, actionDescr) { \
     int enabled;
   };
 
-// #define ART_INPUT(index) &(thisActor->base.inputPort[index].localInputPort)
-#define ART_INPUT(index) input_port_local_port(input_port_array_get(thisActor->base.inputPort, index))
-// #define ART_OUTPUT(index) &(thisActor->base.outputPort[index].localOutputPort)
-#define ART_OUTPUT(index) output_port_local_port(output_port_array_get(thisActor->base.outputPort, index))
+// #define ART_INPUT(index) input_port_local_port(input_port_array_get(thisActor->base.inputPort, index))
+#define ART_INPUT(index) input_port_array_get(thisActor->base.inputPort, index)
+// #define ART_OUTPUT(index) output_port_local_port(output_port_array_get(thisActor->base.outputPort, index))
+#define ART_OUTPUT(index) output_port_array_get(thisActor->base.outputPort, index)
 
   // Action-scheduler exit code (first element of array)
   // EXITCODE_TERMINATE = actor is dead
@@ -331,49 +308,30 @@ pinReadRepeat_int32_t(port,(int32_t*)buf,n)
    * runtime.
    */
 
-  static inline unsigned pinAvailIn_dyn(const LocalInputPort *p)
+  static inline unsigned pinAvailIn_dyn(const InputPort *p)
   {
-    return p->available;
+    return input_port_available(p);
   }
 
-  static inline void pinRead_dyn(LocalInputPort *p,
+  static inline void pinRead_dyn(InputPort *p,
                                  void *token,       /* output */
                                  size_t tokenSize)
   {
-    const char * readPtr = p->readPtr;
-    assert(p->available > 0);
-
-    memcpy(token, readPtr, tokenSize);
-    readPtr += tokenSize;
-
-    if (readPtr >= (char *) p->bufferEnd)
-      readPtr = p->bufferStart;
-    p->readPtr = readPtr;
-    p->available --;
+    input_port_read(p, tokenSize, token);
   }
 
-  static inline unsigned pinAvailOut_dyn(const LocalOutputPort *p)
+  static inline unsigned pinAvailOut_dyn(const OutputPort *p)
   {
-    return p->spaceLeft;
+    return output_port_space_left(p);
   }
 
-  static inline void pinWrite_dyn(LocalOutputPort *p,
+  static inline void pinWrite_dyn(OutputPort *p,
                                   const void *token,
                                   size_t tokenSize)
   {
-    char *writePtr = p->writePtr;
-    assert(p->spaceLeft > 0);
-
-    /* FIXME: this is not terribly efficient for small tokens */
-    memcpy(writePtr, token, tokenSize);
-    writePtr += tokenSize;
-    
-    if (writePtr >= (char *) p->bufferEnd)
-      writePtr = p->bufferStart;
-    p->writePtr = writePtr;
-    p->spaceLeft --;
+    output_port_write(p, tokenSize, token);
   }
-  
+
 #ifdef __cplusplus
 }
 #endif

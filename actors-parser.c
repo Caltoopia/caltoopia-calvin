@@ -289,6 +289,8 @@ static void connect_handler(struct parser_state *state)
     return;
   }
 
+  printf("Connecting: %s & %s\n",
+      src_actor, dst_actor);
   switch (parse_port_ref(state, &dst_actor, &dst_port)) {
     case PORT_REF_LOCAL:
       createLocalConnection(src_actor, src_port, dst_actor, dst_port);

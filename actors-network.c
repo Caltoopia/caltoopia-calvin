@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "io_port.h"
+#include "io-port.h"
 #include "actors-network.h"
 #include "actors-teleport.h"
 #include "actors-rts.h"
@@ -60,8 +60,19 @@
  * When they are later enabled, they are moved to 'instances'. Only the
  * latter list is used for execution.
  */
-static dllist_head_t instances;   /* active, executing instances */
+static dllist_head_t enabled_instances;   /* active, executing instances */
 static dllist_head_t disabled_instances;/* disabled, non-executing instances */
+
+static pthread_mutex_t instance_lock = PTHREAD_MUTEX_INITIALIZER;
+
+#define LOCK_INSTANCES(...) do { \
+  pthread_mutex_lock(&instance_lock); \
+} while (0)
+
+#define UNLOCK_INSTANCES(...) do { \
+    pthread_mutex_unlock(&instance_lock); \
+} while (0)
+
 
 /* TODO: make it possible to configure this on a per-connection basis */
 #define FIFO_CAPACITY  (256)
@@ -123,31 +134,33 @@ static AbstractActorInstance * lookupActor(const char *actorName)
    * The actor could be either in 'disabled_instances' or 'instances'
    */
 
+  LOCK_INSTANCES();
   dllist_element_t *elem = dllist_first(&disabled_instances);
   while (elem) {
     AbstractActorInstance *actor = (AbstractActorInstance *) elem;
     if (strcmp(actor->instanceName, actorName) == 0) {
       result = actor;
-      goto found;
+      goto out;
     }
     elem = dllist_next(&disabled_instances, elem);
   }
 
-  elem = dllist_first(&instances);
+  elem = dllist_first(&enabled_instances);
   while (elem) {
     AbstractActorInstance *actor = (AbstractActorInstance *) elem;
     if (strcmp(actor->instanceName, actorName) == 0) {
       result = actor;
-      goto found;
+      goto out;
     }
 
-    elem = dllist_next(&instances, elem);
+    elem = dllist_next(&enabled_instances, elem);
   }
+out:
+  UNLOCK_INSTANCES();
 
   /* Is there any particular reason for failing here? */
   // fail("lookupActor: no such actor '%s'\n", actorName);
   //
-found:
   return result;
 }
 
@@ -218,23 +231,7 @@ lookupInput(const AbstractActorInstance *instance,
 
 static void connectInput(InputPort *consumer, OutputPort *producer)
 {
-  input_port_set_producer(consumer, producer);
-  // copy FIFO pointers from the producer
-  input_port_set_buffer_start(consumer,
-      output_port_buffer_start(producer));
-  input_port_set_read_ptr(consumer,
-      output_port_buffer_start(producer));
-  input_port_set_buffer_end(consumer,
-      output_port_buffer_end(producer));
-
-  input_port_set_capacity(consumer,
-      output_port_capacity(producer));
-
-  input_port_set_functions(consumer,
-      output_port_functions(producer));
-
-  input_port_init_consumer(consumer);
-  output_port_add_consumer(producer, consumer);
+  output_port_input_port_connect(producer, consumer);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -252,12 +249,9 @@ static inline void preFire(AbstractActorInstance *actor) {
 
   for (i = 0; i < actor->numInputPorts; ++i) {
     InputPort *input = input_port_array_get(actor->inputPort, i);
-    // InputPort *input = &actor->inputPort[i];
 
     if (input_port_has_producer(input)) {
       input_port_update_available(input);
-
-      // drainedAt: tokensConsumed counter when zero tokens available
       input_port_update_drained_at(input);
     }
   }
@@ -278,22 +272,24 @@ static inline void preFire(AbstractActorInstance *actor) {
  */
 static inline int postFire(AbstractActorInstance *actor) {
   int i;
-  int fired=0;
+  int fired = 0;
 
   // Update tokensConsumed counter of each InputPort:
   // Counter at which the FIFO is drained less tokens still available
   for (i=0; i<actor->numInputPorts; ++i) {
     InputPort *input = input_port_array_get(actor->inputPort, i);
-    // InputPort *input=&actor->inputPort[i];
-    fired = input_port_update_counter(input);
+    if (input_port_update_counter(input)) {
+      fired = 1;
+    }
   }
 
   // Update tokensProduced counter of each OutputPort:
   // Counter at which the FIFO is full less space still left
   for (i=0; i<actor->numOutputPorts; ++i) {
     OutputPort *output = output_port_array_get(actor->outputPort, i);
-    // OutputPort *output=&actor->outputPort[i];
-    fired = output_port_update_tokens_produced(output);
+    if (output_port_update_tokens_produced(output)) {
+      fired = 1;
+    }
   }
 
   return fired;
@@ -308,16 +304,18 @@ static void * workerThreadMain(void *unused_arg)
 
     while (fired) {
       pthread_mutex_lock(&thread_state.execution_mutex);
-      dllist_element_t *elem = dllist_first_lock(&instances);
+      LOCK_INSTANCES();
+      dllist_element_t *elem = dllist_first_lock(&enabled_instances);
       fired=0;
       while (elem) {
         AbstractActorInstance *actor = (AbstractActorInstance *) elem;
         preFire(actor);
         actor->action_scheduler(actor);
         fired = postFire(actor);
-        elem = dllist_next_locked(&instances, elem);
+        elem = dllist_next_locked(&enabled_instances, elem);
       }
-      dllist_unlock(&instances);
+      dllist_unlock(&enabled_instances);
+      UNLOCK_INSTANCES();
 
       pthread_mutex_unlock(&thread_state.execution_mutex);
     }
@@ -348,9 +346,10 @@ void initActorNetwork(void)
 {
   pthread_t pid;
 
-  dllist_create(&instances);
+  LOCK_INSTANCES();
+  dllist_create(&enabled_instances);
   dllist_create(&disabled_instances);
-
+  UNLOCK_INSTANCES();
   pthread_mutex_init(&thread_state.execution_mutex, NULL);
 
 #ifdef CALVIN_BLOCK_ON_IDLE
@@ -396,9 +395,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
       destroyActorInstance(actor_name);
     }
   }
-  dllist_append(&disabled_instances, &instance->listEntry);
-
-  /* create outputs */
+    /* create outputs */
   for (i = 0; i < actorClass->numOutputPorts; ++i) {
     const PortDescription *descr = &actorClass->outputPortDescriptions[i];
     OutputPort *output = output_port_array_get(instance->outputPort, i);
@@ -409,18 +406,13 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
      * corresponding input)
      */
     static const unsigned int capacity = FIFO_CAPACITY;
-    unsigned int size = capacity * descr->tokenSize;
-    char *buffer = malloc(size);
-    output_port_set_buffer_start(output, buffer);
-    output_port_set_write_ptr(output, buffer);
-    output_port_set_buffer_end(output, buffer + size);
 
-    output_port_set_capacity(output, capacity);
+    output_port_setup_buffer(output, capacity, descr->tokenSize);
     output_port_set_functions(output, descr->functions);
-
     output_port_init_consumer_list(output);
   }
 
+  LOCK_INSTANCES();
   /* Set parameters (if any) */
   for (int i=0; params && params[2*i] && i<MAX_PARAMS; i++) {
     setActorParam(instance, params[2*i], params[2*i + 1]);
@@ -429,7 +421,9 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
   if (instance->actorClass->constructor) {
     instance->actorClass->constructor(instance);
   }
-
+  /* Add it to the list of instances */
+  dllist_append(&disabled_instances, &instance->listEntry);
+  UNLOCK_INSTANCES();
   return instance;
 }
 
@@ -454,12 +448,10 @@ void setActorParam(AbstractActorInstance *instance,
 void disableActorInstance(const char *actor_name)
 {
   AbstractActorInstance *instance = lookupActor(actor_name);
-
-  printf("Removing %s from enabled instances\n", actor_name);
-  dllist_remove(&instances, &instance->listEntry);
-  printf("Appending %s to disabled instances\n", actor_name);
+  LOCK_INSTANCES();
+  dllist_remove(&enabled_instances, &instance->listEntry);
   dllist_append(&disabled_instances, &instance->listEntry);
-  printf("Waking network\n");
+  UNLOCK_INSTANCES();
   instance->enabled = 0;
   // wakeUpNetwork();
 }
@@ -471,11 +463,10 @@ void enableActorInstance(const char *actor_name)
 {
   AbstractActorInstance *instance = lookupActor(actor_name);
 
-  printf("Removing %s from disabled instances\n", actor_name);
+  LOCK_INSTANCES();
   dllist_remove(&disabled_instances, &instance->listEntry);
-  printf("Appending %s to enabled instances\n", actor_name);
-  dllist_append(&instances, &instance->listEntry);
-  printf("Waking network\n");
+  dllist_append(&enabled_instances, &instance->listEntry);
+  UNLOCK_INSTANCES();
   instance->enabled = 1;
   wakeUpNetwork();
 }
@@ -491,6 +482,7 @@ void destroyActorInstance(const char *actor_name)
   printf("Destroying %s\n", actor_name);
   assert(!instance->enabled);
 
+  LOCK_INSTANCES();
   {
     pthread_mutex_lock(&thread_state.execution_mutex);
     // dllist_remove(&instances, &instance->listEntry);
@@ -516,6 +508,7 @@ void destroyActorInstance(const char *actor_name)
     pthread_mutex_unlock(&thread_state.execution_mutex);
   }
 
+  UNLOCK_INSTANCES();
   input_port_array_free(instance->inputPort);
   output_port_array_free(instance->outputPort);
 
@@ -767,6 +760,7 @@ void listActors(FILE *out)
 {
   /* TODO: tag disabled actors as such? */
 
+  LOCK_INSTANCES();
   dllist_element_t *elem = dllist_first(&disabled_instances);
   while (elem) {
     fprintf(out, " %s", ((AbstractActorInstance *) elem)->instanceName);
@@ -774,12 +768,13 @@ void listActors(FILE *out)
     elem = dllist_next(&disabled_instances, elem);
   }
 
-  elem = dllist_first(&instances);
+  elem = dllist_first(&enabled_instances);
   while (elem) {
     fprintf(out, " %s", ((AbstractActorInstance *) elem)->instanceName);
 
-    elem = dllist_next(&instances, elem);
+    elem = dllist_next(&enabled_instances, elem);
   }
+  UNLOCK_INSTANCES();
 }
 
 /* ------------------------------------------------------------------------- */

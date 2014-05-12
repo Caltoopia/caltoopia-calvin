@@ -50,7 +50,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#include "io_port.h"
+#include "io-port.h"
 #include "actors-network.h"
 #include "actors-teleport.h"
 #include "dllist.h"
@@ -388,8 +388,7 @@ ART_ACTION_SCHEDULER(receiver_action_scheduler)
   ART_ACTION_SCHEDULER_ENTER(0, 1);
 
   // LocalOutputPort *output = &pBase->outputPort[0].localOutputPort;
-  LocalOutputPort *output = output_port_local_port(
-      output_port_array_get(pBase->outputPort, 0));
+  OutputPort *output = output_port_array_get(pBase->outputPort, 0);
   if (pinAvailOut_dyn(output) > 0) {
     /* If there is a new token in the monitor, take it */
     {
@@ -441,7 +440,7 @@ static void *sender_thread(void *arg)
   int tokenSize
     = instance->base.actorClass->inputPortDescriptions[0].tokenSize;
   tokenFn* functions
-  = instance->base.actorClass->inputPortDescriptions[0].functions;
+    = instance->base.actorClass->inputPortDescriptions[0].functions;
   int needSerialization = functions != NULL;
   struct sockaddr_in server_addr;
 
@@ -595,8 +594,7 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
   ART_ACTION_SCHEDULER_ENTER(0, 1);
 
   // LocalInputPort *input = &pBase->inputPort[0].localInputPort;
-  LocalInputPort *input = input_port_local_port(
-      input_port_array_get(pBase->inputPort, 0));
+  InputPort *input =  input_port_array_get(pBase->inputPort, 0);
   if (pinAvailIn_dyn(input) > 0) {
     /* We have data to send keep the scheduler loop locked busy, keep track locally of toggling */
     if(!instance->lockedBusy) {
@@ -604,7 +602,7 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
       instance->lockedBusy=1;
     }
     /* If there is room for a new token in the monitor, push one there */
-    {
+    if (input_port_producer(input) != NULL) {
       pthread_mutex_lock(&instance->tokenMon.lock);
       if (! instance->tokenMon.full) {
         pinRead_dyn(input, instance->tokenMon.tokenBuffer, tokenSize);
@@ -698,7 +696,6 @@ const ActorClass *getReceiverClass(int tokenSize, tokenFn *functions)
     xclass->portDescription.functions = calloc(1,sizeof(tokenFn));
     memcpy(xclass->portDescription.functions, functions, sizeof(tokenFn));
   }
-
   xclass->actorClass.majorVersion = ACTORS_RTS_MAJOR;
   xclass->actorClass.minorVersion = ACTORS_RTS_MINOR;
   xclass->actorClass.name = xclass->className;
@@ -768,9 +765,9 @@ const ActorClass *getSenderClass(int tokenSize, tokenFn *functions)
   xclass->actorClass.name = xclass->className;
   xclass->actorClass.sizeActorInstance
   = sizeof(ActorInstance_art_SocketSender);
+  xclass->actorClass.numOutputPorts = 0;
   xclass->actorClass.numInputPorts = 1;
   xclass->actorClass.inputPortDescriptions = &xclass->portDescription;
-  xclass->actorClass.numOutputPorts = 0;
   xclass->actorClass.action_scheduler = &sender_action_scheduler;
   xclass->actorClass.constructor = &sender_constructor;
   xclass->actorClass.destructor = &sender_destructor;

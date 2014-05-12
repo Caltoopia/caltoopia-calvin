@@ -55,7 +55,7 @@ static const int exitcode_block_Out_1[] = {
   EXITCODE_BLOCK(1), 0, 1
 };
 
-ART_ACTION_CONTEXT(0, 1);
+ART_ACTION_CONTEXT(0, 1)
 
 ART_ACTION_SCHEDULER(art_Source_txt_action_scheduler)
 {

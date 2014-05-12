@@ -40,11 +40,11 @@
 #include <time.h>
 #include <sys/timeb.h>
 
-#include "io_port.h"
+#include "io-port.h"
 #include "actors-rts.h"
 #include "display.h"
 
-ART_ACTION_CONTEXT(1, 1);
+ART_ACTION_CONTEXT(1, 1)
 
 typedef struct {
   AbstractActorInstance base;

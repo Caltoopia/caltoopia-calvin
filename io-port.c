@@ -1,38 +1,52 @@
-#include "io_port.h"
+#include <stdio.h>
+#include "io-port.h"
 
-  /*
-   * InputPort
-   * Extends LocalInputPort, computes available tokens in pre-fire step,
-   * updates tokensConsumed in post-fire step
+/*
+   * Circular buffer (used by FIFO operations)
    */
-  struct InputPort {
-    dllist_element_t asConsumer;        // member of producer's 'consumers' list
-
-    OutputPort *producer;
-
-    LocalInputPort localInputPort;
-    unsigned tokensConsumed;          // number of tokens consumed
-    unsigned drainedAt;               // point at which all tokensConsumed
-    unsigned capacity;                // minimum capacity of buffer (in tokens)
-
-    tokenFn functions;                // functions to handle structured tokens
+  struct circ_buffer {
+    void *bufferStart;          // Start of cyclic buffer
+    void *bufferEnd;            // One past end of cyclic buffer
+    const void *readPtr;              // position in cyclic buffer
+    void *writePtr;
+    unsigned spaceLeft;
+    unsigned available;               // number of available tokens
   };
 
-  /*
-   * OutputPort
-   * Extends LocalOutputPort: computes spaceLeft in pre-fire step,
-   * updates tokensProduced in post-fire step
-   */
-  struct OutputPort {
-    LocalOutputPort localOutputPort;
-    unsigned capacity;                   // capacity of buffer (in tokens)
-    unsigned tokensProduced;             // number of tokens produced
-    unsigned fullAt;                     // tokensProduced when FIFO is full
+ 
+/*
+ * InputPort
+ * Extends LocalInputPort, computes available tokens in pre-fire step,
+ * updates tokensConsumed in post-fire step
+ */
+struct InputPort {
+  dllist_element_t asConsumer;        // member of producer's 'consumers' list
 
-    tokenFn functions;                   // functions to handle structured tokens
+  OutputPort *producer;
 
-    dllist_head_t consumers;
-  };
+  struct circ_buffer *localInputPort;
+  unsigned tokensConsumed;          // number of tokens consumed
+  unsigned drainedAt;               // point at which all tokensConsumed
+  unsigned capacity;                // minimum capacity of buffer (in tokens)
+
+  tokenFn functions;                // functions to handle structured tokens
+};
+
+/*
+ * OutputPort
+ * Extends LocalOutputPort: computes spaceLeft in pre-fire step,
+ * updates tokensProduced in post-fire step
+ */
+struct OutputPort {
+  struct circ_buffer localOutputPort;
+  unsigned capacity;                   // capacity of buffer (in tokens)
+  unsigned tokensProduced;             // number of tokens produced
+  unsigned fullAt;                     // tokensProduced when FIFO is full
+
+  tokenFn functions;                   // functions to handle structured tokens
+
+  dllist_head_t consumers;
+};
 
 
 void
@@ -42,13 +56,13 @@ input_port_update_available(InputPort *self)
 
   available = self->producer->tokensProduced - self->tokensConsumed;
 
-  self->localInputPort.available = available;
+  self->localInputPort->available = available;
 }
 
 void
 input_port_update_drained_at(InputPort *self)
 {
-  self->drainedAt = self->tokensConsumed + self->localInputPort.available;
+  self->drainedAt = self->tokensConsumed + self->localInputPort->available;
 }
 
 int
@@ -63,7 +77,7 @@ input_port_update_counter(InputPort *self)
   unsigned int counter;
   int fired = 0;
 
-  counter = self->drainedAt - self->localInputPort.available;
+  counter = self->drainedAt - self->localInputPort->available;
   if (counter != self->tokensConsumed) {
     self->tokensConsumed = counter;
     fired = 1;
@@ -100,13 +114,13 @@ output_port_update_full_at(OutputPort *self)
 }
 
 unsigned int
-input_port_available(InputPort *self)
+input_port_available(const InputPort *self)
 {
-  return self->localInputPort.available;
+  return self->localInputPort->available;
 }
 
 unsigned int
-output_port_space_left(OutputPort *self)
+output_port_space_left(const OutputPort *self)
 {
   return self->localOutputPort.spaceLeft;
 }
@@ -171,23 +185,24 @@ output_port_buffer_start(OutputPort *self)
 {
   return self->localOutputPort.bufferStart;
 }
-
+#if 0
 void
 input_port_set_buffer_start(InputPort *self, void *buffer_start)
 {
-  self->localInputPort.bufferStart = buffer_start;
+  self->localInputPort->bufferStart = buffer_start;
 }
-
+#endif
 void
 input_port_set_read_ptr(InputPort *self, void *read_ptr)
 {
-  self->localInputPort.readPtr = read_ptr;
+  self->localInputPort->readPtr = read_ptr;
 }
 
 void
 output_port_set_write_ptr(OutputPort *self, void *write_ptr)
 {
   self->localOutputPort.writePtr = write_ptr;
+  self->localOutputPort.readPtr = self->localOutputPort.bufferStart;
 }
 
 void *
@@ -199,7 +214,7 @@ output_port_write_ptr(OutputPort *self)
 const void *
 input_port_read_ptr(InputPort *self)
 {
-  return self->localInputPort.readPtr;
+  return self->localInputPort->readPtr;
 }
 
 void
@@ -221,9 +236,21 @@ output_port_buffer_end(OutputPort *self)
 }
 
 void
+output_port_setup_buffer(OutputPort *self, unsigned int capacity, unsigned int token_size)
+{
+  self->capacity = capacity;
+  self->localOutputPort.bufferStart = calloc(capacity, token_size);
+  self->localOutputPort.bufferEnd = ((char*)self->localOutputPort.bufferStart) + capacity*token_size;
+  self->localOutputPort.writePtr = self->localOutputPort.bufferStart;
+  self->localOutputPort.readPtr = self->localOutputPort.bufferStart;
+  self->localOutputPort.spaceLeft = 0;
+  self->localOutputPort.available = 0;
+}
+
+void
 input_port_set_buffer_end(InputPort *self, void *buffer_end)
 {
-  self->localInputPort.bufferEnd = buffer_end;
+  self->localInputPort->bufferEnd = buffer_end;
 }
 
 int
@@ -257,13 +284,13 @@ output_port_set_functions(OutputPort *self, tokenFn *functions)
     memset(&self->functions, 0, sizeof self->functions);
   }
 }
-
+#if 0
 void
 output_port_set_buffer_start(OutputPort *self, void *buffer_start)
 {
   self->localOutputPort.bufferStart = buffer_start;
 }
-
+#endif
 OutputPort *
 input_port_producer(InputPort *self)
 {
@@ -378,15 +405,105 @@ output_port_max_available(OutputPort *self)
   return max_available;
 }
 
-LocalOutputPort *
-output_port_local_port(OutputPort *self)
+static void
+dump_buffer(struct circ_buffer *buf, const char *op)
 {
-  return &self->localOutputPort;
+  printf(" ----- %s\n", op);
+  printf("buffer start: 0x%p\n", buf->bufferStart);
+  printf("  buffer end: 0x%p\n", buf->bufferEnd);
+  printf("   write ptr: 0x%p\n", buf->writePtr);
+  printf("    read ptr: 0x%p\n", buf->readPtr);
+  printf("available: %d, space left: %d\n",
+      buf->available, buf->spaceLeft);
+ }
+
+void
+output_port_write(OutputPort *self, unsigned int token_size, const void *token)
+{
+  dump_buffer(&self->localOutputPort, __FUNCTION__);
+  memcpy(self->localOutputPort.writePtr, token, token_size);
+
+  self->localOutputPort.writePtr = ((char *)self->localOutputPort.writePtr) + token_size;
+
+
+  if (self->localOutputPort.writePtr == self->localOutputPort.bufferEnd) {
+    self->localOutputPort.writePtr = self->localOutputPort.bufferStart;
+  }
+  self->localOutputPort.spaceLeft--;
+  assert(self->localOutputPort.spaceLeft >= 0);
 }
 
-LocalInputPort *
-input_port_local_port(InputPort *self)
+void
+input_port_read(InputPort *self, unsigned int token_size, void *token)
 {
-  return &self->localInputPort;
+  assert(token != NULL);
+  assert(self->producer != NULL);
+  memcpy(token, self->localInputPort->readPtr, token_size);
+
+  assert(self->localInputPort->readPtr !=
+      ((char *)self->localInputPort->readPtr) + token_size);
+  self->localInputPort->readPtr = ((char*)self->localInputPort->readPtr) + token_size;
+
+
+  if (self->localInputPort->readPtr == self->localInputPort->bufferEnd) {
+    self->localInputPort->readPtr = self->localInputPort->bufferStart;
+  }
+  self->localInputPort->available--;
+  assert(self->localInputPort->available >= 0 );
+  dump_buffer(self->localInputPort, __FUNCTION__);
+}
+
+void
+input_port_peek(const InputPort *self, int pos, unsigned int token_size, void *token)
+{
+  int i;
+  const void *idx;
+
+  for (i = 0, idx = self->localInputPort->readPtr; i < pos; ++i, idx = ((char *)idx) + token_size) {
+    if (idx == self->localInputPort->bufferEnd) {
+      idx = self->localInputPort->bufferStart;
+    }
+  }
+
+  memcpy(token, idx, token_size);
+}
+
+void
+output_port_input_port_connect(OutputPort *producer, InputPort *consumer)
+{
+  input_port_set_producer(consumer, producer);
+
+  consumer->localInputPort = &producer->localOutputPort;
+  // producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
+  consumer->tokensConsumed = producer->tokensProduced;
+  input_port_set_functions(consumer,
+      output_port_functions(producer));
+  input_port_init_consumer(consumer);
+  output_port_add_consumer(producer, consumer);
+}
+
+void
+output_port_set_available(OutputPort *self, unsigned int available)
+{
+  self->localOutputPort.available = available;
+}
+
+void
+output_port_reset_read_ptr(OutputPort *self, int tokens, int token_size)
+{
+  int idx;
+  self->localOutputPort.readPtr = self->localOutputPort.writePtr - self->localOutputPort.available*token_size;;
+  for (idx = 0; idx < tokens; ++idx) {
+    self->localOutputPort.readPtr = ((char *)self->localOutputPort.readPtr) - token_size;
+    if (self->localOutputPort.readPtr == self->localOutputPort.bufferStart) {
+      self->localOutputPort.readPtr = self->localOutputPort.bufferEnd;
+    }
+  }
+}
+
+void
+output_port_set_space_left(OutputPort *self, unsigned int space_left)
+{
+  self->localOutputPort.spaceLeft = space_left;
 }
 

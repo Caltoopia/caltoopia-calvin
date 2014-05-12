@@ -64,31 +64,31 @@ serialize(AbstractActorInstance *actor, ActorCoder *coder)
             CoderState *port = coder->encode_struct(coder, ports, portname);
             CoderState *buffer = coder->encode_array(coder, port, "buffer");
             int count = 0;
-            // OutputPort *output = &actor->outputPort[i];
             OutputPort *output = output_port_array_get(actor->outputPort, i);
-            // InputPort *consumer = (InputPort *) dllist_first(&output->consumers);
             InputPort *consumer = output_port_first_consumer(output);
             // FIXME: Multiple consumers (fan-out) not supported
             if (!consumer) {
                 fail("No consumer connected");
             }
             // FIXME: Assume FIFO is int32_t for now
-            intptr_t *bufferEnd = (intptr_t*)output_port_buffer_end(output);
-            intptr_t *writePtr = (intptr_t *)output_port_write_ptr(output);
-            intptr_t *readPtr = (intptr_t *)input_port_read_ptr(consumer);
+            int32_t *bufferEnd = (int32_t *)output_port_buffer_end(output);
+            int32_t *writePtr = (int32_t*)output_port_write_ptr(output);
+            int32_t *readPtr = (int32_t*)input_port_read_ptr(consumer);
             while(readPtr != writePtr) {
               coder->encode(coder, buffer, NULL, readPtr, "i");
               count++;
               readPtr++;
               if (readPtr >= bufferEnd) {
-                readPtr = (intptr_t *)output_port_buffer_start(output);
+                readPtr = (int32_t *)output_port_buffer_start(output);
               }
             }
+#if 0
             {
               int j = 0xdeadbeef;
               coder->encode(coder, buffer, NULL, &j, "i");
               count++;
             }
+#endif
             coder->encode(coder, port, "length", &count, "i");
         }
     }
@@ -97,25 +97,22 @@ serialize(AbstractActorInstance *actor, ActorCoder *coder)
 static void
 deserialize_buffer(OutputPort *output_port, ActorCoder *coder, CoderState *port)
 {
-  intptr_t *write_ptr;
+  void *write_ptr;
   int buffer_size;
   int idx;
   int32_t buffer_value;
   CoderState *buffer;
 
-  write_ptr = (intptr_t *)output_port_write_ptr(output_port);
-  // write_ptr = (int32_t *)output_port->localOutputPort.writePtr;
+  write_ptr = (int32_t*)output_port_write_ptr(output_port);
   buffer = coder->decode_array(coder, port, "buffer");
   coder->decode(coder, port, "length", &buffer_size, "i");
 
   for (idx = 0; idx < buffer_size; ++idx) {
     coder->decode(coder, buffer, NULL, &buffer_value, "i");
-    *write_ptr = buffer_value;
-    write_ptr++;
+    *(int32_t *)write_ptr = buffer_value;
+    write_ptr += sizeof buffer_value;
   }
   output_port_set_write_ptr(output_port, write_ptr);
-  // output_port->localOutputPort.writePtr = write_ptr;
-  puts(" --- check --- ");
 }
 
 static void
@@ -129,7 +126,6 @@ deserialize_port(AbstractActorInstance *actor, ActorCoder *coder,
   portname = actor->actorClass->outputPortDescriptions[port_number].name;
   port = coder->decode_struct(coder, ports, portname);
   output_port = output_port_array_get(actor->outputPort, port_number);
-  // output_port = &actor->outputPort[port_number];
 
   deserialize_buffer(output_port, coder, port);
 }
@@ -149,17 +145,6 @@ deserialize(AbstractActorInstance *actor, ActorCoder *coder)
   for (idx = 0; idx < actor->actorClass->numOutputPorts; ++idx) {
     deserialize_port(actor, coder, ports, idx);
   }
-    for (idx = 0; idx < actor->numInputPorts; ++idx) {
-      InputPort *consumer = input_port_array_get(actor->inputPort, idx);
-      // InputPort *consumer = &actor->inputPort[idx];
-      // OutputPort *producer = (OutputPort *)&consumer->asConsumer;
-      OutputPort *producer = input_port_as_consumer(consumer);
-      input_port_set_read_ptr(consumer,
-          output_port_write_ptr(producer)-1);
-
-      // consumer->localInputPort.readPtr = (int32_t *)producer->localOutputPort.writePtr - 1;
-    }
-
 }
 
 

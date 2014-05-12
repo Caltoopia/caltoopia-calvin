@@ -73,6 +73,16 @@ extern const ActorClass ActorClass_art_Display_yuv;
 const int exit_code_terminate[] = {-1};
 const int exit_code_yield[] = {-2};
 
+/* signal handling */
+#include <signal.h>
+
+static void
+sig_handler(int signum)
+{
+  exit(0);
+}
+
+
 /* ------------------------------------------------------------------------- */
 
 static void usage(const char *bname)
@@ -145,6 +155,8 @@ main(int argc, char **argv)
   int i;
   int keep_other_threads = 0; /* Allow other pthreads to stay on exit? */
   int port = 0;
+
+  signal(1, &sig_handler);
 
   /* find our port number if we have any */
   for (i = 1; i < argc; i++) {
