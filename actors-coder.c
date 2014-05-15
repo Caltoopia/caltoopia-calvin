@@ -60,9 +60,30 @@ static void json_encode(ActorCoder *this, CoderState *state, const char *key, vo
         case 's': // C string
             value = cJSON_CreateString(*(const char **)value_ref);
             break;
-        case 'i': // C int
-            value = cJSON_CreateNumber((double)*((int *)value_ref));
+        case 'b': // boolean
+          value = cJSON_CreateBool((int)*((int32_t *)value_ref));
+          break;
+        case 'i': // C int 32 bit
+            value = cJSON_CreateNumber((double)*((int32_t *)value_ref));
             break;
+        case 'I': // C unsigned int 32 bit
+            value = cJSON_CreateNumber((double)*((uint32_t *)value_ref));
+            break;
+        case 'h': // C int 16 bit
+            value = cJSON_CreateNumber((double)*((int16_t *)value_ref));
+            break;
+        case 'H': // C unsigned int 16 bit
+            value = cJSON_CreateNumber((double)*((uint16_t *)value_ref));
+            break;
+        case 'c': // C int 8 bit
+            value = cJSON_CreateNumber((double)*((int8_t *)value_ref));
+            break;
+        case 'C': // C unsigned int 8 bit
+            value = cJSON_CreateNumber((double)*((uint8_t *)value_ref));
+            break;
+        case 'd': // C double
+          value = cJSON_CreateNumber((double)*((double *)value_ref));
+          break;
         case 'f': // C float
             value = cJSON_CreateNumber((double)*((float *)value_ref));
             break;
@@ -105,9 +126,44 @@ static void json_decode(ActorCoder *this, CoderState *state, const char *key, vo
             *(char **)value_ref = strdup(value->valuestring);
         }
         break;
-        case 'i': // C int
+        case 'b': // boolean
         {
-            *(int *)value_ref = (int)(value->valueint);
+          *(int32_t *)value_ref = (int32_t)(value->type==cJSON_True);
+        }
+        break;
+        case 'i': // C int 32 bit
+        {
+            *(int32_t *)value_ref = (int32_t)(value->valueint);
+        }
+        break;
+        case 'I': // C unsigned int 32 bit
+        {
+          *(uint32_t *)value_ref = (uint32_t)(value->valueint);
+        }
+        break;
+        case 'h': // C int 16 bit
+        {
+          *(int16_t *)value_ref = (int16_t)(value->valueint);
+        }
+        break;
+        case 'H': // C unsigned int 16 bit
+        {
+          *(uint16_t *)value_ref = (uint16_t)(value->valueint);
+        }
+        break;
+        case 'c': // C int 8 bit
+        {
+          *(int8_t *)value_ref = (int8_t)(value->valueint);
+        }
+        break;
+        case 'C': // C unsigned int 8 bit
+        {
+          *(uint8_t *)value_ref = (uint8_t)(value->valueint);
+        }
+        break;
+        case 'd': // C double
+        {
+          *(double *)value_ref = (double)(value->valuedouble);
         }
         break;
         case 'f': // C float
