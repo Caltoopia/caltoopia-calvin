@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "logging.h"
 #include "io-port.h"
 #include "actors-network.h"
 #include "actors-teleport.h"
@@ -70,7 +71,7 @@ static pthread_mutex_t instance_lock = PTHREAD_MUTEX_INITIALIZER;
 } while (0)
 
 #define UNLOCK_INSTANCES(...) do { \
-    pthread_mutex_unlock(&instance_lock); \
+  pthread_mutex_unlock(&instance_lock); \
 } while (0)
 
 
@@ -155,12 +156,13 @@ static AbstractActorInstance * lookupActor(const char *actorName)
 
     elem = dllist_next(&enabled_instances, elem);
   }
+
+  /* Is there any particular reason for failing here? */
+  m_warning("lookupActor: no such actor '%s'", actorName);
+
 out:
   UNLOCK_INSTANCES();
 
-  /* Is there any particular reason for failing here? */
-  // fail("lookupActor: no such actor '%s'\n", actorName);
-  //
   return result;
 }
 
@@ -191,8 +193,9 @@ lookupOutput(const AbstractActorInstance *instance, const char *portName,
     }
   }
 
-  fail("lookupOutput: no such port '%s.%s'\n",
+  m_warning("lookupOutput: no such port '%s.%s'",
       actorClass->name, portName);
+  return NULL;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -223,11 +226,18 @@ lookupInput(const AbstractActorInstance *instance,
     }
   }
 
-  fail("lookupInput: no such port '%s.%s'\n",
+  m_warning("lookupInput: no such port '%s.%s'",
       actorClass->name, portName);
+  return NULL;
 }
 
 /* ------------------------------------------------------------------------- */
+
+static void
+disconnectInput(InputPort *consumer, OutputPort *producer)
+{
+  output_port_input_port_disconnect(producer, consumer);
+}
 
 static void connectInput(InputPort *consumer, OutputPort *producer)
 {
@@ -303,21 +313,17 @@ static void * workerThreadMain(void *unused_arg)
     int fired=1;
 
     while (fired) {
-      pthread_mutex_lock(&thread_state.execution_mutex);
       LOCK_INSTANCES();
-      dllist_element_t *elem = dllist_first_lock(&enabled_instances);
+      dllist_element_t *elem = dllist_first(&enabled_instances);
       fired=0;
       while (elem) {
         AbstractActorInstance *actor = (AbstractActorInstance *) elem;
         preFire(actor);
         actor->action_scheduler(actor);
         fired = postFire(actor);
-        elem = dllist_next_locked(&enabled_instances, elem);
+        elem = dllist_next(&enabled_instances, elem);
       }
-      dllist_unlock(&enabled_instances);
       UNLOCK_INSTANCES();
-
-      pthread_mutex_unlock(&thread_state.execution_mutex);
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE
@@ -373,6 +379,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
   AbstractActorInstance *instance = calloc(1, actorClass->sizeActorInstance);
   unsigned int i;
 
+  assert(instance->sender_name == NULL);
   instance->actorClass = actorClass;
   instance->instanceName = strdup(actor_name);
   instance->inputPort = input_port_array_new(actorClass->numInputPorts);
@@ -388,7 +395,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
     /* already exist? */
     AbstractActorInstance *exist = lookupActor(actor_name);
     if (exist) {
-      printf("Actor already exists - destroying\n");
+      m_message("Actor already exists - destroying");
       if (exist->enabled) {
         disableActorInstance(actor_name);
       }
@@ -412,7 +419,6 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
     output_port_init_consumer_list(output);
   }
 
-  LOCK_INSTANCES();
   /* Set parameters (if any) */
   for (int i=0; params && params[2*i] && i<MAX_PARAMS; i++) {
     setActorParam(instance, params[2*i], params[2*i + 1]);
@@ -422,6 +428,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
     instance->actorClass->constructor(instance);
   }
   /* Add it to the list of instances */
+  LOCK_INSTANCES();
   dllist_append(&disabled_instances, &instance->listEntry);
   UNLOCK_INSTANCES();
   return instance;
@@ -438,7 +445,7 @@ void setActorParam(AbstractActorInstance *instance,
     actorClass->set_param(instance, key, value);
   }
   else {
-    warn("parameter (%s) not supported by actor %s",
+    m_warning("parameter (%s) not supported by actor %s",
         instance->instanceName, key);
   }
 }
@@ -479,12 +486,12 @@ void destroyActorInstance(const char *actor_name)
   const ActorClass *actorClass = instance->actorClass;
   unsigned int i;
 
-  printf("Destroying %s\n", actor_name);
+  m_message("Destroying %s", actor_name);
   assert(!instance->enabled);
 
-  LOCK_INSTANCES();
   {
     pthread_mutex_lock(&thread_state.execution_mutex);
+    LOCK_INSTANCES();
     // dllist_remove(&instances, &instance->listEntry);
     dllist_remove(&disabled_instances, &instance->listEntry);
 
@@ -493,7 +500,7 @@ void destroyActorInstance(const char *actor_name)
       InputPort *input = input_port_array_get(instance->inputPort, i);
       OutputPort *producer = input_port_producer(input);
       if (producer) {
-        output_port_remove_consumer(producer, input);
+        output_port_input_port_disconnect(producer, input);
       }
     }
 
@@ -505,10 +512,10 @@ void destroyActorInstance(const char *actor_name)
       output_port_buffer_start_free(output);
     }
 
+    UNLOCK_INSTANCES();
     pthread_mutex_unlock(&thread_state.execution_mutex);
   }
 
-  UNLOCK_INSTANCES();
   input_port_array_free(instance->inputPort);
   output_port_array_free(instance->outputPort);
 
@@ -519,13 +526,27 @@ void destroyActorInstance(const char *actor_name)
 
 /* ------------------------------------------------------------------------- */
 
+void
+dropLocalConnection(const char *src_actor, const char *src_port,
+    const char *dst_actor, const char *dst_port)
+{
+  InputPort *input = lookupInput(lookupActor(dst_actor), dst_port, NULL, NULL);
+  OutputPort *output = lookupOutput(lookupActor(src_actor), src_port, NULL, NULL);
+  disconnectInput(input, output);
+}
+
 void createLocalConnection(const char *src_actor,
     const char *src_port,
     const char *dst_actor,
     const char *dst_port)
 {
-  InputPort *input = lookupInput(lookupActor(dst_actor), dst_port, NULL, NULL);
-  OutputPort *output = lookupOutput(lookupActor(src_actor), src_port, NULL, NULL);
+  AbstractActorInstance *src = lookupActor(src_actor);
+  AbstractActorInstance *dst = lookupActor(dst_actor);
+  InputPort *input = lookupInput(dst, dst_port, NULL, NULL);
+  OutputPort *output = lookupOutput(src, src_port, NULL, NULL);
+
+  /* olaan: meh */
+  src->sender_name = NULL;
 
   connectInput(input, output);
 
@@ -533,6 +554,37 @@ void createLocalConnection(const char *src_actor,
 }
 
 /* ------------------------------------------------------------------------- */
+
+void
+dropRemoteConnection(const char *src_actor,
+    const char *src_port,
+    const char *remote_host,
+    const char *remote_port)
+{
+  int tokenSize;
+  AbstractActorInstance *src = lookupActor(src_actor);
+  tokenFn functions;
+  OutputPort *output = lookupOutput(src, src_port, &tokenSize, &functions);
+
+  AbstractActorInstance *sender = lookupActor(src->sender_name);
+
+  m_message("Dropping sender %s from %s", src->sender_name, src->instanceName);
+  /* TODO: stop thread? */
+  if (sender != NULL) {
+    extern void actor_instance_art_socket_sender_kill(AbstractActorInstance *);
+    InputPort *input = lookupInput(sender, "in", NULL, NULL);
+    actor_instance_art_socket_sender_kill(sender);
+    disconnectInput(input, output);
+    disableActorInstance(src->sender_name);
+    destroyActorInstance(src->sender_name);
+    free(src->sender_name);
+    src->sender_name = NULL;
+  } else {
+    m_warning("Could not locate sender %s", src->sender_name);
+  }
+  wakeUpNetwork();
+}
+
 
 void createRemoteConnection(const char *src_actor,
     const char *src_port,
@@ -544,17 +596,20 @@ void createRemoteConnection(const char *src_actor,
   tokenFn functions;
   OutputPort *output = lookupOutput(src, src_port, &tokenSize, &functions);
   const ActorClass *klass = getSenderClass(tokenSize, &functions);
-
-#define MAX_SENDER_NAME   (30)
-  char sender_name[MAX_SENDER_NAME];
-
-  snprintf(sender_name, MAX_SENDER_NAME, "_sender_%lx",
-      get_unique_counter());
+  char *sender_name;
+  asprintf(&sender_name, "_sender_%lx", get_unique_counter());
 
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *sender
-    = createActorInstance(klass, strdup(sender_name), NULL);
+    = createActorInstance(klass, sender_name, NULL);
+  /* save name to facilitate dropping connection later */
+  m_warning("Adding sender %s to instance %s", sender_name, src->instanceName);
+  src->sender_name = strdup(sender_name);
+
   setSenderRemoteAddress(sender, remote_host, atoi(remote_port));
+  /* olaan: to avoid race */
+  extern void start_sender_thread(AbstractActorInstance *);
+  start_sender_thread(sender);
 
   InputPort *input = lookupInput(sender, "in", NULL, NULL);
   connectInput(input, output);
@@ -575,15 +630,13 @@ int createSocketReceiver(const char *actor_name,
   InputPort *input = lookupInput(consumer, port, &tokenSize, &functions);
 
   const ActorClass *klass = getReceiverClass(tokenSize, &functions);
-#define MAX_RECEIVER_NAME   (30)
-  char receiver_name[MAX_RECEIVER_NAME];
+  char* receiver_name;
 
-  snprintf(receiver_name, MAX_RECEIVER_NAME, "_receiver_%lx",
-      get_unique_counter());
+  asprintf(&receiver_name, "_receiver_%lx", get_unique_counter());
 
-  /* name allocated here (using strdup), free'd in destructor */
+  /* name allocated here, free'd in destructor */
   AbstractActorInstance *receiver
-    = createActorInstance(klass, strdup(receiver_name), NULL);
+    = createActorInstance(klass, receiver_name, NULL);
   OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);
   connectInput(input, output);
 

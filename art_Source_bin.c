@@ -40,9 +40,10 @@
  * by xlim2c version 0.6 (June 3, 2009)
  */
 
-#include "actors-rts.h"
 #include <stdio.h>
 #include <errno.h>
+#include "logging.h"
+#include "actors-rts.h"
 
 #define BUF_SIZE 1024
 

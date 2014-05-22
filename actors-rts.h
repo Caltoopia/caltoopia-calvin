@@ -56,21 +56,12 @@ extern "C" {
 #define COPY(a)       (a)
 #define MEMCPY(d,s,c) (memcpy(d,s,c))
 
-#define RANGECHK(X,B) ((unsigned)(X)<(unsigned)(B)?(X):RANGEERR(X,B))
-#define RANGEERR(X,B) (rangeError((X),(B),__FILE__,__LINE__))
-
   /*
    * These versioning constants are compiled into actors, and then checked
    * by the runtime.
    */
 #define ACTORS_RTS_MAJOR     2
 #define ACTORS_RTS_MINOR     0
-
-  void fail(const char *fmt, ...) __attribute__ ((noreturn));
-  void warn(const char *fmt, ...);
-
-  int rangeError(int x, int y, const char *filename, int line);
-  void runtimeError(AbstractActorInstance*, const char *format,...);
 
   // bool_t represents the CAL-type bool
   typedef int32_t        bool_t;
@@ -172,6 +163,7 @@ nActions, actionDescr) { \
 
     const int* (*action_scheduler)(AbstractActorInstance*);
     int enabled;
+    char *sender_name;
   };
 
 // #define ART_INPUT(index) input_port_local_port(input_port_array_get(thisActor->base.inputPort, index))

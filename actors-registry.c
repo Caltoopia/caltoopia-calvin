@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "logging.h"
 #include "actors-registry.h"
 #include "dllist.h"
 
@@ -56,7 +57,7 @@ static unsigned int nbr_classes;
 
 void registryInit(void)
 {
-  classes = malloc(MAX_CLASSES * sizeof(classes[0]));
+  classes = calloc(MAX_CLASSES, sizeof classes[0]);
   nbr_classes = 0;
 }
 
@@ -73,11 +74,11 @@ const ActorClass * registryLoadClass(const char *filename)
   lib_handle = dlopen(filenameext, RTLD_LAZY);
 
   if (! lib_handle) {
-    fail("failed loading %s: %s\n", filename, dlerror());
+    m_critical("failed loading %s: %s", filename, dlerror());
   }
   klass = dlsym(lib_handle, "klass");
   if (! klass) {
-    fail("failed accessing class in %s: %s\n",
+    m_critical("failed accessing class in %s: %s",
          filename, dlerror());
   }
 
@@ -92,8 +93,8 @@ const ActorClass * registryLoadClass(const char *filename)
   if (klass->majorVersion != ACTORS_RTS_MAJOR
       || klass->minorVersion > ACTORS_RTS_MINOR)
   {
-    fail("incompatible object '%s' "
-         "(expects runtime %u.%u, current is %u.%u).\n",
+    m_critical("incompatible object '%s' "
+         "(expects runtime %u.%u, current is %u.%u).",
          filename, /* cannot access '->name' -- struct layout is unknown! */
          klass->majorVersion, klass->minorVersion,
          ACTORS_RTS_MAJOR, ACTORS_RTS_MINOR);
@@ -120,7 +121,7 @@ const ActorClass * registryGetClass(const char *name)
     }
   }
 
-  fail("failed looking up actor class '%s'\n", name);
+  m_critical("failed looking up actor class '%s'", name);
   return NULL; /* won't be executed, but keeps compiler happy */
 }
 

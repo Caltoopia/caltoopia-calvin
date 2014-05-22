@@ -105,6 +105,8 @@ extern "C" {
                              const char *dst_actor,
                              const char *dst_port);
 
+  void dropLocalConnection(const char *, const char *, 
+      const char *, const char *);
   /**
    * Called by parser. Create a FIFO between a local output and a
    * remote input. If the worker thread is idle, it will be woken up.
@@ -113,6 +115,9 @@ extern "C" {
                               const char *src_port,
                               const char *remote_host,
                               const char *remote_port);
+
+  void dropRemoteConnection(const char *, const char *,
+      const char *, const char *);
 
   /**
    * Called by parser. Creates a socket listener for the indicated

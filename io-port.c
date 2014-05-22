@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "logging.h"
 #include "io-port.h"
 
 /*
@@ -364,6 +365,7 @@ output_port_disconnect_consumers(OutputPort *self)
 
   while (elem) {
     input_port_set_producer((InputPort *)elem, NULL);
+    output_port_input_port_disconnect(self, (InputPort *)elem);
     elem = dllist_next(&self->consumers, elem);
   }
 }
@@ -405,22 +407,9 @@ output_port_max_available(OutputPort *self)
   return max_available;
 }
 
-static void
-dump_buffer(struct circ_buffer *buf, const char *op)
-{
-  printf(" ----- %s\n", op);
-  printf("buffer start: 0x%p\n", buf->bufferStart);
-  printf("  buffer end: 0x%p\n", buf->bufferEnd);
-  printf("   write ptr: 0x%p\n", buf->writePtr);
-  printf("    read ptr: 0x%p\n", buf->readPtr);
-  printf("available: %d, space left: %d\n",
-      buf->available, buf->spaceLeft);
- }
-
 void
 output_port_write(OutputPort *self, unsigned int token_size, const void *token)
 {
-  dump_buffer(&self->localOutputPort, __FUNCTION__);
   memcpy(self->localOutputPort.writePtr, token, token_size);
 
   self->localOutputPort.writePtr = ((char *)self->localOutputPort.writePtr) + token_size;
@@ -450,7 +439,6 @@ input_port_read(InputPort *self, unsigned int token_size, void *token)
   }
   self->localInputPort->available--;
   assert(self->localInputPort->available >= 0 );
-  dump_buffer(self->localInputPort, __FUNCTION__);
 }
 
 void
@@ -459,7 +447,7 @@ input_port_peek(const InputPort *self, int pos, unsigned int token_size, void *t
   int i;
   const void *idx;
 
-  for (i = 0, idx = self->localInputPort->readPtr; i < pos; ++i, idx = ((char *)idx) + token_size) {
+  for (i = 0, idx = self->localInputPort->readPtr; i < pos; ++i, idx = ((const char *)idx) + token_size) {
     if (idx == self->localInputPort->bufferEnd) {
       idx = self->localInputPort->bufferStart;
     }
@@ -471,16 +459,30 @@ input_port_peek(const InputPort *self, int pos, unsigned int token_size, void *t
 void
 output_port_input_port_connect(OutputPort *producer, InputPort *consumer)
 {
+  m_message("connecting ports");
   input_port_set_producer(consumer, producer);
 
   consumer->localInputPort = &producer->localOutputPort;
-  // producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
+  producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
   consumer->tokensConsumed = producer->tokensProduced;
   input_port_set_functions(consumer,
       output_port_functions(producer));
   input_port_init_consumer(consumer);
   output_port_add_consumer(producer, consumer);
 }
+
+void
+output_port_input_port_disconnect(OutputPort *producer, InputPort *consumer)
+{
+  m_message("disconnectint ports");
+  input_port_set_producer(consumer, NULL);
+
+  consumer->localInputPort = NULL;
+  // producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
+  input_port_set_functions(consumer, NULL);
+  output_port_remove_consumer(producer, consumer);
+}
+
 
 void
 output_port_set_available(OutputPort *self, unsigned int available)
@@ -492,7 +494,7 @@ void
 output_port_reset_read_ptr(OutputPort *self, int tokens, int token_size)
 {
   int idx;
-  self->localOutputPort.readPtr = self->localOutputPort.writePtr - self->localOutputPort.available*token_size;;
+  self->localOutputPort.readPtr = ((char *)self->localOutputPort.writePtr) - self->localOutputPort.available*token_size;;
   for (idx = 0; idx < tokens; ++idx) {
     self->localOutputPort.readPtr = ((char *)self->localOutputPort.readPtr) - token_size;
     if (self->localOutputPort.readPtr == self->localOutputPort.bufferStart) {

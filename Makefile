@@ -1,11 +1,12 @@
+CC=gcc
 PROGRAM = calvin
 SOURCES = $(wildcard *.c)
 DISPLAY_SOURCES = $(wildcard display-*.c)
 SOURCES := $(filter-out $(DISPLAY_SOURCES), $(SOURCES))
 
-CFLAGS = -pg -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99
+CFLAGS = -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99 -O0
 
-LDFLAGS := -rdynamic -ldl -pthread -pg
+LDFLAGS := -rdynamic -ldl -pthread
 
 # set up linux specifics
 ifeq ($(shell uname -s),Linux)
@@ -51,7 +52,7 @@ MAKEFILE_PATH = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 
 %.so : %.c
-	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -ggdb -fPIC -shared -Wl,-soname,$@ -o $@ $<
+	$(CC) -I$(CALVIN_HOME) $(CFLAGS) -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
 	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<

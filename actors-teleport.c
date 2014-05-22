@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "logging.h"
 #include "io-port.h"
 #include "actors-network.h"
 #include "actors-teleport.h"
@@ -79,6 +80,7 @@ struct TokenMonitor {
   char *tokenBuffer;
   size_t serializeBufferSize;
   char *serializeBuffer;
+  int die;
 };
 
 /**
@@ -114,6 +116,16 @@ typedef struct {
   int lockedBusy;     /* local sender state of locked/unlocked busy scheduler loop */
   struct TokenMonitor tokenMon;
 } ActorInstance_art_SocketSender;
+
+void
+actor_instance_art_socket_sender_kill(AbstractActorInstance *instance)
+{
+  ActorInstance_art_SocketSender *self =
+    (ActorInstance_art_SocketSender *)instance;
+  self->tokenMon.die = 1;
+  pthread_cond_signal(&self->tokenMon.available);
+}
+
 
 /**
  * An instance of this struct is created for each sender/receiver
@@ -190,7 +202,7 @@ static void *receiver_thread(void *arg)
     if (status >= 0) {
       instance->client_socket = status;
     } else {
-      warn("accept() failed: %s", strerror(errno));
+      m_warning("accept() failed: %s", strerror(errno));
       return NULL;
     }
 
@@ -236,7 +248,7 @@ static void *receiver_thread(void *arg)
             bytesRead += status;
           } else {
             bytesRead = 0;
-            warn("read() failed: %s", strerror(errno));
+            m_warning("read() failed: %s", strerror(errno));
           }
         } while (bytesRead!=sizeof(int32_t));
         
@@ -254,7 +266,7 @@ static void *receiver_thread(void *arg)
               bytesRead += status;
             } else {
               bytesRead = 0;
-              warn("read() failed: %s", strerror(errno));
+              m_warning("read() failed: %s", strerror(errno));
             }
           } while (bytesRead!=sz);
           if(bytesRead!=sz) {
@@ -292,7 +304,7 @@ static void *receiver_thread(void *arg)
             /* on general read failures, assume client disconnected and wait for
              * another one */
             instance->bytesRead = 0;
-            warn("read() failed: %s", strerror(errno));
+            m_warning("read() failed: %s", strerror(errno));
             break;
           }
         } while (instance->bytesRead != tokenSize);
@@ -327,7 +339,7 @@ static void receiver_constructor(AbstractActorInstance *pBase)
 
   instance->server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (instance->server_socket < 0) {
-    warn("could not open server socket: %s", strerror(errno));
+    m_warning("could not open server socket: %s", strerror(errno));
     return;
   }
 
@@ -342,13 +354,13 @@ static void receiver_constructor(AbstractActorInstance *pBase)
            (struct sockaddr *) &server_addr,
            sizeof(server_addr)) < 0)
   {
-    warn("could not bind: %s", strerror(errno));
+    m_warning("could not bind: %s", strerror(errno));
     instance->server_socket = -1;
     return;
   }
 
   if (listen(instance->server_socket, 1 /* max one client */) < 0) {
-    warn("could not listen: %s", strerror(errno));
+    m_warning("could not listen: %s", strerror(errno));
     instance->server_socket = -1;
     return;
   }
@@ -358,13 +370,14 @@ static void receiver_constructor(AbstractActorInstance *pBase)
                   (struct sockaddr *) &server_addr,
                   &sockaddr_size) < 0)
   {
-    warn("could not getsockname: %s", strerror(errno));
+    m_warning("could not getsockname: %s", strerror(errno));
     instance->server_socket = -1;
     return;
   }
   assert(server_addr.sin_family == AF_INET);
   instance->port = ntohs(server_addr.sin_port);
-    
+  m_message("Listen: %d", instance->port);
+
   instance->bytesRead = 0;
 
   instance->hashId = getUniqueHashid();
@@ -401,7 +414,6 @@ ART_ACTION_SCHEDULER(receiver_action_scheduler)
       pthread_mutex_unlock(&instance->tokenMon.lock);
     }
   }
-
   ART_ACTION_SCHEDULER_EXIT(0, 1);
   return EXIT_CODE_YIELD;
 }
@@ -433,7 +445,8 @@ static void receiver_destructor(AbstractActorInstance *pBase)
 
 /* ------------------------------------------------------------------------- */
 
-static void *sender_thread(void *arg)
+static void *
+sender_thread(void *arg)
 {
   ActorInstance_art_SocketSender *instance
     = (ActorInstance_art_SocketSender *) arg;
@@ -446,8 +459,9 @@ static void *sender_thread(void *arg)
 
   server_addr.sin_family = AF_INET;
 
-  if (! inet_aton(instance->remoteHost, &server_addr.sin_addr)) {
-    warn("could not parse host specification '%s'", instance->remoteHost);
+  assert(instance->remoteHost != NULL);
+  if (!inet_aton(instance->remoteHost, &server_addr.sin_addr)) {
+    m_warning("could not parse host specification '%s'", instance->remoteHost);
     instance->socket = -1;
     return NULL;
   }
@@ -458,7 +472,7 @@ static void *sender_thread(void *arg)
               (struct sockaddr *) &server_addr,
               sizeof(server_addr)) < 0)
   {
-    warn("could not connect: %s", strerror(errno));
+    m_warning("could not connect: %s", strerror(errno));
     instance->socket = -1;
     return NULL;
   }
@@ -484,6 +498,10 @@ static void *sender_thread(void *arg)
                           &instance->tokenMon.lock);
       }
       pthread_mutex_unlock(&instance->tokenMon.lock);
+      if (instance->tokenMon.die) {
+        m_warning("TokenMonitor exiting\n");
+        return NULL;
+      }
     }
 
     int bytesWritten = 0;
@@ -508,18 +526,18 @@ static void *sender_thread(void *arg)
       //FIXME we free the token here, but that only works if the port has no fan-out,
       //that limitation also exist in the Caltoopia generated code.
       functions->free(*((void**)instance->tokenMon.tokenBuffer), 1/*TRUE*/);
-      
+
       do {
         int status = write(instance->socket,
                            instance->tokenMon.serializeBuffer + bytesWritten,
                            sz - bytesWritten);
-        
+
         if (status >= 0) {
           bytesWritten += status;
           assert(bytesWritten <= sz);
         } else {
           /* on general write failures, bail out*/
-          warn("write() failed: %s", strerror(errno));
+          m_warning("write() failed: %s", strerror(errno));
           return NULL;
         }
       } while (bytesWritten != sz);
@@ -537,7 +555,7 @@ static void *sender_thread(void *arg)
           assert(bytesWritten <= tokenSize);
         } else {
           /* on general write failures, bail out*/
-          warn("write() failed: %s", strerror(errno));
+          m_warning("write() failed: %s", strerror(errno));
           return NULL;
         }
       } while (bytesWritten != tokenSize);
@@ -556,22 +574,32 @@ static void *sender_thread(void *arg)
   }
 }
 
+void
+start_sender_thread(AbstractActorInstance *instance)
+{
+  ActorInstance_art_SocketSender *self = 
+    (ActorInstance_art_SocketSender *)instance;
+  pthread_create(&self->pid, NULL, &sender_thread, instance);
+
+}
+
 /* ------------------------------------------------------------------------- */
 
-static void sender_constructor(AbstractActorInstance *pBase)
+static void
+sender_constructor(AbstractActorInstance *pBase)
 {
   ActorInstance_art_SocketSender *instance
   = (ActorInstance_art_SocketSender *) pBase;
 
   instance->socket = socket(AF_INET, SOCK_STREAM, 0);
   if (instance->socket < 0) {
-    warn("could not open client socket: %s", strerror(errno));
+    m_warning("could not open client socket: %s", strerror(errno));
     return;
   }
 
   /* don't touch remoteHost here: it was set in
    setSenderRemoteAddress() below */
-
+  /* olaan: correction: was/will/might be set. */
   instance->hashId = getUniqueHashid();
   instance->lockedBusy = 0;
   
@@ -580,7 +608,7 @@ static void sender_constructor(AbstractActorInstance *pBase)
   initTokenMonitor(&instance->tokenMon,
                    pBase->actorClass->inputPortDescriptions[0].tokenSize);
 
-  pthread_create(&instance->pid, NULL, &sender_thread, pBase);
+  // pthread_create(&instance->pid, NULL, &sender_thread, pBase);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -799,12 +827,12 @@ int getReceiverPort(AbstractActorInstance *pBase)
 
 /* ------------------------------------------------------------------------- */
 
-void setSenderRemoteAddress(AbstractActorInstance *pBase,
-                            const char *host,
-                            int port)
+void
+setSenderRemoteAddress(AbstractActorInstance *pBase,
+    const char *host, int port)
 {
   /* Ensure this is actually an instance of a known sender class */
-  
+  m_message("remote: %s:%d", host, port);
   int correct_instance_type = 0;
   dllist_element_t *elem = dllist_first(&sender_classes);
   while (elem) {
@@ -815,9 +843,10 @@ void setSenderRemoteAddress(AbstractActorInstance *pBase,
     elem = dllist_next(&sender_classes, elem);
   }
   assert(correct_instance_type);
-  
+
   ActorInstance_art_SocketSender * instance
-  = (ActorInstance_art_SocketSender *) pBase;
+    = (ActorInstance_art_SocketSender *) pBase;
+
   instance->remoteHost = strdup(host);
   instance->remotePort = port;
 }

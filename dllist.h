@@ -148,7 +148,7 @@ dllist_next(dllist_head_t *list, dllist_element_t *elem)
 {
   dllist_element_t *next;
 
-  pthread_mutex_lock(&list->mutex);
+  //pthread_mutex_lock(&list->mutex);
   {
     assert(elem != NULL);
 
@@ -157,7 +157,7 @@ dllist_next(dllist_head_t *list, dllist_element_t *elem)
       next = NULL;
     }
   }
-  pthread_mutex_unlock(&list->mutex);
+  //pthread_mutex_unlock(&list->mutex);
 
   return next;
 }

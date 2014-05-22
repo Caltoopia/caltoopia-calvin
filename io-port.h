@@ -111,6 +111,7 @@ InputPort *output_port_first_consumer(OutputPort *self);
 InputPort *input_port_next_consumer(InputPort *self);
 
 void output_port_input_port_connect(OutputPort *, InputPort *);
+void output_port_input_port_disconnect(OutputPort *, InputPort *);
 void output_port_set_available(OutputPort *, unsigned int);
 void output_port_reset_read_ptr(OutputPort *, int tokens, int token_size);
 void output_port_set_space_left(OutputPort *, unsigned int);

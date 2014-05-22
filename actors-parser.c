@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "logging.h"
 #include "actors-parser.h"
 
 #include "actors-network.h"
@@ -148,7 +149,6 @@ static enum {
   /*
    * Colon takes priority: the host spec will contain dots
    */
-
   char *colonpos = index(descr, ':');
   if (colonpos) {
     *colonpos = '\0';
@@ -156,6 +156,7 @@ static enum {
     *actor = descr;
     *port = colonpos + 1;
 
+    m_message("Found %s:%s", descr, colonpos +1);
     return PORT_REF_REMOTE;
   }
 
@@ -165,7 +166,7 @@ static enum {
 
     *actor = descr;
     *port = dotpos + 1;
-
+    m_message("Found %s:%s", descr, dotpos+1);
     return PORT_REF_LOCAL;
   }
 
@@ -275,9 +276,8 @@ static void classes_handler(struct parser_state *state)
   ok_end(state);
 }
 
-/* ------------------------------------------------------------------------- */
-
-static void connect_handler(struct parser_state *state)
+static void 
+disconnect_handler(struct parser_state *state)
 {
   const char *src_actor;
   const char *src_port;
@@ -289,16 +289,55 @@ static void connect_handler(struct parser_state *state)
     return;
   }
 
-  printf("Connecting: %s & %s\n",
-      src_actor, dst_actor);
   switch (parse_port_ref(state, &dst_actor, &dst_port)) {
     case PORT_REF_LOCAL:
+      m_message("Disonnecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
+      dropLocalConnection(src_actor, src_port, dst_actor, dst_port);
+      ok(state, "dropping local connection %s.%s --> %s.%s",
+         src_actor, src_port,
+         dst_actor, dst_port);
+      break;
+    case PORT_REF_REMOTE:
+      m_message("Disonnecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
+      dropRemoteConnection(src_actor, src_port, dst_actor, dst_port);
+      ok(state, "dropping remote connection %s.%s --> %s.%s",
+         src_actor, src_port,
+         dst_actor, dst_port);
+      break;
+    case PORT_REF_INVALID:
+    default:
+      error(state, "invalid destination actor");
+      break;
+  }
+}
+
+
+/* ------------------------------------------------------------------------- */
+
+static void
+connect_handler(struct parser_state *state)
+{
+  const char *src_actor;
+  const char *src_port;
+  const char *dst_actor;
+  const char *dst_port;
+
+  if (parse_port_ref(state, &src_actor, &src_port) != PORT_REF_LOCAL) {
+    error(state, "invalid source actor");
+    return;
+  }
+
+  switch (parse_port_ref(state, &dst_actor, &dst_port)) {
+
+    case PORT_REF_LOCAL:
+      m_message("Connecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
       createLocalConnection(src_actor, src_port, dst_actor, dst_port);
       ok(state, "local connection %s.%s --> %s.%s",
          src_actor, src_port,
          dst_actor, dst_port);
       break;
     case PORT_REF_REMOTE:
+      m_message("Connecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
       createRemoteConnection(src_actor, src_port, dst_actor, dst_port);
       ok(state, "remote connection %s.%s --> %s.%s",
          src_actor, src_port,
@@ -452,9 +491,7 @@ static void new_handler(struct parser_state *state)
     } else {
       splitpoint++;
     }
-    printf("arg: %s\n", arg);
     params[2*i] = strdup(arg);
-    printf("split: %s\n", splitpoint);
     params[2*i + 1] = strdup(splitpoint);
     
     arg = get_next_word(state);
@@ -519,23 +556,26 @@ static void serialize_handler(struct parser_state *state)
 
 static void deserialize_handler(struct parser_state *state)
 {
+  m_message("start deserialize");
   const char *actor_name = get_next_word(state);
   if (! actor_name) {
     error(state, "missing actor name");
     return;
   }
 
+  m_message("deserialize actor %s", actor_name);
   const char *closure = get_next_word(state);
   if (! closure) {
     error(state, "missing closure");
     return;
   }
-  
+
+  m_message("deserialize closure %s", closure);
   ActorCoder *coder = newCoder(JSON_CODER);
   coder->set_data(coder, (void *)closure);
   deserializeActor(actor_name, coder);
   destroyCoder(coder);
-  
+
   ok(state, "%s state set", actor_name);
 }
 
@@ -549,6 +589,7 @@ static const struct command_entry {
   { "ADDRESS", &address_handler },
   { "CLASSES", &classes_handler },
   { "CONNECT", &connect_handler },
+  { "DISCONNECT", &disconnect_handler },
   { "DESERIALIZE", &deserialize_handler },
   { "DESTROY", &destroy_handler },
   { "DISABLE", &disable_handler },
@@ -585,6 +626,7 @@ static void parseLine(struct parser_state *state)
     entry ++;
   }
   if (entry->handler) {
+    m_message("Exec: %s", entry->command);
     entry->handler(state);
   } else {
     error(state, "unknown command %s", command);
@@ -593,7 +635,8 @@ static void parseLine(struct parser_state *state)
 
 /* ------------------------------------------------------------------------- */
 
-static void parserLoop(struct parser_state *state, FILE *in)
+static void
+parserLoop(struct parser_state *state, FILE *in)
 {
   while(! state->quit_flag) {
     fprintf(state->out, "%% ");
@@ -652,17 +695,19 @@ static void * client_thread(void *arg)
 
 /* ------------------------------------------------------------------------- */
 
-static void *server_main_thread(void *arg)
+static void *
+server_main_thread(void *arg)
 {
   int server_socket;
   struct sockaddr_in server_addr;
   static const int one = 1;
 
-  long server_port = (long) arg;
+  short server_port = *(short*) arg;
+  free(arg);
 
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (server_socket < 0) {
-    fail("could not open server socket: %s", strerror(errno));
+    m_critical("could not open server socket: %s", strerror(errno));
   }
 
   setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
@@ -675,11 +720,11 @@ static void *server_main_thread(void *arg)
            (struct sockaddr *) &server_addr,
            sizeof(server_addr)) < 0)
   {
-    fail("could not bind: %s", strerror(errno));
+    m_critical("could not bind: %s", strerror(errno));
   }
 
   if (listen(server_socket, MAX_CLIENTS) < 0) {
-    fail("could not listen: %s", strerror(errno));
+    m_critical("could not listen: %s", strerror(errno));
   }
 
   for (;;) {
@@ -692,7 +737,7 @@ static void *server_main_thread(void *arg)
                            (struct sockaddr *) &client_addr,
                            &client_addr_size);
     if (client_socket < 0) {
-      fail("client connection failed: %s", strerror(errno));
+      m_critical("client connection failed: %s", strerror(errno));
     }
 
     pthread_create(&client_pid,
@@ -700,6 +745,7 @@ static void *server_main_thread(void *arg)
                    &client_thread,
                    (void *) (long) client_socket);
   }
+  return NULL;
 }
 
 /* ========================================================================= */
@@ -752,9 +798,11 @@ void parseInteractively(void)
 /* ------------------------------------------------------------------------- */
 
 void
-spawnServer(unsigned int port)
+spawnServer(short port)
 {
   pthread_t pid;
+  short *s_ptr = malloc(sizeof port);
+  *s_ptr = port;
   
-  pthread_create(&pid, NULL, &server_main_thread, (void *) (long) port);
+  pthread_create(&pid, NULL, &server_main_thread, s_ptr);
 }

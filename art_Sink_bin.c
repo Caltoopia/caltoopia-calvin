@@ -43,6 +43,7 @@
 #include "actors-rts.h"
 #include <stdio.h>
 #include <errno.h>
+#include "logging.h"
 
 typedef struct {
   AbstractActorInstance base;

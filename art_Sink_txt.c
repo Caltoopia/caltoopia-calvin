@@ -40,9 +40,10 @@
  * by xlim2c version 0.6 (June 3, 2009)
  */
 
-#include "actors-rts.h"
 #include <stdio.h>
 #include <errno.h>
+#include "logging.h"
+#include "actors-rts.h"
 
 typedef struct {
   AbstractActorInstance base;
@@ -71,6 +72,7 @@ ART_ACTION_SCHEDULER(art_Sink_txt_action_scheduler)
       numTokens--;
       ART_ACTION_ENTER(action1, 0);
       int32_t token=pinRead_int32_t(ART_INPUT(0));
+      m_message("token: %d", token);
       fprintf(thisActor->file, "%d\n", token);
 	  fflush(thisActor->file);
       ART_ACTION_EXIT(action1, 0);
