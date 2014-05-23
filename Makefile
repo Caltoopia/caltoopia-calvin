@@ -36,7 +36,7 @@ OBJECTS = $(SOURCES:.c=.o)
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJECTS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJECTS) : %.o : %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
