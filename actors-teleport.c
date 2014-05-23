@@ -117,16 +117,6 @@ typedef struct {
   struct TokenMonitor tokenMon;
 } ActorInstance_art_SocketSender;
 
-void
-actor_instance_art_socket_sender_kill(AbstractActorInstance *instance)
-{
-  ActorInstance_art_SocketSender *self =
-    (ActorInstance_art_SocketSender *)instance;
-  self->tokenMon.die = 1;
-  pthread_cond_signal(&self->tokenMon.available);
-}
-
-
 /**
  * An instance of this struct is created for each sender/receiver
  * class
@@ -170,9 +160,18 @@ static void initTokenMonitor(struct TokenMonitor *mon, int tokenSize)
 
 static void destroyTokenMonitor(struct TokenMonitor *mon)
 {
-  pthread_mutex_destroy(&mon->lock);
-  pthread_cond_destroy(&mon->available);
+  pthread_mutex_lock(&mon->lock);
+
+  mon->die = 1;
+  pthread_cond_broadcast(&mon->available);
+  pthread_cond_broadcast(&mon->empty);
+
+  pthread_mutex_unlock(&mon->lock);
+
   pthread_cond_destroy(&mon->empty);
+  pthread_cond_destroy(&mon->available);
+
+  pthread_mutex_destroy(&mon->lock);
 
   free(mon->tokenBuffer);
   if(mon->serializeBuffer!=NULL && mon->serializeBufferSize>0) {
@@ -227,8 +226,16 @@ static void *receiver_thread(void *arg)
         while (instance->tokenMon.full) {
           pthread_cond_wait(&instance->tokenMon.empty,
                             &instance->tokenMon.lock);
+          if (instance->tokenMon.die) {
+            m_message("Exiting token monitor");
+            break;
+          }
         }
         pthread_mutex_unlock(&instance->tokenMon.lock);
+        if (instance->tokenMon.die) {
+          m_message("Token monitor exiting");
+          return NULL;
+        }
       }
 
       /* Disable locked busy execution. Matched above.
@@ -425,9 +432,12 @@ static void receiver_destructor(AbstractActorInstance *pBase)
   ActorInstance_art_SocketReceiver *instance
   = (ActorInstance_art_SocketReceiver *) pBase;
 
+  m_message("Destroying %s", pBase->instanceName);
   if (instance->server_socket > 0) {
+    shutdown(instance->server_socket, SHUT_RDWR);
     close(instance->server_socket);
     if (instance->client_socket > 0) {
+      shutdown(instance->server_socket, SHUT_RDWR);
       close(instance->client_socket);
     }
   }
@@ -496,10 +506,14 @@ sender_thread(void *arg)
       while (! instance->tokenMon.full) {
         pthread_cond_wait(&instance->tokenMon.available,
                           &instance->tokenMon.lock);
+        if (instance->tokenMon.die) {
+          m_message("Exiting token monitor for %s", ((AbstractActorInstance *)instance)->instanceName);
+          break;
+        }
       }
       pthread_mutex_unlock(&instance->tokenMon.lock);
       if (instance->tokenMon.die) {
-        m_warning("TokenMonitor exiting\n");
+        m_message("Token monitor exited");
         return NULL;
       }
     }
@@ -658,7 +672,9 @@ static void sender_destructor(AbstractActorInstance *pBase)
   ActorInstance_art_SocketSender *instance
   = (ActorInstance_art_SocketSender *) pBase;
 
+  m_message("Destroying %s", pBase->instanceName);
   if (instance->socket > 0) {
+    shutdown(instance->socket, SHUT_RDWR);
     close(instance->socket);
   }
 

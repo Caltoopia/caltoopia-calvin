@@ -123,6 +123,18 @@ static inline void dllist_remove(dllist_head_t *list, dllist_element_t *elem) {
     /* FIXME: we never check that the element actually belongs
      * to _this_ list. */
 
+    {
+      /* Ensure the element is a member of the list */
+      dllist_element_t *idx;
+      idx = ((dllist_element_t *)list)->suc;
+      while (idx != elem && idx != (dllist_element_t*)list) {
+        idx = idx->suc;
+      }
+      if (idx != elem) {
+        assert(0);
+      }
+    }
+
     elem->pre->suc = elem->suc;
     elem->suc->pre = elem->pre;
     elem->pre = elem->suc = NULL;
@@ -148,7 +160,7 @@ dllist_next(dllist_head_t *list, dllist_element_t *elem)
 {
   dllist_element_t *next;
 
-  //pthread_mutex_lock(&list->mutex);
+  pthread_mutex_lock(&list->mutex);
   {
     assert(elem != NULL);
 
@@ -157,7 +169,7 @@ dllist_next(dllist_head_t *list, dllist_element_t *elem)
       next = NULL;
     }
   }
-  //pthread_mutex_unlock(&list->mutex);
+  pthread_mutex_unlock(&list->mutex);
 
   return next;
 }
@@ -169,16 +181,16 @@ static inline dllist_element_t *
 dllist_next_locked(dllist_head_t *list, dllist_element_t *elem)
 {
   dllist_element_t *next;
-  
+
   {
     assert(elem != NULL);
-    
+
     next = elem->suc;
     if (next == &list->head_element) {
       next = NULL;
     }
   }
-  
+
   return next;
 }
 

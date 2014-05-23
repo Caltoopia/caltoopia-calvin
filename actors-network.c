@@ -324,6 +324,7 @@ static void * workerThreadMain(void *unused_arg)
         elem = dllist_next(&enabled_instances, elem);
       }
       UNLOCK_INSTANCES();
+      usleep(10000);
     }
 
 #ifdef CALVIN_BLOCK_ON_IDLE
@@ -568,12 +569,10 @@ dropRemoteConnection(const char *src_actor,
 
   AbstractActorInstance *sender = lookupActor(src->sender_name);
 
-  m_message("Dropping sender %s from %s", src->sender_name, src->instanceName);
+  m_message("Dropping sender %s from instance %s", src->sender_name, src->instanceName);
   /* TODO: stop thread? */
   if (sender != NULL) {
-    extern void actor_instance_art_socket_sender_kill(AbstractActorInstance *);
     InputPort *input = lookupInput(sender, "in", NULL, NULL);
-    actor_instance_art_socket_sender_kill(sender);
     disconnectInput(input, output);
     disableActorInstance(src->sender_name);
     destroyActorInstance(src->sender_name);

@@ -10,12 +10,14 @@
 #define YELLOW  "\033[33;1m"
 
 #define GREEN   "\033[32m"
-#define BLUE    "\033[35m"
+#define BLUE    "\033[34m"
 
 #define LOG(COL, ...) do { \
-  time_t t1; struct tm t;\
-  time(&t1); localtime_r(&t1, &t); \
-  printf("%02d:%02d.%02d (%15.15s:%4d) > ", t.tm_hour, t.tm_min, t.tm_sec, \
+  time_t unlikely_variable_name_t1; struct tm unlikely_variable_name_t;\
+  time(&unlikely_variable_name_t1); \
+  localtime_r(&unlikely_variable_name_t1, &unlikely_variable_name_t); \
+  printf("%02d:%02d.%02d (%15.15s:%4d) > ", unlikely_variable_name_t.tm_hour, \
+      unlikely_variable_name_t.tm_min, unlikely_variable_name_t.tm_sec, \
       __FUNCTION__, __LINE__); \
   printf(COL __VA_ARGS__); \
   puts(RESET);\

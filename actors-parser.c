@@ -291,7 +291,7 @@ disconnect_handler(struct parser_state *state)
 
   switch (parse_port_ref(state, &dst_actor, &dst_port)) {
     case PORT_REF_LOCAL:
-      m_message("Disonnecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
+      m_message("Disconnecting: %s:%s & %s:%s", src_actor, src_port, dst_actor, dst_port);
       dropLocalConnection(src_actor, src_port, dst_actor, dst_port);
       ok(state, "dropping local connection %s.%s --> %s.%s",
          src_actor, src_port,

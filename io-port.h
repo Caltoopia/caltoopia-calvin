@@ -72,7 +72,6 @@ void input_port_array_free(InputPort *arr);
 
 void input_port_set_producer(InputPort *self, OutputPort *producer);
 OutputPort *input_port_producer(InputPort *self);
-OutputPort *input_port_as_consumer(InputPort *self);
 void *output_port_buffer_start(OutputPort *self);
 void output_port_setup_buffer(OutputPort *self, unsigned int capacity, unsigned int token_size);
 void output_port_set_buffer_start(OutputPort *self, void *buffer_start);
@@ -108,7 +107,6 @@ void output_port_disconnect_consumers(OutputPort *self);
 unsigned int output_port_max_available(OutputPort *self);
 
 InputPort *output_port_first_consumer(OutputPort *self);
-InputPort *input_port_next_consumer(InputPort *self);
 
 void output_port_input_port_connect(OutputPort *, InputPort *);
 void output_port_input_port_disconnect(OutputPort *, InputPort *);

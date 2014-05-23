@@ -68,7 +68,7 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
     coder->encode(coder, state, "next_firing", &this->next_firing, "i");
     coder->encode(coder, state, "firing_interval", &this->firing_interval, "i");
     
-};
+}
 
 static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
@@ -79,7 +79,7 @@ static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
     coder->decode(coder, state, "next_firing", (void *)&this->next_firing, "i");
     coder->decode(coder, state, "firing_interval", (void *)&this->firing_interval, "i");
     
-};
+}
 
 ActorClass klass = INIT_ActorClass(
                                    "timed_counter",

@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <pthread.h>
 #include "logging.h"
 #include "io-port.h"
+#include "slist.h"
 
 /*
    * Circular buffer (used by FIFO operations)
@@ -14,21 +16,17 @@
     unsigned available;               // number of available tokens
   };
 
- 
 /*
  * InputPort
  * Extends LocalInputPort, computes available tokens in pre-fire step,
  * updates tokensConsumed in post-fire step
  */
 struct InputPort {
-  dllist_element_t asConsumer;        // member of producer's 'consumers' list
+  slist_node asConsumer;
 
   OutputPort *producer;
 
   struct circ_buffer *localInputPort;
-  unsigned tokensConsumed;          // number of tokens consumed
-  unsigned drainedAt;               // point at which all tokensConsumed
-  unsigned capacity;                // minimum capacity of buffer (in tokens)
 
   tokenFn functions;                // functions to handle structured tokens
 };
@@ -43,19 +41,30 @@ struct OutputPort {
   unsigned capacity;                   // capacity of buffer (in tokens)
   unsigned tokensProduced;             // number of tokens produced
   unsigned fullAt;                     // tokensProduced when FIFO is full
+  unsigned tokensConsumed;          // number of tokens consumed
+  unsigned drainedAt;               // point at which all tokensConsumed
 
   tokenFn functions;                   // functions to handle structured tokens
 
-  dllist_head_t consumers;
+  slist consumers;
 };
 
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+#define LOCK do {\
+  pthread_mutex_lock(&lock); \
+} while (0)
+
+#define UNLOCK do { \
+  pthread_mutex_unlock(&lock); \
+} while (0)
 
 void
 input_port_update_available(InputPort *self)
 {
   unsigned int available;
 
-  available = self->producer->tokensProduced - self->tokensConsumed;
+  available = self->producer->tokensProduced - self->producer->tokensConsumed;
 
   self->localInputPort->available = available;
 }
@@ -63,13 +72,17 @@ input_port_update_available(InputPort *self)
 void
 input_port_update_drained_at(InputPort *self)
 {
-  self->drainedAt = self->tokensConsumed + self->localInputPort->available;
+  self->producer->drainedAt = self->producer->tokensConsumed + self->localInputPort->available;
 }
 
 int
 input_port_has_producer(InputPort *self)
 {
-  return self->producer != NULL;
+  void *producer;
+  LOCK;
+  producer = self->producer;
+  UNLOCK;
+  return producer != NULL;
 }
 
 int
@@ -78,11 +91,16 @@ input_port_update_counter(InputPort *self)
   unsigned int counter;
   int fired = 0;
 
-  counter = self->drainedAt - self->localInputPort->available;
-  if (counter != self->tokensConsumed) {
-    self->tokensConsumed = counter;
-    fired = 1;
+  LOCK;
+  if (self != NULL && self->localInputPort != NULL) {
+    counter = self->producer->drainedAt - self->localInputPort->available;
+    if (counter != self->producer->tokensConsumed) {
+      self->producer->tokensConsumed = counter;
+      fired = 1;
+    }
   }
+  UNLOCK;
+
   return fired;
 }
 
@@ -91,13 +109,14 @@ output_port_update_tokens_produced(OutputPort *self)
 {
   unsigned int counter;
   int fired = 0;
-
+  LOCK;
   counter = self->fullAt - self->localOutputPort.spaceLeft;
 
   if (counter != self->tokensProduced) {
     self->tokensProduced = counter;
     fired = 1;
   }
+  UNLOCK;
   return fired;
 }
 
@@ -106,18 +125,25 @@ output_port_update_full_at(OutputPort *self)
 {
   unsigned int max_available;
   unsigned int space_left;
-
+  LOCK;
   max_available = output_port_max_available(self);
   space_left = self->capacity - max_available;
   self->localOutputPort.spaceLeft = space_left;
   // fullAt: tokensProduced counter when FIFO is full
   self->fullAt = self->tokensProduced + space_left;
+  UNLOCK;
 }
 
 unsigned int
 input_port_available(const InputPort *self)
 {
-  return self->localInputPort->available;
+  unsigned int available = 0;
+  LOCK;
+  if (self != NULL && self->localInputPort != NULL) {
+    available = self->localInputPort->available;
+  }
+  UNLOCK;
+  return available;
 }
 
 unsigned int
@@ -134,7 +160,7 @@ input_port_new(void)
 
 
 struct OutputPort *
-output_port_new(void)
+output_port_new()
 {
   return output_port_array_new(1);
 }
@@ -178,7 +204,9 @@ output_port_array_get(OutputPort *arr, int index)
 void
 input_port_set_producer(InputPort *self, OutputPort *producer)
 {
+  LOCK;
   self->producer = producer;
+  UNLOCK;
 }
 
 void *
@@ -261,29 +289,27 @@ output_port_capacity(OutputPort *self)
 }
 
 void
-input_port_set_capacity(InputPort *self, int capacity)
-{
-  self->capacity = capacity;
-}
-
-void
 input_port_set_functions(InputPort *self, tokenFn *functions)
 {
+  LOCK;
   if (functions != NULL) {
     memcpy(&self->functions, functions, sizeof self->functions);
   } else {
     memset(&self->functions, 0, sizeof self->functions);
   }
+  UNLOCK;
 }
 
 void
 output_port_set_functions(OutputPort *self, tokenFn *functions)
 {
+  LOCK;
   if (functions != NULL) {
     memcpy(&self->functions, functions, sizeof self->functions);
   } else {
     memset(&self->functions, 0, sizeof self->functions);
   }
+  UNLOCK;
 }
 #if 0
 void
@@ -325,75 +351,63 @@ output_port_set_tokens_produced(OutputPort *self, int tokens_produced)
 int
 input_port_tokens_consumed(InputPort *self)
 {
-  return self->tokensConsumed;
+  return self->producer->tokensConsumed;
 }
 
 void
 input_port_set_tokens_consumed(InputPort *self, int tokens_consumed)
 {
-  self->tokensConsumed = tokens_consumed;
+  self->producer->tokensConsumed = tokens_consumed;
 }
 
 void
 input_port_init_consumer(InputPort *self)
 {
-  dllist_init_element(&self->asConsumer);
+  slist_init_node(&self->asConsumer);
 }
 
 void
 output_port_add_consumer(OutputPort *self, InputPort *input)
 {
-  dllist_append(&self->consumers, &input->asConsumer);
+  slist_append(&self->consumers, &input->asConsumer);
 }
 
 void
 output_port_init_consumer_list(OutputPort *self)
 {
-  dllist_create(&self->consumers);
+ slist_create(&self->consumers);
 }
 
 void
 output_port_remove_consumer(OutputPort *self, InputPort *input)
 {
-  dllist_remove(&self->consumers, &input->asConsumer);
+  slist_remove(&self->consumers, &input->asConsumer);
 }
 
 void
 output_port_disconnect_consumers(OutputPort *self)
 {
-  dllist_element_t *elem = dllist_first(&self->consumers);
+  slist_node *elem = slist_first(&self->consumers);
 
-  while (elem) {
+  while (elem != NULL) {
     input_port_set_producer((InputPort *)elem, NULL);
     output_port_input_port_disconnect(self, (InputPort *)elem);
-    elem = dllist_next(&self->consumers, elem);
+    elem = slist_next(&self->consumers, elem);
   }
 }
 
 InputPort *
 output_port_first_consumer(OutputPort *self)
 {
-  dllist_element_t *elem = dllist_first(&self->consumers);
+  slist_node *elem = slist_first(&self->consumers);
   return (InputPort*)elem;
-}
-
-InputPort *
-input_port_next_consumer(InputPort *self)
-{
-  return NULL;
-}
-
-OutputPort *
-input_port_as_consumer(InputPort *self)
-{
-  return (OutputPort *)&self->asConsumer;
 }
 
 unsigned int
 output_port_max_available(OutputPort *self)
 {
   unsigned int max_available = 0;
-  dllist_element_t *elem = dllist_first(&self->consumers);
+  slist_node *elem = slist_first(&self->consumers);
 
   while (elem != NULL) {
     unsigned int available =
@@ -402,7 +416,7 @@ output_port_max_available(OutputPort *self)
     if (available > max_available) {
       max_available = available;
     }
-    elem = dllist_next(&self->consumers, elem);
+    elem = slist_next(&self->consumers, elem);
   }
   return max_available;
 }
@@ -414,8 +428,7 @@ output_port_write(OutputPort *self, unsigned int token_size, const void *token)
 
   self->localOutputPort.writePtr = ((char *)self->localOutputPort.writePtr) + token_size;
 
-
-  if (self->localOutputPort.writePtr == self->localOutputPort.bufferEnd) {
+  if (self->localOutputPort.writePtr >= self->localOutputPort.bufferEnd) {
     self->localOutputPort.writePtr = self->localOutputPort.bufferStart;
   }
   self->localOutputPort.spaceLeft--;
@@ -429,12 +442,9 @@ input_port_read(InputPort *self, unsigned int token_size, void *token)
   assert(self->producer != NULL);
   memcpy(token, self->localInputPort->readPtr, token_size);
 
-  assert(self->localInputPort->readPtr !=
-      ((char *)self->localInputPort->readPtr) + token_size);
   self->localInputPort->readPtr = ((char*)self->localInputPort->readPtr) + token_size;
 
-
-  if (self->localInputPort->readPtr == self->localInputPort->bufferEnd) {
+  if (self->localInputPort->readPtr >= self->localInputPort->bufferEnd) {
     self->localInputPort->readPtr = self->localInputPort->bufferStart;
   }
   self->localInputPort->available--;
@@ -463,8 +473,6 @@ output_port_input_port_connect(OutputPort *producer, InputPort *consumer)
   input_port_set_producer(consumer, producer);
 
   consumer->localInputPort = &producer->localOutputPort;
-  producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
-  consumer->tokensConsumed = producer->tokensProduced;
   input_port_set_functions(consumer,
       output_port_functions(producer));
   input_port_init_consumer(consumer);
@@ -477,8 +485,9 @@ output_port_input_port_disconnect(OutputPort *producer, InputPort *consumer)
   m_message("disconnectint ports");
   input_port_set_producer(consumer, NULL);
 
+  LOCK;
   consumer->localInputPort = NULL;
-  // producer->localOutputPort.readPtr = producer->localOutputPort.bufferStart;
+  UNLOCK;
   input_port_set_functions(consumer, NULL);
   output_port_remove_consumer(producer, consumer);
 }
