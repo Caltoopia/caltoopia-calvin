@@ -153,7 +153,7 @@ nActions, actionDescr) { \
     dllist_element_t listEntry;           // to keep instance in list
 
     const ActorClass *actorClass;
-    const char       *instanceName;
+    char       *instanceName;
 
     int numInputPorts;
     InputPort *inputPort;
@@ -164,6 +164,7 @@ nActions, actionDescr) { \
     const int* (*action_scheduler)(AbstractActorInstance*);
     int enabled;
     char *sender_name;
+    char *receiver_name;
   };
 
 // #define ART_INPUT(index) input_port_local_port(input_port_array_get(thisActor->base.inputPort, index))

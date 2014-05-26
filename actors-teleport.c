@@ -81,6 +81,7 @@ struct TokenMonitor {
   size_t serializeBufferSize;
   char *serializeBuffer;
   int die;
+  pthread_t pid;
 };
 
 /**
@@ -107,7 +108,7 @@ typedef struct {
   pthread_t pid;
 
   /* Info on how to find the peer (SocketReceiver) */
-  const char *remoteHost;
+  char *remoteHost;
   int remotePort;
 
   int socket; /* socket to peer */
@@ -167,6 +168,9 @@ static void destroyTokenMonitor(struct TokenMonitor *mon)
   pthread_cond_broadcast(&mon->empty);
 
   pthread_mutex_unlock(&mon->lock);
+  m_message("Waiting for thread");
+  pthread_join(mon->pid, NULL);
+  m_message("Thread exited");
 
   pthread_cond_destroy(&mon->empty);
   pthread_cond_destroy(&mon->available);
@@ -182,22 +186,191 @@ static void destroyTokenMonitor(struct TokenMonitor *mon)
 
 /* ------------------------------------------------------------------------- */
 
+static int
+token_monitor_wait_until_available(struct TokenMonitor *self, const char *instance_name)
+{
+  int keep_going = 1;
+  pthread_mutex_lock(&self->lock);
+  while (self->full) {
+    pthread_cond_wait(&self->empty, &self->lock);
+    if (self->die) {
+      m_message("Noticed death of token monitor for %s", instance_name);
+      keep_going = 0;
+      break;
+    }
+  }
+  pthread_mutex_unlock(&self->lock);
+  return keep_going;
+}
+
+static int
+receiver_read_simple_data(ActorInstance_art_SocketReceiver *instance)
+{
+  const char *instance_name = ((AbstractActorInstance *)instance)->instanceName;
+  int status = 1;
+  int bytes_read;
+  int tokenSize
+    = instance->base.actorClass->outputPortDescriptions[0].tokenSize;
+
+  /**************************************************
+   * Read simple tokens that don't need serialization
+   **************************************************/
+  do {
+    m_message("Receiver %s reading", instance_name);
+    bytes_read = read(instance->client_socket,
+        instance->tokenMon.tokenBuffer + instance->bytesRead,
+        tokenSize - instance->bytesRead);
+    m_message("Receiver %s read %d bytes", instance_name, bytes_read);
+
+    if (instance->tokenMon.die) {
+      m_message("Receiver %s noticed death of token monitor", instance_name);
+      status = -1;
+      goto out;
+    }
+
+    if (bytes_read > 0) {
+      instance->bytesRead += bytes_read;
+      assert(instance->bytesRead <= tokenSize);
+    } else {
+      /* on general read failures, assume client disconnected and wait for
+       * another one */
+      instance->bytesRead = 0;
+      m_warning("read() failed: %s", strerror(errno));
+      status = 0;
+      goto out;
+    }
+  } while (instance->bytesRead != tokenSize);
+
+  if (instance->tokenMon.die) {
+    m_warning("receiver thread %s exiting", instance_name);
+    status = -1;
+    goto out;
+  }
+
+  /* if we failed reading, break out of this loop to and wait for
+     another client */
+  if (instance->bytesRead != tokenSize) {
+    status = 0;
+  }
+out:
+  return status;
+}
+
+static int
+receiver_read_serialized_data(ActorInstance_art_SocketReceiver *instance)
+{
+  /************************************************
+   * Read complex tokens that do need serialization
+   ************************************************/
+  int status;
+  int32_t sz = 0;
+  int total_bytes_read = 0;
+  int bytes_read;
+  tokenFn* functions
+    = instance->base.actorClass->outputPortDescriptions[0].functions;
+
+  const char *instance_name = ((AbstractActorInstance *)instance)->instanceName;
+
+  //Read serialization token size
+  do {
+    m_message("Receiver %s reading", instance_name);
+    bytes_read = read(instance->client_socket, &sz+total_bytes_read,
+        sizeof(int32_t)-total_bytes_read);
+    m_message("Receiver %s read %d bytes", instance_name, bytes_read);
+    if (instance->tokenMon.die) {
+      m_message("Receiver %s noticed death of token monitor", instance_name);
+      status = -1;
+      goto out;
+    }
+
+    if(bytes_read >= 0) {
+      total_bytes_read += bytes_read;
+    } else {
+      total_bytes_read = 0;
+      m_warning("read() failed: %s", strerror(errno));
+      status = 0;
+      goto out;
+    }
+  } while (total_bytes_read != sizeof(int32_t));
+
+  //Read serialized token data
+
+  if (total_bytes_read > 0 && sz > 0) {
+    total_bytes_read = 0;
+    if(instance->tokenMon.serializeBufferSize < sz) {
+      //Need more memory to handle the serialization
+      instance->tokenMon.serializeBuffer =
+        realloc(instance->tokenMon.serializeBuffer,sz);
+      instance->tokenMon.serializeBufferSize = sz;
+    }
+
+    do {
+      m_message("Receiver %s reading", instance_name);
+      bytes_read = read(instance->client_socket,
+          instance->tokenMon.serializeBuffer + total_bytes_read,
+          sz - total_bytes_read);
+      m_message("Receiver %s read %d bytes", instance_name, bytes_read);
+
+      if (instance->tokenMon.die) {
+        m_message("Receiver %s noticed death of token monitor", instance_name);
+        status = -1;
+        goto out;
+      }
+
+      if (bytes_read > 0) {
+        total_bytes_read += bytes_read;
+      } else {
+        m_warning("read() failed: %s", strerror(errno));
+        status = 0;
+        goto out;
+      }
+    } while (total_bytes_read != sz);
+
+    if (total_bytes_read != sz) {
+      /* 
+       * If we got here it is a failure, since
+       * we have a serialization size but can't get all
+       * the data. Anyway break out of here and wait
+       * for a new sender to connect.
+       */
+      status = 0;
+      goto out;
+    } else {
+      //Deserialize the incoming token (will allocate it on the heap) and write
+      //the reference to the tokenBuffer Also assert that the deserialization
+      //used all the data
+      assert((functions->deserialize((void**)instance->tokenMon.tokenBuffer,instance->tokenMon.serializeBuffer) -
+            instance->tokenMon.serializeBuffer) == sz);
+    }
+  } else {
+    /* if we failed reading, break out of this loop to and wait for
+       another client */
+    status = 0;
+  }
+
+out:
+
+  return status;
+}
+
 static void *receiver_thread(void *arg)
 {
   ActorInstance_art_SocketReceiver *instance
-  = (ActorInstance_art_SocketReceiver *) arg;
-  int tokenSize
-  = instance->base.actorClass->outputPortDescriptions[0].tokenSize;
-  tokenFn* functions
-  = instance->base.actorClass->outputPortDescriptions[0].functions;
-  int needSerialization = functions != NULL;
-  int status;
+    = (ActorInstance_art_SocketReceiver *) arg;
+  int is_serialized = 0;
 
+  int status;
+  const char *instance_name = ((AbstractActorInstance *)instance)->instanceName;
+
+  if (instance->base.actorClass->outputPortDescriptions[0].functions != NULL) {
+    is_serialized = 1;
+  }
   while (1) {  /* one iteration per client */
     struct sockaddr client_addr;
     static socklen_t client_addr_size = sizeof(client_addr);
 
     status = accept(instance->server_socket, &client_addr, &client_addr_size);
+    m_message("Receiver %s accepting", instance_name);
     if (status >= 0) {
       instance->client_socket = status;
     } else {
@@ -219,108 +392,30 @@ static void *receiver_thread(void *arg)
        * otherwise we might be waiting forever. Matched below.
        */
       lockedBusyNetworkToggle(instance->hashId);
-      
-      /* Block until the monitor has space for a token */
-      {
-        pthread_mutex_lock(&instance->tokenMon.lock);
-        while (instance->tokenMon.full) {
-          pthread_cond_wait(&instance->tokenMon.empty,
-                            &instance->tokenMon.lock);
-          if (instance->tokenMon.die) {
-            m_message("Exiting token monitor");
-            break;
-          }
-        }
-        pthread_mutex_unlock(&instance->tokenMon.lock);
-        if (instance->tokenMon.die) {
-          m_message("Token monitor exiting");
-          return NULL;
-        }
-      }
 
+      /* Block until the monitor has space for a token */
+      if (!token_monitor_wait_until_available(&instance->tokenMon, instance_name))
+      {
+        m_message("Returning from receiver thread %s", instance_name);
+        return NULL;
+      }
       /* Disable locked busy execution. Matched above.
        */
       lockedBusyNetworkToggle(instance->hashId);
 
-      if(needSerialization) {
-        /************************************************
-         * Read complex tokens that do need serialization
-         ************************************************/
-        int32_t sz=0;
-        int bytesRead = 0;
-        //Read serialization token size
-        do {
-          status = read(instance->client_socket, &sz+bytesRead, sizeof(int32_t)-bytesRead);
-          if(status >= 0) {
-            bytesRead += status;
-          } else {
-            bytesRead = 0;
-            m_warning("read() failed: %s", strerror(errno));
-          }
-        } while (bytesRead!=sizeof(int32_t));
-        
-        //Read serialized token data
-        if(bytesRead>0 && sz>0) {
-          bytesRead = 0;
-          if(instance->tokenMon.serializeBufferSize < sz) {
-            //Need more memory to handle the serialization
-            instance->tokenMon.serializeBuffer = realloc(instance->tokenMon.serializeBuffer,sz);
-            instance->tokenMon.serializeBufferSize = sz;
-          }
-          do {
-            status = read(instance->client_socket, instance->tokenMon.serializeBuffer + bytesRead, sz - bytesRead);
-            if(status >= 0) {
-              bytesRead += status;
-            } else {
-              bytesRead = 0;
-              m_warning("read() failed: %s", strerror(errno));
-            }
-          } while (bytesRead!=sz);
-          if(bytesRead!=sz) {
-            /* 
-             * If we got here it is a failure, since
-             * we have a serialization size but can't get all
-             * the data. Anyway break out of here and wait
-             * for a new sender to connect.
-             */
-            break;
-          } else {
-            //Deserialize the incoming token (will allocate it on the heap) and write the reference to the tokenBuffer
-            //Also assert that the deserialization used all the data
-            assert((functions->deserialize((void**)instance->tokenMon.tokenBuffer,instance->tokenMon.serializeBuffer) -
-                   instance->tokenMon.serializeBuffer) == sz);
-          }
-        } else {
-          /* if we failed reading, break out of this loop to and wait for
-           another client */
-          break;
-        }
+      if (is_serialized) {
+        status = receiver_read_serialized_data(instance);
       } else {
-        /**************************************************
-         * Read simple tokens that don't need serialization
-         **************************************************/
-        do {
-          status = read(instance->client_socket,
-                        instance->tokenMon.tokenBuffer + instance->bytesRead,
-                        tokenSize - instance->bytesRead);
+        status = receiver_read_simple_data(instance);
+      }
 
-          if (status >= 0) {
-            instance->bytesRead += status;
-            assert(instance->bytesRead <= tokenSize);
-          } else {
-            /* on general read failures, assume client disconnected and wait for
-             * another one */
-            instance->bytesRead = 0;
-            m_warning("read() failed: %s", strerror(errno));
-            break;
-          }
-        } while (instance->bytesRead != tokenSize);
-
-        /* if we failed reading, break out of this loop to and wait for
-         another client */
-        if (instance->bytesRead != tokenSize) {
-          break;
-        }
+      if (status == -1 || status == 0) {
+          m_message("Receiver %s exiting", instance_name);
+          goto out;
+      } else if (status == 0) {
+        break;
+      } else {
+        /* Proceed */
       }
 
       instance->bytesRead = 0;
@@ -334,6 +429,8 @@ static void *receiver_thread(void *arg)
       }
     }
   }
+out:
+  return NULL;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -395,6 +492,7 @@ static void receiver_constructor(AbstractActorInstance *pBase)
                    pBase->actorClass->outputPortDescriptions[0].tokenSize);
 
   pthread_create(&instance->pid, NULL, &receiver_thread, pBase);
+  instance->tokenMon.pid = instance->pid;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -434,10 +532,8 @@ static void receiver_destructor(AbstractActorInstance *pBase)
 
   m_message("Destroying %s", pBase->instanceName);
   if (instance->server_socket > 0) {
-    shutdown(instance->server_socket, SHUT_RDWR);
     close(instance->server_socket);
     if (instance->client_socket > 0) {
-      shutdown(instance->server_socket, SHUT_RDWR);
       close(instance->client_socket);
     }
   }
@@ -466,6 +562,7 @@ sender_thread(void *arg)
     = instance->base.actorClass->inputPortDescriptions[0].functions;
   int needSerialization = functions != NULL;
   struct sockaddr_in server_addr;
+  // const char *instance_name = ((AbstractActorInstance *)instance)->instanceName;
 
   server_addr.sin_family = AF_INET;
 
@@ -507,13 +604,13 @@ sender_thread(void *arg)
         pthread_cond_wait(&instance->tokenMon.available,
                           &instance->tokenMon.lock);
         if (instance->tokenMon.die) {
-          m_message("Exiting token monitor for %s", ((AbstractActorInstance *)instance)->instanceName);
+          m_message("Noticed death of token monitor for %s", ((AbstractActorInstance *)instance)->instanceName);
           break;
         }
       }
       pthread_mutex_unlock(&instance->tokenMon.lock);
       if (instance->tokenMon.die) {
-        m_message("Token monitor exited");
+        m_message("Returning from sender thread");
         return NULL;
       }
     }
@@ -594,6 +691,7 @@ start_sender_thread(AbstractActorInstance *instance)
   ActorInstance_art_SocketSender *self = 
     (ActorInstance_art_SocketSender *)instance;
   pthread_create(&self->pid, NULL, &sender_thread, instance);
+  self->tokenMon.pid = self->pid;
 
 }
 
@@ -611,17 +709,15 @@ sender_constructor(AbstractActorInstance *pBase)
     return;
   }
 
-  /* don't touch remoteHost here: it was set in
-   setSenderRemoteAddress() below */
-  /* olaan: correction: was/will/might be set. */
   instance->hashId = getUniqueHashid();
   instance->lockedBusy = 0;
-  
+
   /* since we only have the class here, not the extended class, we need
    * to take the long way to find the port description */
   initTokenMonitor(&instance->tokenMon,
                    pBase->actorClass->inputPortDescriptions[0].tokenSize);
 
+  /* not here */
   // pthread_create(&instance->pid, NULL, &sender_thread, pBase);
 }
 
@@ -670,18 +766,17 @@ ART_ACTION_SCHEDULER(sender_action_scheduler)
 static void sender_destructor(AbstractActorInstance *pBase)
 {
   ActorInstance_art_SocketSender *instance
-  = (ActorInstance_art_SocketSender *) pBase;
+    = (ActorInstance_art_SocketSender *) pBase;
 
   m_message("Destroying %s", pBase->instanceName);
   if (instance->socket > 0) {
-    shutdown(instance->socket, SHUT_RDWR);
     close(instance->socket);
   }
 
   destroyTokenMonitor(&instance->tokenMon);
 
   if (instance->remoteHost) {
-    free((void *) instance->remoteHost);
+    free(instance->remoteHost);
   }
 
   /*
@@ -690,7 +785,7 @@ static void sender_destructor(AbstractActorInstance *pBase)
    * is instead allocated on the heap, in createSocketSender() using
    * strdup(). Hence, we need to free() it here.
    */
-  free((void *) pBase->instanceName);
+  free(pBase->instanceName);
 }
 
 /* ========================================================================= */
