@@ -63,9 +63,7 @@ void
 input_port_update_available(InputPort *self)
 {
   unsigned int available;
-
   available = self->producer->tokensProduced - self->producer->tokensConsumed;
-
   self->localInputPort->available = available;
 }
 
@@ -231,7 +229,6 @@ void
 output_port_set_write_ptr(OutputPort *self, void *write_ptr)
 {
   self->localOutputPort.writePtr = write_ptr;
-  self->localOutputPort.readPtr = self->localOutputPort.bufferStart;
 }
 
 void *
@@ -482,7 +479,7 @@ output_port_input_port_connect(OutputPort *producer, InputPort *consumer)
 void
 output_port_input_port_disconnect(OutputPort *producer, InputPort *consumer)
 {
-  m_message("disconnectint ports");
+  m_message("disconnecting ports");
   input_port_set_producer(consumer, NULL);
 
   LOCK;
