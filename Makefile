@@ -4,7 +4,7 @@ SOURCES = $(wildcard *.c)
 DISPLAY_SOURCES = $(wildcard display-*.c)
 SOURCES := $(filter-out $(DISPLAY_SOURCES), $(SOURCES))
 
-CFLAGS = -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99 -O0
+CFLAGS = -g -Wall -std=c99 -O0
 
 LDFLAGS := -rdynamic -ldl -pthread
 
@@ -15,12 +15,12 @@ ifeq ($(shell uname -m),armv6l)
   # Raspberries
   SOURCES += display-null.c
   LDFLAGS += -lm
-  CFLAGS += -ggdb -pedantic
+  CFLAGS += -ggdb -pedantic -D_GNU_SOURCE=1
 else
   # Other
   LDFLAGS += $(shell sdl-config --libs) -lm
   SOURCES += display-sdl.c
-  CFLAGS += $(shell sdl-config --cflags) -ggdb -pedantic
+  CFLAGS += $(shell sdl-config --cflags) -ggdb -pedantic -DCALVIN_DISPLAY_SUPPORT 
 endif
 endif
 
