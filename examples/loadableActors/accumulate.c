@@ -78,14 +78,14 @@ serialize(AbstractActorInstance *actor, ActorCoder *coder)
       int32_t *readPtr = (int32_t*)input_port_read_ptr(consumer);
       while(readPtr != writePtr) {
         coder->encode(coder, buffer, NULL, readPtr, "i");
+        m_info("Encoded : %d", *readPtr);
         count++;
         readPtr++;
         if (readPtr >= bufferEnd) {
           readPtr = (int32_t *)output_port_buffer_start(output);
         }
       }
-#if 0 
-      /* Just a marker for debugging purposes */
+#if 0
       {
         int j = -1;
         coder->encode(coder, buffer, NULL, &j, "i");
@@ -118,6 +118,7 @@ deserialize_buffer(OutputPort *output_port, ActorCoder *coder, CoderState *port)
     coder->decode(coder, buffer, NULL, &buffer_value, "i");
     *write_ptr = buffer_value;
     write_ptr++;
+    m_info("Decoded %i", buffer_value);
     if (write_ptr >= bufferEnd) {
       write_ptr = bufferStart;
     }
@@ -140,7 +141,7 @@ deserialize_port(AbstractActorInstance *actor, ActorCoder *coder,
   deserialize_buffer(output_port, coder, port);
 }
 
-static void
+  static void
 deserialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
   ActorInstance_accumulate *this = (ActorInstance_accumulate *)actor;
@@ -173,7 +174,7 @@ ActorClass klass = INIT_ActorClass(
     );
 
 
-//
+
 ART_ACTION(action0, ActorInstance_accumulate) {
   int32_t x;
   int32_t U__0;
@@ -181,6 +182,7 @@ ART_ACTION(action0, ActorInstance_accumulate) {
   x = pinRead_int32_t(IN0_In);
   U__0 = (x + thisActor->sum);
   thisActor->sum = U__0;
+  m_info("Accumulate: %d", U__0);
   pinWrite_int32_t(OUT0_Out, U__0);
   ART_ACTION_EXIT(action0, 0);
 }

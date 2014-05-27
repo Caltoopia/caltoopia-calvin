@@ -1,55 +1,65 @@
 #! /usr/bin/env python
 import sys
 import time
+from random import shuffle
 import calvin
 
-# expects a calvin node to be running at localhost:9000
 
-a = calvin.Node("10.0.2.15", 9000, True)
-b = calvin.Node("10.0.2.15", 9001, True)
-c = calvin.Node("10.0.2.15", 9002, True)
+hosts = [ "10.0.0.3", "10.0.0.4", "10.0.0.6", "10.0.0.7", "10.0.0.10", "10.0.0.12" ]
+#node_ports = [ 9000 + i for i in range(0,NUM_NODES-1) ]
 
-a.load("./timed_counter")
-c.load("./accumulate")
-b.load("./accumulate")
+nodes = [ calvin.Node(node, 9000, True) for node in hosts]
 
-src = a.new("timed_counter", "src")
-snk = a.new("art_Sink_txt", "snk", fileName="outdata.txt")
-acd = b.new("accumulate", "acd")
-acc = c.new("accumulate", "acc")
+# Node 0 is 'host'
+nodes[0].load("./timed_counter")
+for n in nodes :
+    n.load("./accumulate")
 
-src.Out >> acc.In
-acc.Out >> snk.In
+src = nodes[0].new("timed_counter", "src")
+snk = nodes[0].new("art_Sink_txt", "snk", fileName="outdata.txt")
+accumulators = [ n.new("accumulate", "acc-%d" % (nodes.index(n))) for n in nodes ]
+
+src.Out >> accumulators[0].In
+accumulators[0].Out >> snk.In
 
 src.enable()
 snk.enable()
-acc.enable()
+accumulators[0].enable()
 
-enabled = acc
-disabled = acd
+enabled = 0
+
+iterations = 1
+
+time.sleep(3)
+
+acc = accumulators[0]
 
 while True :
-  # Let the network produce some output ...
-  time.sleep(3)
+  print " === iteration %d : %s === " % (iterations, acc.name)
+
+  #time.sleep(1)
   # ... before fiddling with an actor ...
+
+  state = acc.serialize()
   src.disable()
-  enabled.disable()
+  acc.disable()
   snk.disable()
 
-  state = enabled.serialize()
-  src.Out.disconnectFromInput(enabled.In)
-  enabled.Out.disconnectFromInput(snk.In)
+  state = acc.serialize()
+  src.Out.disconnectFromInput(acc.In)
+  acc.Out.disconnectFromInput(snk.In)
 
-  src.Out >> disabled.In
-  disabled.Out >> snk.In
-  disabled.deserialize(state)
+  # enabled = (enabled + 1) % len(nodes)
+  shuffle(accumulators)
 
-  tmp = disabled
-  disabled = enabled
-  enabled = tmp
+  acc = accumulators[0]
+
+  acc.deserialize(state)
+  src.Out >> acc.In
+  acc.Out >> snk.In
 
   # ... and finally resume normal operation
   snk.enable()
   src.enable()
-  enabled.enable()
-  time.sleep(0.3)
+  acc.enable()
+  iterations = iterations + 1
