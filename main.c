@@ -91,6 +91,7 @@ main(int argc, char **argv)
   if (port != 0) {
     spawnServer(port);
     /* Wait for it */
+    m_message("Server running on port %d", port);
     select(0, NULL, NULL, NULL, NULL);
   } else if (interactive) {
     parseInteractively();

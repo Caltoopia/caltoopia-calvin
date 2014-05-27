@@ -158,7 +158,7 @@ static AbstractActorInstance * lookupActor(const char *actorName)
   }
 
   /* Is there any particular reason for failing here? */
-  m_warning("lookupActor: no such actor '%s'", actorName);
+  m_message("lookupActor: no such actor '%s'", actorName);
 
 out:
   UNLOCK_INSTANCES();
@@ -193,7 +193,7 @@ lookupOutput(const AbstractActorInstance *instance, const char *portName,
     }
   }
 
-  m_warning("lookupOutput: no such port '%s.%s'",
+  m_message("lookupOutput: no such port '%s.%s'",
       actorClass->name, portName);
   return NULL;
 }
@@ -226,7 +226,7 @@ lookupInput(const AbstractActorInstance *instance,
     }
   }
 
-  m_warning("lookupInput: no such port '%s.%s'",
+  m_message("lookupInput: no such port '%s.%s'",
       actorClass->name, portName);
   return NULL;
 }

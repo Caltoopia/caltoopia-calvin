@@ -235,7 +235,7 @@ receiver_read_simple_data(ActorInstance_art_SocketReceiver *instance)
       /* on general read failures, assume client disconnected and wait for
        * another one */
       instance->bytesRead = 0;
-      m_warning("read() failed: %s", strerror(errno));
+      m_message("read() failed: %s", strerror(errno));
       status = 0;
       goto out;
     }
@@ -287,7 +287,7 @@ receiver_read_serialized_data(ActorInstance_art_SocketReceiver *instance)
       total_bytes_read += bytes_read;
     } else {
       total_bytes_read = 0;
-      m_warning("read() failed: %s", strerror(errno));
+      m_message("read() failed: %s", strerror(errno));
       status = 0;
       goto out;
     }
@@ -320,7 +320,7 @@ receiver_read_serialized_data(ActorInstance_art_SocketReceiver *instance)
       if (bytes_read > 0) {
         total_bytes_read += bytes_read;
       } else {
-        m_warning("read() failed: %s", strerror(errno));
+        m_message("read() failed: %s", strerror(errno));
         status = 0;
         goto out;
       }
@@ -353,7 +353,8 @@ out:
   return status;
 }
 
-static void *receiver_thread(void *arg)
+static void *
+receiver_thread(void *arg)
 {
   ActorInstance_art_SocketReceiver *instance
     = (ActorInstance_art_SocketReceiver *) arg;
@@ -369,22 +370,20 @@ static void *receiver_thread(void *arg)
     struct sockaddr client_addr;
     static socklen_t client_addr_size = sizeof(client_addr);
 
-    status = accept(instance->server_socket, &client_addr, &client_addr_size);
+    instance->client_socket = accept(instance->server_socket, &client_addr, &client_addr_size);
     m_message("Receiver %s accepting", instance_name);
-    if (status >= 0) {
-      instance->client_socket = status;
-    } else {
+    if (instance->client_socket < 0) {
       m_warning("accept() failed: %s", strerror(errno));
-      return NULL;
+      goto out;
     }
 
     /* Don't buffer, send tokens asap */
     static const int one = 1;
     (void) setsockopt(instance->client_socket,
-		      IPPROTO_TCP,
-		      TCP_NODELAY,
-		      (char *) &one,
-		      sizeof(one));
+        IPPROTO_TCP,
+        TCP_NODELAY,
+        (char *) &one,
+        sizeof(one));
 
     while (1) {  /* one iteration per token */
 
@@ -396,8 +395,7 @@ static void *receiver_thread(void *arg)
       /* Block until the monitor has space for a token */
       if (!token_monitor_wait_until_available(&instance->tokenMon, instance_name))
       {
-        m_message("Returning from receiver thread %s", instance_name);
-        return NULL;
+        goto out;
       }
       /* Disable locked busy execution. Matched above.
        */
@@ -410,7 +408,6 @@ static void *receiver_thread(void *arg)
       }
 
       if (status == -1 || status == 0) {
-          m_message("Receiver %s exiting", instance_name);
           goto out;
       } else if (status == 0) {
         break;
@@ -421,7 +418,7 @@ static void *receiver_thread(void *arg)
       instance->bytesRead = 0;
 
       /* Update the monitor and notify actor */
-      assert(! instance->tokenMon.full);
+      assert(!instance->tokenMon.full);
       {
         pthread_mutex_lock(&instance->tokenMon.lock);
         instance->tokenMon.full = 1;
@@ -430,6 +427,8 @@ static void *receiver_thread(void *arg)
     }
   }
 out:
+  m_message("Receiver %s exiting", instance_name);
+  destroyActorInstance(instance_name);
   return NULL;
 }
 
@@ -528,7 +527,7 @@ ART_ACTION_SCHEDULER(receiver_action_scheduler)
 static void receiver_destructor(AbstractActorInstance *pBase)
 {
   ActorInstance_art_SocketReceiver *instance
-  = (ActorInstance_art_SocketReceiver *) pBase;
+    = (ActorInstance_art_SocketReceiver *) pBase;
 
   m_message("Destroying %s", pBase->instanceName);
   if (instance->server_socket > 0) {
@@ -546,7 +545,7 @@ static void receiver_destructor(AbstractActorInstance *pBase)
    * allocated on the heap, in createSocketReceiver() using strdup().
    * Hence, we need to free() it here.
    */
-  free((void *) pBase->instanceName);
+  free(pBase->instanceName);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -671,7 +670,7 @@ sender_thread(void *arg)
         }
       } while (bytesWritten != tokenSize);
     }
-    
+
     bytesWritten = 0;
 
     /* Update the monitor and notify actor */
