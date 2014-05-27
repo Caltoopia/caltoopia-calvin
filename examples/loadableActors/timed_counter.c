@@ -137,7 +137,7 @@ ART_ACTION_SCHEDULER(timed_counter_action_scheduler)
             // Update firing based on the time of this firing; alternatively,
             // the next firing could be based on the last wanted firing time.
             thisActor->next_firing = now + thisActor->firing_interval;
-            thisActor->firing_interval = (random() % 1000) + 250;
+            thisActor->firing_interval = (random() % 1000) + 750;
             result = EXIT_CODE_YIELD;
         } else {
             // Can't fire because no room in output buffer
