@@ -38,7 +38,9 @@
 #ifndef REGISTRY_INCLUSION_GUARD
 #define REGISTRY_INCLUSION_GUARD
 
+#include <stdio.h>
 #include "actors-rts.h"
+
 
 #ifdef _WIN64
 //define something for Windows (64-bit)

@@ -48,6 +48,8 @@ class Node:
 
   class Port:
     """Represents a port on an actor."""
+    listening_port = 0
+
     def __init__(self, name, node, actor):
       self.name = name
       self.node = node
@@ -55,14 +57,23 @@ class Node:
 
     def connectToInput(self, i):
       """Make a connection. Can only be called for outputs."""
-      if self.node == i.node:
+      if False and self.node == i.node:
         self.node.execute("CONNECT %s.%s %s.%s" % (self.actor.name, self.name, i.actor.name, i.name))
       else:
         listening_port = i.node.execute("LISTEN %s.%s" % (i.actor.name, i.name))
         self.node.execute("CONNECT %s.%s %s:%s" % (self.actor.name, self.name, i.node.address, listening_port))
+        self.listening_port = listening_port
 
     def __lshift__(self, o): o.connectToInput(self)
     def __rshift__(self, i): self.connectToInput(i)
+
+    def disconnectFromInput(self, i) :
+        if False and self.node == i.node :
+            self.node.execute("DISCONNECT %s.%s %s.%s" %
+                    (self.actor.name, self.name, i.actor.name, i.name))
+        else :
+            self.node.execute("DISCONNECT %s.%s %s:%s" %
+                    (self.actor.name, self.name, i.node.address, self.listening_port))
 
   # ---------------------------------------------------------------------------
 
@@ -152,6 +163,7 @@ class Node:
 
   def destroyAll(self):
     """Destroys all actors created from this Node."""
-    for actor in self.actors: actor.destroy()
+    for actor in self.actors:
+        actor.destroy()
 
   def join(self): self.execute("JOIN")

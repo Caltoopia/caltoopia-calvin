@@ -36,10 +36,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libgen.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "actors-debug.h"
@@ -50,20 +47,6 @@
 
 /* ------------------------------------------------------------------------- */
 
-extern const ActorClass ActorClass_art_Sink_bin;
-extern const ActorClass ActorClass_art_Sink_real;
-extern const ActorClass ActorClass_art_Sink_txt;
-
-extern const ActorClass ActorClass_art_Source_bin;
-extern const ActorClass ActorClass_art_Source_real;
-extern const ActorClass ActorClass_art_Source_txt;
-
-#ifdef CALVIN_DISPLAY_SUPPORT
-extern const ActorClass ActorClass_art_Display_yuv;
-#else
-#warning Not adding support for display actor
-#endif /* CALVIN_DISPLAY_SUPPORT */
-
 // ============================================================================
 
 /*
@@ -73,133 +56,6 @@ extern const ActorClass ActorClass_art_Display_yuv;
 const int exit_code_terminate[] = {-1};
 const int exit_code_yield[] = {-2};
 
-/* ------------------------------------------------------------------------- */
 
-static void usage(const char *bname)
-{
-  fail("usage: %s [-i] [-v] [script1.cs script2.cs ... scriptN.cs]\n"
-       "  Named scripts are executed in sequence. Other options:\n"
-       "  -i:   start interactive interpreter\n"
-       "  -s N: start command server at port N\n",
-       bname);
-}
 
-// ============================================================================
-
-void fail(const char *fmt, ...)
-{
-  va_list args;
-
-  va_start(args, fmt);
-  fprintf(stderr, "failed: ");
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-
-  fprintf(stderr, "\n");
-
-  exit(1);
-}
-
-/* ------------------------------------------------------------------------- */
-
-void warn(const char *fmt, ...)
-{
-  va_list args;
-
-  va_start(args, fmt);
-  fprintf(stderr, "warning: ");
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-
-  fprintf(stderr, "\n");
-}
-
-// ============================================================================
-
-/*
- * Error reporting
- */
-
-void runtimeError(AbstractActorInstance *pInst, const char *format,...) {
-  va_list ap;
-  va_start(ap,format);
-  vfprintf(stderr,format,ap);
-  fprintf(stderr,"\n");
-  va_end(ap);
-  exit(1);
-}
-
-// ============================================================================
-
-int rangeError(int x, int y, const char *filename, int line) {
-  runtimeError(NULL, "Range check error: %d %d %s(%d)\n",
-               x, y, filename, line);
-  return 0;
-}
-
-// ============================================================================
-
-int
-main(int argc, char **argv)
-{
-  int i;
-  int keep_other_threads = 0; /* Allow other pthreads to stay on exit? */
-  int port = 0;
-
-  /* find our port number if we have any */
-  for (i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "-s") == 0) {
-      if ((i+1) < argc) {
-        port = atoi(argv[i+1]);
-        break;
-      }
-    }
-  }
-
-  createDebugFile(port);
-
-  registryInit();
-  initActorNetwork();
-
-  /* Built-in system actors */
-
-  registryAddClass(&ActorClass_art_Sink_bin);
-  registryAddClass(&ActorClass_art_Sink_real);
-  registryAddClass(&ActorClass_art_Sink_txt);
-
-  registryAddClass(&ActorClass_art_Source_bin);
-  registryAddClass(&ActorClass_art_Source_real);
-  registryAddClass(&ActorClass_art_Source_txt);
-
-#ifdef CALVIN_DISPLAY_SUPPORT
-  registryAddClass(&ActorClass_art_Display_yuv);
-#endif /* CALVIN_DISPLAY_SUPPORT */
-
-  /* execute each named file in non-interactive mode */
-  for (i = 1; i < argc; i++) {
-    if (argv[i][0] == '-') {
-      if (strcmp(argv[i], "-i") == 0) {
-        parseInteractively();
-      } else if (strcmp(argv[i], "-s") == 0) {
-        i++;
-        if (i >= argc) {
-          usage(basename(argv[0]));
-        }
-        spawnServer(atoi(argv[i]));
-        keep_other_threads = 1;
-      } else {
-        usage(basename(argv[0]));
-      }
-    } else {
-      parseFile(argv[i]);
-    }
-  }
-
-  if (keep_other_threads) {
-    /* Just exit the main thread, rather than the entire process */
-    pthread_exit(NULL);
-  }
-  closeDebugFile();
-  return 0;
-}
 

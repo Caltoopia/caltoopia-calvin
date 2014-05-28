@@ -43,6 +43,7 @@
 #include "actors-rts.h"
 #include <stdio.h>
 #include <errno.h>
+#include "logging.h"
 
 typedef struct {
   AbstractActorInstance base;
@@ -54,7 +55,7 @@ static const int exitcode_block_In_1[] = {
   EXITCODE_BLOCK(1), 0, 1
 };
 
-ART_ACTION_CONTEXT(1, 0);
+ART_ACTION_CONTEXT(1, 0)
 
 ART_ACTION_SCHEDULER(art_Sink_bin_action_scheduler)
 {

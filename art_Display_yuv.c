@@ -40,11 +40,12 @@
 #include <time.h>
 #include <sys/timeb.h>
 
-#include "io_port.h"
+#include "logging.h"
+#include "io-port.h"
 #include "actors-rts.h"
 #include "display.h"
 
-ART_ACTION_CONTEXT(1, 1);
+ART_ACTION_CONTEXT(1, 1)
 
 typedef struct {
   AbstractActorInstance base;
@@ -152,7 +153,7 @@ void art_Display_yuv_destructor(AbstractActorInstance *pBase)
   int totTime;
   ftime(&tb);
   totTime = tb.time*1000 + tb.millitm - thisActor->startTime;
-  printf("%d total frames in %f seconds (%f fps)\n",
+  m_message("%d total frames in %f seconds (%f fps)",
 	 thisActor->totFrames,
 	 (double) totTime/1000, 
 	 (double) (thisActor->totFrames)*1000/totTime);

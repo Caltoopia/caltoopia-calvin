@@ -40,9 +40,10 @@
  * by xlim2c version 0.6 (June 3, 2009)
  */
 
-#include "actors-rts.h"
 #include <stdio.h>
 #include <errno.h>
+#include "logging.h"
+#include "actors-rts.h"
 
 #define BUF_SIZE 1024
 
@@ -59,7 +60,7 @@ static const int exitcode_block_Out_1[] = {
   EXITCODE_BLOCK(1), 0, 1
 };
 
-ART_ACTION_CONTEXT(0, 1);
+ART_ACTION_CONTEXT(0, 1)
 
 ART_ACTION_SCHEDULER(art_Source_bin_action_scheduler)
 {

@@ -1,9 +1,10 @@
+CC=gcc
 PROGRAM = calvin
 SOURCES = $(wildcard *.c)
 DISPLAY_SOURCES = $(wildcard display-*.c)
 SOURCES := $(filter-out $(DISPLAY_SOURCES), $(SOURCES))
 
-CFLAGS = -g -Wall -DCALVIN_DISPLAY_SUPPORT -std=c99
+CFLAGS = -g -Wall -std=c99 -O0
 
 LDFLAGS := -rdynamic -ldl -pthread
 
@@ -14,12 +15,12 @@ ifeq ($(shell uname -m),armv6l)
   # Raspberries
   SOURCES += display-null.c
   LDFLAGS += -lm
-  CFLAGS += -ggdb -pedantic
+  CFLAGS += -ggdb -pedantic -D_GNU_SOURCE=1
 else
   # Other
   LDFLAGS += $(shell sdl-config --libs) -lm
   SOURCES += display-sdl.c
-  CFLAGS += $(shell sdl-config --cflags) -ggdb -pedantic
+  CFLAGS += $(shell sdl-config --cflags) -ggdb -pedantic -DCALVIN_DISPLAY_SUPPORT 
 endif
 endif
 
@@ -35,7 +36,7 @@ OBJECTS = $(SOURCES:.c=.o)
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJECTS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJECTS) : %.o : %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -51,7 +52,7 @@ MAKEFILE_PATH = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 
 %.so : %.c
-	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -ggdb -fPIC -shared -Wl,-soname,$@ -o $@ $<
+	$(CC) -I$(CALVIN_HOME) $(CFLAGS) -fPIC -shared -Wl,-soname,$@ -o $@ $<
 
 %.bundle : %.c
 	$(CC) -I$(CALVIN_HOME) -std=c99 -Wall -g -Wno-parentheses-equality -fPIC -flat_namespace -bundle -undefined suppress -o $@ $<

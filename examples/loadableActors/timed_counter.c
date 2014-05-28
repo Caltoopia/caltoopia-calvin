@@ -68,7 +68,7 @@ static void serialize(AbstractActorInstance *actor, ActorCoder *coder)
     coder->encode(coder, state, "next_firing", &this->next_firing, "i");
     coder->encode(coder, state, "firing_interval", &this->firing_interval, "i");
     
-};
+}
 
 static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
 {
@@ -79,7 +79,7 @@ static void deserialize(AbstractActorInstance *actor, ActorCoder *coder)
     coder->decode(coder, state, "next_firing", (void *)&this->next_firing, "i");
     coder->decode(coder, state, "firing_interval", (void *)&this->firing_interval, "i");
     
-};
+}
 
 ActorClass klass = INIT_ActorClass(
                                    "timed_counter",
@@ -117,7 +117,7 @@ static void ActorInstance_timed_counter_constructor(AbstractActorInstance *pBase
     thisActor->_fsmState = ActorInstance_timed_counter__defaultState_ID;
     thisActor->counter = 0;
     thisActor->next_firing = _now_ms(); // Fire ASAP first time around
-    thisActor->firing_interval = 1000;   // milliseconds
+    thisActor->firing_interval = 1500;   // milliseconds
 }
 
 static const int exitcode_block_Any[3] = {1, 0, 1};
@@ -132,11 +132,12 @@ ART_ACTION_SCHEDULER(timed_counter_action_scheduler)
     int32_t now = _now_ms();
     
     if (now >= thisActor->next_firing) {
-        if ((pinAvailOut_int32_t(ART_OUTPUT(0)) >= 1)) {
+        if ((pinAvailOut_int32_t(ART_OUTPUT(0)) > 0)) {
             ART_FIRE_ACTION(action0);
             // Update firing based on the time of this firing; alternatively,
             // the next firing could be based on the last wanted firing time.
             thisActor->next_firing = now + thisActor->firing_interval;
+            thisActor->firing_interval = (random() % 1000) + 750;
             result = EXIT_CODE_YIELD;
         } else {
             // Can't fire because no room in output buffer

@@ -34,6 +34,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "io-port.h"
 
 #ifdef REF
 #undef FIFO_NAME
@@ -48,110 +49,64 @@
 /*
  * Number of tokens available on InputPort p
  */
-static inline unsigned FIFO_NAME(pinAvailIn)(const LocalInputPort *p) 
+static inline unsigned FIFO_NAME(pinAvailIn)(const InputPort *p)
 {
-  return p->available;
+  return input_port_available(p);
 }
 
 /*
  * Number of (additional) tokens that would fit into OutputPort p 
  */
-static inline unsigned FIFO_NAME(pinAvailOut)(const LocalOutputPort *p) 
+static inline unsigned FIFO_NAME(pinAvailOut)(const OutputPort *p) 
 {
-  return p->spaceLeft;
+  return output_port_space_left(p);
 }
 
-static inline void FIFO_NAME(pinWrite)(LocalOutputPort *p, FIFO_TYPE token) 
+static inline void FIFO_NAME(pinWrite)(OutputPort *p, FIFO_TYPE token) 
 {
-  FIFO_TYPE *writePtr=(FIFO_TYPE *) p->writePtr;
-  assert(p->spaceLeft > 0);
-
-  *(writePtr++)=token;
-
-  if (writePtr >= (FIFO_TYPE*) p->bufferEnd)
-    writePtr = p->bufferStart;
-  p->writePtr=writePtr;
-  p->spaceLeft--;
+  output_port_write(p, sizeof token, &token);
 }
 
-static inline void FIFO_NAME(pinWriteRepeat)(LocalOutputPort *p,
+static inline void FIFO_NAME(pinWriteRepeat)(OutputPort *p,
                                              FIFO_TYPE *buf,
                                              int n) 
 {
-  char *startPtr=(char*) p->writePtr;
-  char *endPtr=(char*) ((FIFO_TYPE*) startPtr + n);
-  char *bufferEnd=(char*) p->bufferEnd;
-
-  assert(p->spaceLeft >= n);
-  p->spaceLeft -= n;
-
-  if (endPtr >= bufferEnd) {
-    // Buffer wrap
-    int numBytes=bufferEnd-startPtr;
-    memcpy(startPtr, buf, numBytes);
-    buf=(FIFO_TYPE*) ((char*) buf + numBytes);
-    startPtr=p->bufferStart;
-    endPtr=startPtr+(endPtr-bufferEnd);
+  int i = 0;
+  for (; i < n ; ++i) {
+    assert(output_port_space_left(p) > 0);
+    output_port_write(p, sizeof *buf, buf+i);
   }
-
-  memcpy(startPtr,buf,endPtr-startPtr);
-  p->writePtr=endPtr;
 }
 
 
-static inline FIFO_TYPE FIFO_NAME(pinRead)(LocalInputPort *p) 
+static inline FIFO_TYPE FIFO_NAME(pinRead)(InputPort *p) 
 {
-  const FIFO_TYPE *readPtr=(const FIFO_TYPE *) p->readPtr;
-  FIFO_TYPE result;
-
-  assert(p->available > 0);
-
-  result = (FIFO_TYPE) *readPtr++;
-
-  if (readPtr >= (const FIFO_TYPE*) p->bufferEnd)
-    readPtr = (const FIFO_TYPE*)p->bufferStart;
-  p->readPtr=readPtr;
-  p->available--;
-  return result;
+  FIFO_TYPE token;
+  input_port_read(p, sizeof token, &token);
+  return token;
 }
 
-static inline void FIFO_NAME(pinReadRepeat)(LocalInputPort *p,
+static inline void FIFO_NAME(pinReadRepeat)(InputPort *p,
                                             FIFO_TYPE *buf,
                                             int n) 
 {
-  const char *startPtr=(char*) p->readPtr;
-  const char *endPtr=(char*) ((FIFO_TYPE*) startPtr + n);
-  const char *bufferEnd=(char*) p->bufferEnd;
-
-  assert(p->available >= n);
-  p->available -= n;
-
-  if (endPtr >= bufferEnd) {
-    // Buffer wrap
-    int numBytes=bufferEnd-startPtr;
-    memcpy(buf, startPtr, numBytes);
-    buf=(FIFO_TYPE*) ((char*) buf + numBytes);
-    startPtr=p->bufferStart;
-    endPtr=startPtr+(endPtr-bufferEnd);
+  int i;
+  for (i = 0; i < n; ++i) {
+    input_port_read(p, sizeof *buf, buf+i);
   }
-  memcpy(buf, startPtr, endPtr-startPtr);
-  p->readPtr=endPtr;
 }
 
-static inline FIFO_TYPE FIFO_NAME(pinPeekFront)(const LocalInputPort *p)
+static inline FIFO_TYPE FIFO_NAME(pinPeekFront)(const InputPort *p)
 {
-  return *((FIFO_TYPE*)p->readPtr);
+  FIFO_TYPE token;
+  input_port_peek(p, 0, sizeof token, &token);
+  return token;
 }
 
-static inline FIFO_TYPE FIFO_NAME(pinPeek)(const LocalInputPort *p, 
-                                           int offset) {
-  FIFO_TYPE *readPtr=((FIFO_TYPE*) p->readPtr + offset);
-  assert(offset>=0);
-
-  if (readPtr >= (FIFO_TYPE*) p->bufferEnd) {
-    // Buffer wrap
-    int capacityInBytes=(char*) p->bufferEnd - (char*) p->bufferStart;
-    readPtr=(FIFO_TYPE*) ((char*) readPtr - capacityInBytes);
-  }
-  return *readPtr;
+static inline FIFO_TYPE FIFO_NAME(pinPeek)(const InputPort *p, 
+    int offset)
+{
+  FIFO_TYPE token;
+  input_port_peek(p, offset, sizeof token, &token);
+  return token;
 }
