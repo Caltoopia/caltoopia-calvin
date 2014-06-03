@@ -216,11 +216,9 @@ receiver_read_simple_data(ActorInstance_art_SocketReceiver *instance)
    * Read simple tokens that don't need serialization
    **************************************************/
   do {
-    m_message("Receiver %s reading", instance_name);
     bytes_read = read(instance->client_socket,
         instance->tokenMon.tokenBuffer + instance->bytesRead,
         tokenSize - instance->bytesRead);
-    m_message("Receiver %s read %d bytes", instance_name, bytes_read);
 
     if (instance->tokenMon.die) {
       m_message("Receiver %s noticed death of token monitor", instance_name);
@@ -262,7 +260,7 @@ receiver_read_serialized_data(ActorInstance_art_SocketReceiver *instance)
   /************************************************
    * Read complex tokens that do need serialization
    ************************************************/
-  int status;
+  int status = 1;
   int32_t sz = 0;
   int total_bytes_read = 0;
   int bytes_read;
@@ -273,10 +271,8 @@ receiver_read_serialized_data(ActorInstance_art_SocketReceiver *instance)
 
   //Read serialization token size
   do {
-    m_message("Receiver %s reading", instance_name);
     bytes_read = read(instance->client_socket, &sz+total_bytes_read,
         sizeof(int32_t)-total_bytes_read);
-    m_message("Receiver %s read %d bytes", instance_name, bytes_read);
     if (instance->tokenMon.die) {
       m_message("Receiver %s noticed death of token monitor", instance_name);
       status = -1;
@@ -428,7 +424,6 @@ receiver_thread(void *arg)
   }
 out:
   m_message("Receiver %s exiting", instance_name);
-  destroyActorInstance(instance_name);
   return NULL;
 }
 

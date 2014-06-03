@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -57,12 +58,9 @@
 /* ------------------------------------------------------------------------- */
 
 /*
- * When instances are created, they are placed in 'disabled_instances'.
- * When they are later enabled, they are moved to 'instances'. Only the
- * latter list is used for execution.
+ * When instances are created, they are disabled.
  */
-static dllist_head_t enabled_instances;   /* active, executing instances */
-static dllist_head_t disabled_instances;/* disabled, non-executing instances */
+static slist instances;
 
 static pthread_mutex_t instance_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -74,9 +72,12 @@ static pthread_mutex_t instance_lock = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_unlock(&instance_lock); \
 } while (0)
 
+struct mainloop_params {
+  int delay;
+};
 
 /* TODO: make it possible to configure this on a per-connection basis */
-#define FIFO_CAPACITY  (256)
+#define FIFO_CAPACITY  (5)
 
 /* ------------------------------------------------------------------------- */
 
@@ -131,30 +132,15 @@ static AbstractActorInstance * lookupActor(const char *actorName)
   AbstractActorInstance *result = NULL;
   /* FIXME: linear time for each lookup --> quadratic initialization time */
 
-  /*
-   * The actor could be either in 'disabled_instances' or 'instances'
-   */
-
   LOCK_INSTANCES();
-  dllist_element_t *elem = dllist_first(&disabled_instances);
-  while (elem) {
-    AbstractActorInstance *actor = (AbstractActorInstance *) elem;
+  slist_node *elem = slist_first(&instances);
+  while (elem != NULL) {
+    AbstractActorInstance *actor = (AbstractActorInstance *)elem;
     if (strcmp(actor->instanceName, actorName) == 0) {
       result = actor;
       goto out;
     }
-    elem = dllist_next(&disabled_instances, elem);
-  }
-
-  elem = dllist_first(&enabled_instances);
-  while (elem) {
-    AbstractActorInstance *actor = (AbstractActorInstance *) elem;
-    if (strcmp(actor->instanceName, actorName) == 0) {
-      result = actor;
-      goto out;
-    }
-
-    elem = dllist_next(&enabled_instances, elem);
+    elem = slist_next(&instances, elem);
   }
 
   /* Is there any particular reason for failing here? */
@@ -239,7 +225,8 @@ disconnectInput(InputPort *consumer, OutputPort *producer)
   output_port_input_port_disconnect(producer, consumer);
 }
 
-static void connectInput(InputPort *consumer, OutputPort *producer)
+static void
+connectInput(InputPort *consumer, OutputPort *producer)
 {
   output_port_input_port_connect(producer, consumer);
 }
@@ -307,41 +294,37 @@ static inline int postFire(AbstractActorInstance *actor) {
 
 /* ------------------------------------------------------------------------- */
 
-static void * workerThreadMain(void *unused_arg)
+static void *
+workerThreadMain(void *params_ptr)
 {
+  struct mainloop_params *params = params_ptr;
+
   while (1) {
-    int fired=1;
+    int fired = 1;
 
     while (fired) {
+      int enabled_actors = 0;
+      int disabled_actors = 0;
+
       LOCK_INSTANCES();
-      dllist_element_t *elem = dllist_first(&enabled_instances);
-      fired=0;
-      while (elem) {
-        AbstractActorInstance *actor = (AbstractActorInstance *) elem;
-        preFire(actor);
-        actor->action_scheduler(actor);
-        fired = postFire(actor);
-        elem = dllist_next(&enabled_instances, elem);
+      fired = 0;
+      slist_node *node = slist_first(&instances);
+      while (node) {
+        AbstractActorInstance *actor = (AbstractActorInstance*)node;
+        if (actor->enabled) {
+          AbstractActorInstance *actor = (AbstractActorInstance *) node;
+          enabled_actors++;
+          preFire(actor);
+          actor->action_scheduler(actor);
+          fired = postFire(actor);
+        } else {
+          disabled_actors++;
+        }
+        node = slist_next(&instances, node);
       }
       UNLOCK_INSTANCES();
-     // usleep(10000);
+      usleep(1000*params->delay);
     }
-
-#ifdef CALVIN_BLOCK_ON_IDLE
-    /* no actor fired on last iteration -- go idle if not locked busy, wait for trigger */
-    {
-      pthread_mutex_lock(&thread_state.signaling_mutex);
-      if(thread_state.state != ACTOR_THREAD_LOCKED_BUSY) {
-        thread_state.state = ACTOR_THREAD_IDLE;
-        pthread_cond_signal(&thread_state.idle_cond);
-        while (thread_state.state == ACTOR_THREAD_IDLE) {
-          pthread_cond_wait(&thread_state.wakeup_cond,
-              &thread_state.signaling_mutex);
-        }
-      }
-      pthread_mutex_unlock(&thread_state.signaling_mutex);
-    }
-#endif
   }
 
   return NULL; /* won't happen, just here for the 'void *' return type */
@@ -349,26 +332,19 @@ static void * workerThreadMain(void *unused_arg)
 
 /* ========================================================================= */
 
-void initActorNetwork(void)
+void
+initActorNetwork(int delay)
 {
   pthread_t pid;
+  struct mainloop_params *params = malloc(sizeof *params);
 
+  params->delay = delay;
   LOCK_INSTANCES();
-  dllist_create(&enabled_instances);
-  dllist_create(&disabled_instances);
+  slist_create(&instances);
   UNLOCK_INSTANCES();
   pthread_mutex_init(&thread_state.execution_mutex, NULL);
 
-#ifdef CALVIN_BLOCK_ON_IDLE
-  pthread_mutex_init(&thread_state.signaling_mutex, NULL);
-
-  pthread_cond_init(&thread_state.idle_cond, NULL);
-  pthread_cond_init(&thread_state.wakeup_cond, NULL);
-
-  thread_state.state = ACTOR_THREAD_BUSY;
-#endif
-
-  pthread_create(&pid, NULL, &workerThreadMain, NULL);
+  pthread_create(&pid, NULL, &workerThreadMain, params);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -390,7 +366,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
   instance->numOutputPorts = actorClass->numOutputPorts;
   instance->enabled = 0;
 
-  dllist_init_element(&instance->listEntry);
+  slist_init_node(&instance->listEntry);
 
   {
     /* already exist? */
@@ -431,7 +407,7 @@ AbstractActorInstance * createActorInstance(const ActorClass *actorClass,
 
   /* Add it to the list of instances */
   LOCK_INSTANCES();
-  dllist_append(&disabled_instances, &instance->listEntry);
+  slist_append(&instances, &instance->listEntry);
   UNLOCK_INSTANCES();
   return instance;
 }
@@ -443,7 +419,7 @@ void setActorParam(AbstractActorInstance *instance,
     const char *value)
 {
   const ActorClass *actorClass = instance->actorClass;
-  if (actorClass->set_param) {
+  if (actorClass->set_param) {    actorClass->set_param(instance, key, value);
     actorClass->set_param(instance, key, value);
   }
   else {
@@ -456,15 +432,19 @@ void setActorParam(AbstractActorInstance *instance,
 
 void disableActorInstance(const char *actor_name)
 {
+  m_message("looking up actor %s", actor_name);
   AbstractActorInstance *instance = lookupActor(actor_name);
 
+  if (instance == NULL) {
+    m_critical("instance %s already destroyed", actor_name);
+  }
+
+  m_message("Disabling %s", actor_name);
+  LOCK_INSTANCES();
   if (instance->enabled) {
-    LOCK_INSTANCES();
-    dllist_remove(&enabled_instances, &instance->listEntry);
-    dllist_append(&disabled_instances, &instance->listEntry);
-    UNLOCK_INSTANCES();
     instance->enabled = 0;
   }
+  UNLOCK_INSTANCES();
 
   /* Disable receivers/senders */
   if (instance->sender_name) {
@@ -483,13 +463,12 @@ void enableActorInstance(const char *actor_name)
 {
   AbstractActorInstance *instance = lookupActor(actor_name);
 
+  LOCK_INSTANCES();
   if (!instance->enabled) {
-    LOCK_INSTANCES();
-    dllist_remove(&disabled_instances, &instance->listEntry);
-    dllist_append(&enabled_instances, &instance->listEntry);
-    UNLOCK_INSTANCES();
     instance->enabled = 1;
   }
+  UNLOCK_INSTANCES();
+
   /* Enabled senders/receivers */
   if (instance->sender_name != NULL) {
     enableActorInstance(instance->sender_name);
@@ -505,8 +484,12 @@ void enableActorInstance(const char *actor_name)
 void destroyActorInstance(const char *actor_name)
 {
   AbstractActorInstance *instance = lookupActor(actor_name);
-  const ActorClass *actorClass = instance->actorClass;
+  const ActorClass *actorClass;
   unsigned int i;
+
+  if (instance == NULL) {
+    m_critical("Instance %s already destroyed", actor_name);
+  }
 
   m_message("Destroying %s", actor_name);
   assert(!instance->enabled);
@@ -514,8 +497,9 @@ void destroyActorInstance(const char *actor_name)
   {
     pthread_mutex_lock(&thread_state.execution_mutex);
     LOCK_INSTANCES();
-    dllist_remove(&disabled_instances, &instance->listEntry);
+    slist_remove(&instances, &instance->listEntry);
 
+    actorClass = instance->actorClass;
     /* for each input, disconnect from the producer */
     for (i = 0; i < actorClass->numInputPorts; i++) {
       InputPort *input = input_port_array_get(instance->inputPort, i);
@@ -546,9 +530,13 @@ void destroyActorInstance(const char *actor_name)
 
   if (instance->sender_name != NULL) {
     destroyActorInstance(instance->sender_name);
+    free(instance->sender_name);
+    instance->sender_name = NULL;
   }
   if (instance->receiver_name != NULL) {
     destroyActorInstance(instance->receiver_name);
+    free(instance->receiver_name);
+    instance->receiver_name = NULL;
   }
 }
 
@@ -629,6 +617,12 @@ void createRemoteConnection(const char *src_actor,
   /* name allocated here (using strdup), free'd in destructor */
   AbstractActorInstance *sender
     = createActorInstance(klass, sender_name, NULL);
+  if (src->sender_name != NULL) {
+    m_message("instance %s already has sender %s - freeing", src_actor, src->sender_name);
+    disableActorInstance(src->sender_name);
+    destroyActorInstance(src->sender_name);
+    free(src->sender_name);
+  }
   /* save name to facilitate dropping connection later */
   m_message("Adding sender %s to instance %s", sender_name, src->instanceName);
   src->sender_name = strdup(sender_name);
@@ -667,6 +661,13 @@ int createSocketReceiver(const char *actor_name,
 
   m_message("Adding receiver %s to instance %s", receiver_name,
       consumer->instanceName);
+
+  if (consumer->receiver_name != NULL) {
+    m_message("instance %s already has receiver %s - freeing", actor_name, consumer->receiver_name);
+    disableActorInstance(consumer->receiver_name);
+    destroyActorInstance(consumer->receiver_name);
+    free(consumer->receiver_name);
+  }
   consumer->receiver_name = strdup(receiver_name);
 
   OutputPort *output = lookupOutput(receiver, "out", NULL, NULL);
@@ -846,19 +847,12 @@ void listActors(FILE *out)
   /* TODO: tag disabled actors as such? */
 
   LOCK_INSTANCES();
-  dllist_element_t *elem = dllist_first(&disabled_instances);
-  while (elem) {
-    fprintf(out, " %s", ((AbstractActorInstance *) elem)->instanceName);
-
-    elem = dllist_next(&disabled_instances, elem);
+  slist_node *node = slist_first(&instances);
+  while (node != NULL) {
+    fprintf(out, " %s", ((AbstractActorInstance *) node)->instanceName);
+    node = slist_next(&instances, node);
   }
 
-  elem = dllist_first(&enabled_instances);
-  while (elem) {
-    fprintf(out, " %s", ((AbstractActorInstance *) elem)->instanceName);
-
-    elem = dllist_next(&enabled_instances, elem);
-  }
   UNLOCK_INSTANCES();
 }
 

@@ -429,6 +429,7 @@ output_port_write(OutputPort *self, unsigned int token_size, const void *token)
     self->localOutputPort.writePtr = self->localOutputPort.bufferStart;
   }
   self->localOutputPort.spaceLeft--;
+  self->localOutputPort.available++;
   assert(self->localOutputPort.spaceLeft >= 0);
 }
 
@@ -445,6 +446,7 @@ input_port_read(InputPort *self, unsigned int token_size, void *token)
     self->localInputPort->readPtr = self->localInputPort->bufferStart;
   }
   self->localInputPort->available--;
+  self->localInputPort->spaceLeft++;
   assert(self->localInputPort->available >= 0 );
 }
 

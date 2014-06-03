@@ -37,9 +37,11 @@ sig_handler(int signum)
 static void
 usage(const char *bname)
 {
-  printf(GREEN "usage: %s [-i] [-v] [script1.cs script2.cs ... scriptN.cs]\n"
+  printf(GREEN "usage: %s [-ic] [-d <ms>] [-p <port>] [script1.cs script2.cs ... scriptN.cs]\n"
        "  Named scripts are executed in sequence. Other options:\n"
        "  -i        : start interactive interpreter\n"
+       "  -c        : enable log colors\n"
+       "  -d  <ms>  : add ms delay to main loop\n"
        "  -s <port> : start command server at given port " RESET "\n",
        bname);
   exit(0);
@@ -52,14 +54,22 @@ main(int argc, char **argv)
   int interactive = 0;
   short port = 0;
   int opt;
+  int mainloop_delay = 0;
+
 
   signal(1, &sig_handler);
 
 
-  while ((opt = getopt(argc, argv, "p:s:i")) != -1) {
+  while ((opt = getopt(argc, argv, "cp:s:id:")) != -1) {
     switch (opt) {
+      case 'c' :
+        mlog_enable_colors();
+        break;
       case 'i':
         interactive = 1;
+        break;
+      case 'd' :
+        mainloop_delay = atoi(optarg);
         break;
       case 's': /* FALLTHROUGH */
       case 'p':
@@ -70,9 +80,8 @@ main(int argc, char **argv)
     }
   }
 
-
   registryInit();
-  initActorNetwork();
+  initActorNetwork(mainloop_delay);
 
   /* Built-in system actors */
 

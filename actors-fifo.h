@@ -35,7 +35,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "io-port.h"
-
 #ifdef REF
 #undef FIFO_NAME
 #define FIFO_NAME(f) f##_##ref

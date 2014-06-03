@@ -52,7 +52,7 @@ extern "C" {
   /**
    * Initialize actor list and launch worker thread
    */
-  void initActorNetwork(void);
+  void initActorNetwork(int delay);
 
   /**
    * Called by parser. Creates an actor instance. Runs the constructor.

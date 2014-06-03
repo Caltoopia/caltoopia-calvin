@@ -3,32 +3,18 @@
 #include <stdio.h>
 #include "logging.h"
 
+int MLOG_USE_COLORS = 0;
+
 void
-fail(const char *fmt, ...)
+mlog_enable_colors(void)
 {
-  va_list args;
-
-  va_start(args, fmt);
-  fprintf(stderr, "failed: ");
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-
-  fprintf(stderr, "\n");
-
-  exit(1);
+  MLOG_USE_COLORS = 1;
 }
 
 void
-warn(const char *fmt, ...)
+mlog_disable_colors(void)
 {
-  va_list args;
-
-  va_start(args, fmt);
-  fprintf(stderr, "warning: ");
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-
-  fprintf(stderr, "\n");
+  MLOG_USE_COLORS = 0;
 }
 
 
