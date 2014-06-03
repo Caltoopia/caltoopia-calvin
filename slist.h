@@ -1,6 +1,9 @@
 #ifndef SLLIST_H_INCLUDED
 #define SLLIST_H_INCLUDED
 
+#include <pthread.h>
+#include <assert.h>
+
 typedef struct slist_node {
   struct slist_node *next;
 } slist_node;
@@ -8,7 +11,14 @@ typedef struct slist_node {
 typedef struct slist {
   slist_node *first;
   pthread_mutex_t lock;
+  int len;
 } slist ;
+
+static inline int
+slist_len(slist *list)
+{
+  return list->len;
+}
 
 static inline void
 slist_create(slist *list)
@@ -30,11 +40,13 @@ slist_append(slist *list, slist_node *node)
   pthread_mutex_lock(&list->lock);
   {
     assert(node != NULL);
-    assert(node->next == NULL);
+    node->next = NULL;
+
     while (idx->next != NULL) {
       idx = idx->next;
     }
     idx->next = node;
+    list->len++;
   }
   pthread_mutex_unlock(&list->lock);
 }
@@ -53,6 +65,7 @@ slist_remove(slist *list, slist_node *node)
       /* node not member of list */
     } else {
       idx->next = idx->next->next;
+      list->len--;
     }
   }
   pthread_mutex_unlock(&list->lock);

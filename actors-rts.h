@@ -43,10 +43,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "logging.h"
 #include "io-port.h"
 #include "actors-typedefs.h"
 #include "actors-coder.h"
-#include "dllist.h"
+#include "slist.h"
 
 /* make the header usable from C++ */
 #ifdef __cplusplus
@@ -150,7 +151,7 @@ nActions, actionDescr) { \
    */
 
   struct AbstractActorInstance {
-    dllist_element_t listEntry;           // to keep instance in list
+    slist_node listEntry;           // to keep instance in list
 
     const ActorClass *actorClass;
     char       *instanceName;

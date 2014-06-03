@@ -373,16 +373,19 @@ static void destroy_handler(struct parser_state *state)
 static void disable_handler(struct parser_state *state)
 {
   const char *actor_name = get_next_word(state);
+
+  m_message("disabling %s", actor_name);
   if (! actor_name) {
     error(state, "missing actor name");
     return;
   }
-  
+
   do {
+    m_info("enter loop");
     disableActorInstance(actor_name);
     actor_name = get_next_word(state);
   } while(actor_name);
-  
+
   ok(state, "disabled");
 }
 
@@ -641,7 +644,8 @@ parserLoop(struct parser_state *state, FILE *in)
   while(! state->quit_flag) {
     fprintf(state->out, "%% ");
 
-    (void) getline(&state->buffer_ptr, &state->buffer_size, in);
+    m_info("Waiting for input");
+    getline(&state->buffer_ptr, &state->buffer_size, in);
 
     if (feof(in) || ferror(in)) {
       break;
@@ -665,6 +669,7 @@ parserLoop(struct parser_state *state, FILE *in)
       parseLine(state);
     }
   }
+  m_warning("Parser loop exiting");
 }
 
 /* ------------------------------------------------------------------------- */
