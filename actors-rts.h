@@ -47,6 +47,7 @@
 #include "actors-typedefs.h"
 #include "actors-coder.h"
 #include "dllist.h"
+#include "logging.h"
 
 /* make the header usable from C++ */
 #ifdef __cplusplus
