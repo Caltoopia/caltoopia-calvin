@@ -33,7 +33,7 @@ clean:
 # Rule for compiling actors for dynamic loading
 
 # location of makefile (crude, but it seems to work)
-MAKEFILE_PATH = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+MAKEFILE_PATH = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CALVIN_HOME = $(shell dirname $(MAKEFILE_PATH))
 
 %.so : %.c
